@@ -33,5 +33,12 @@
         "messages": ["Fetching user preferences."],
         "user": "alice",
         "ip": "192.168.1.2"
+    },
+    {
+        "timestamp": "2024-04-01T10:45:15Z",
+        "level": "ERROR",
+        "messages": ["Failed to save user preferences."],
+        "user": "abdullah",
+        "ip": "192.168.1.6"
     }
 ]

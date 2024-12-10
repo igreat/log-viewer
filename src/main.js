@@ -3,8 +3,15 @@ import './styles.scss';
 $(document).ready(function () {
   let allLogs = [];
 
-  // Filters of shape { regex: boolean, caseSensitive: boolean, text: string }
+  // Filters of shape { regex: boolean, caseSensitive: boolean, text: string, title: string }
   let currentFilters = [];
+
+  const premadeFilters = [
+    { title: 'Error Logs', regex: false, caseSensitive: false, text: 'ERROR' },
+    { title: 'User Alice', regex: false, caseSensitive: false, text: 'Alice' },
+    { title: 'Info Level', regex: false, caseSensitive: false, text: 'INFO' },
+    { title: 'Warnings Starting with "WARN"', regex: true, caseSensitive: false, text: '^WARN' }
+  ];
 
   // Inject HTML content into #app using jQuery with Bootstrap classes
   $("#app").html(`
@@ -44,6 +51,27 @@ $(document).ready(function () {
             </div>
           </div>
 
+          <!-- Premade Filters Multi-Select Dropdown with Checkboxes (Bootstrap 4) -->
+          <div class="dropdown">
+            <button
+              id="premade-filters-dropdown"
+              class="btn btn-secondary dropdown-toggle w-100"
+              type="button"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              Select Premade Filters
+            </button>
+            <div
+              class="dropdown-menu p-3"
+              aria-labelledby="premade-filters-dropdown"
+              style="max-height: 300px; overflow-y: auto;"
+            >
+              <!-- Filters populated via JavaScript -->
+            </div>
+          </div>
+
           <!-- Log Viewer -->
           <div id="log-viewer" class="border p-3 rounded" style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
             <!-- Logs will be displayed here -->
@@ -53,6 +81,10 @@ $(document).ready(function () {
       </div>
     </div>
   `);
+
+  $("#premade-filters-dropdown").on("click", function () {
+    $(this).next(".dropdown-menu").toggleClass("show");
+  });
 
   // Function to render the logs table
   const renderTable = (logs) => {
@@ -138,6 +170,68 @@ $(document).ready(function () {
     });
   };
 
+  // Populate the Premade Filters Dropdown with Checkboxes
+  const populatePremadeFiltersCheckboxes = () => {
+    const $dropdownMenu = $("#premade-filters-dropdown").siblings(".dropdown-menu"); // Select the specific dropdown-menu
+
+    premadeFilters.forEach((filter, index) => {
+      const checkboxHTML = `
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="${index}" id="premade-filter-${index}">
+        <label class="form-check-label" for="premade-filter-${index}">
+          ${filter.title}
+        </label>
+      </div>
+    `;
+      $dropdownMenu.append(checkboxHTML);
+    });
+  };
+
+  // Handle Premade Filters Checkbox Change
+  const handlePremadeFiltersCheckboxChange = () => {
+    const selectedIndices = [];
+    $("#premade-filters-dropdown").siblings(".dropdown-menu").find("input[type='checkbox']:checked").each(function () {
+      selectedIndices.push($(this).val());
+    });
+
+    // Add selected premade filters to currentFilters
+    currentFilters = [];
+    selectedIndices.forEach(index => {
+      currentFilters.push(premadeFilters[index]);
+    });
+
+    // Display active premade filters (optional enhancement)
+    displayActivePremadeFilters(selectedIndices);
+
+    // Apply all current filters
+    applyFilters(currentFilters);
+  };
+
+  // Function to Display Active Premade Filters (Optional)
+  const displayActivePremadeFilters = (selectedIndices) => {
+    const $activeFilters = $("#active-premade-filters");
+    $activeFilters.empty(); // Clear existing active filters
+
+    if (selectedIndices.length === 0) {
+      $activeFilters.html(`<p class="text-muted">No premade filters applied.</p>`);
+      return;
+    }
+
+    selectedIndices.forEach(index => {
+      const filterTitle = premadeFilters[index].title;
+      const badge = `<span class="badge badge-primary mr-2">${filterTitle}</span>`;
+      $activeFilters.append(badge);
+    });
+  };
+
+  // Initialize Premade Filters Dropdown and Event Listeners
+  const initializePremadeFilters = () => {
+    populatePremadeFiltersCheckboxes();
+
+    // Attach change event to the checkboxes within the specific dropdown menu
+    $("#premade-filters-dropdown").siblings(".dropdown-menu").find("input[type='checkbox']").on("change", handlePremadeFiltersCheckboxChange);
+  };
+
   // Function to apply all current filters to the logs
   const applyFilters = (filters) => {
     let filteredLogs = allLogs;
@@ -178,26 +272,23 @@ $(document).ready(function () {
     renderTable(filteredLogs);
   };
 
-  // Function to update currentFilters based on UI inputs
+  // Function to update currentFilters based on UI inputs (search input and checkboxes)
   const updateFilters = () => {
     const searchText = $("#log-search").val();
     const useRegex = $("#use-regex").is(":checked");
     const caseSensitive = $("#case-sensitive").is(":checked");
 
-    // Clear existing filters
-    currentFilters = [];
-
-    // If search text is not empty, add it as a filter
+    // If search text is not empty, add it as a new filter
     if (searchText.trim() !== "") {
       currentFilters.push({
         regex: useRegex,
         caseSensitive: caseSensitive,
-        text: searchText
+        text: searchText,
       });
     }
     console.log(currentFilters);
 
-    // Apply the updated filters
+    // Apply all current filters
     applyFilters(currentFilters);
   };
 
@@ -213,6 +304,9 @@ $(document).ready(function () {
   $("#case-sensitive").on("change", function () {
     updateFilters();
   });
+
+  // Initialize Premade Filters after Document is Ready
+  initializePremadeFilters();
 
   // Load logs on page load
   loadLogs();
