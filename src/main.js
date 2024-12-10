@@ -62,12 +62,37 @@ const loadLogs = () => {
     });
 };
 
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      // Validate the data is an array
+      if (!Array.isArray(data)) {
+        alert("Invalid file format: JSON must be an array of logs.");
+        return;
+      }
+
+      // Update allLogs and render the table
+      allLogs = data;
+      renderTable(allLogs);
+    } catch (error) {
+      alert("Error parsing the JSON file. Please upload a valid JSON file.");
+    }
+  };
+  reader.readAsText(file);
+};
+
 const applyFilters = (filters) => {
   if (filters.length === 0) {
     renderTable(allLogs);
     return;
   }
-  
+
   let filteredLogs = []
   for (let i = 0; i < allLogs.length; i++) {
     const log = allLogs[i];
@@ -122,7 +147,7 @@ const populateFilterGroups = () => {
     dropdownMenu.insertAdjacentHTML('beforeend', groupHTML);
   });
 
-  // Handle selection of filter groups
+  // handle selection of filter groups
   dropdownMenu.addEventListener("change", (event) => {
     if (event.target.classList.contains("form-check-input")) {
       const selectedIndices = Array.from(
@@ -213,6 +238,10 @@ const setupDropdown = () => {
 };
 
 const initializeApp = () => {
+  // attach event listeners for file input
+  document.getElementById("log-file-input").value = '';
+  document.getElementById("log-file-input").addEventListener("change", handleFileUpload);
+
   // attach event listeners for text filters
   document.getElementById("log-search").addEventListener("input", updateTextFilter);
   document.getElementById("use-regex").addEventListener("change", updateTextFilter);
