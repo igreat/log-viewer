@@ -1,13 +1,63 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <title>Log Viewer</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log Viewer</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div id="app" class="container mt-5">
+    <!-- Log Viewer Section -->
+    <div class="row justify-content-center">
+      <div class="col-md-10">
+        <h2 class="mb-4">Logs</h2>
+
+        <!-- Filters bar -->
+        <div class="row g-3 align-items-center mb-4">
+          <div class="col-md-8">
+            <input type="text" id="log-search" class="form-control" placeholder="Search logs...">
+          </div>
+          <div class="col-md-2">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="use-regex">
+              <label class="form-check-label" for="use-regex">Use Regex</label>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="case-sensitive">
+              <label class="form-check-label" for="case-sensitive">Case Sensitive</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="dropdown">
+          <button id="premade-filters-dropdown" class="btn btn-secondary dropdown-toggle w-100" type="button"
+            aria-haspopup="true" aria-expanded="false">
+            Select Premade Filters
+          </button>
+          <div class="dropdown-menu p-3" aria-labelledby="premade-filters-dropdown"
+            style="max-height: 300px; overflow-y: auto;">
+            <!-- Premade filter options will be populated here -->
+          </div>
+        </div>
+
+        <!-- Log Viewer -->
+        <div id="log-viewer" class="border p-3 rounded"
+          style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
+          <p class="text-muted">Click "Load Logs" to view log data.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="./src/main.js"></script>
+</body>
+
 </html>
