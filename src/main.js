@@ -1,10 +1,24 @@
-let allLogs = [];
-const premadeFilters = [
-  { title: 'Error Logs', regex: false, caseSensitive: false, text: 'ERROR' },
-  { title: 'User Alice', regex: false, caseSensitive: false, text: 'Alice' },
-  { title: 'Info Level', regex: false, caseSensitive: false, text: 'INFO' },
-  { title: 'Warnings Starting with "WARN"', regex: true, caseSensitive: false, text: '^WARN' }
+import './styles.scss';
+
+const filterGroups = [
+  {
+    title: 'Error Logs',
+    description: 'Filters logs containing "ERROR"',
+    filters: [{ regex: false, caseSensitive: false, text: 'ERROR' }]
+  },
+  {
+    title: 'User Alice',
+    description: 'Filters logs mentioning user Alice',
+    filters: [{ regex: false, caseSensitive: false, text: 'Alice' }]
+  },
+  {
+    title: 'ip of shape 192.*.1.2',
+    description: 'Filters logs containing ip of shape 192.*.1.2',
+    filters: [{ regex: true, caseSensitive: false, text: '192\..*\.1\.2' }]
+  }
 ];
+
+let allLogs = [];
 let currentFilters = [];
 
 const renderTable = (logs) => {
@@ -48,61 +62,131 @@ const loadLogs = () => {
     });
 };
 
-const applyFilters = () => {
-  let filteredLogs = allLogs;
-  currentFilters.forEach(filter => {
-    const { regex, caseSensitive, text } = filter;
-    if (regex) {
-      const pattern = new RegExp(text, caseSensitive ? '' : 'i');
-      filteredLogs = filteredLogs.filter(log =>
-        Object.values(log).some(value => pattern.test(String(value)))
-      );
-    } else {
-      const searchText = caseSensitive ? text : text.toLowerCase();
-      filteredLogs = filteredLogs.filter(log =>
-        Object.values(log).some(value => {
+const applyFilters = (filters) => {
+  if (filters.length === 0) {
+    renderTable(allLogs);
+    return;
+  }
+  
+  let filteredLogs = []
+  for (let i = 0; i < allLogs.length; i++) {
+    const log = allLogs[i];
+    if (filters.some(filter => {
+      const { regex, caseSensitive, text } = filter;
+      if (regex) {
+        const pattern = new RegExp(text, caseSensitive ? '' : 'i');
+        return Object.values(log).some(value => pattern.test(String(value)));
+      } else {
+        const searchText = caseSensitive ? text : text.toLowerCase();
+        return Object.values(log).some(value => {
           const fieldValue = String(value);
           return caseSensitive ? fieldValue.includes(searchText) : fieldValue.toLowerCase().includes(searchText);
-        })
-      );
-    }
-  });
+        });
+      }
+    })) {
+      filteredLogs.push(log);
+    };
+  }
   renderTable(filteredLogs);
 };
 
-const updateFilters = () => {
-  const searchText = document.getElementById("log-search").value.trim();
-  const useRegex = document.getElementById("use-regex").checked;
+const updateTextFilter = () => {
+  const text = document.getElementById("log-search").value.trim();
+  const regex = document.getElementById("use-regex").checked;
   const caseSensitive = document.getElementById("case-sensitive").checked;
 
-  currentFilters = [];
-  if (searchText) {
-    currentFilters.push({ regex: useRegex, caseSensitive, text: searchText });
+  if (text) {
+    applyFilters([...currentFilters, { text, regex, caseSensitive }]);
+  } else {
+    applyFilters(currentFilters);
   }
-  applyFilters();
-};
+}
 
-const populatePremadeFilters = () => {
+const populateFilterGroups = () => {
   const dropdownMenu = document.querySelector(".dropdown-menu");
-  premadeFilters.forEach((filter, index) => {
-    const filterHTML = `
+  dropdownMenu.innerHTML = ''; // Clear existing items
+  filterGroups.forEach((group, index) => {
+    const groupHTML = `
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="premade-filter-${index}" value="${index}">
-        <label class="form-check-label" for="premade-filter-${index}">${filter.title}</label>
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="filter-group-${index}"
+          value="${index}"
+        >
+        <label class="form-check-label" for="filter-group-${index}">
+          ${group.title} - ${group.description}
+        </label>
       </div>
     `;
-    dropdownMenu.insertAdjacentHTML('beforeend', filterHTML);
+    dropdownMenu.insertAdjacentHTML('beforeend', groupHTML);
   });
 
+  // Handle selection of filter groups
   dropdownMenu.addEventListener("change", (event) => {
     if (event.target.classList.contains("form-check-input")) {
       const selectedIndices = Array.from(
         dropdownMenu.querySelectorAll("input:checked")
       ).map(input => parseInt(input.value));
-      currentFilters = selectedIndices.map(index => premadeFilters[index]);
-      applyFilters();
+      currentFilters = selectedIndices.flatMap(index => filterGroups[index].filters);
+      updateTextFilter(); // in case there is text in the search box
     }
   });
+};
+
+const addFilterInput = () => {
+  const filterList = document.getElementById("filter-list");
+  const filterHTML = `
+    <div class="input-group mb-2">
+      <input type="text" class="form-control filter-text" placeholder="Filter text">
+      <div class="input-group-prepend">
+        <div class="input-group-text">
+          <input type="checkbox" class="filter-regex" title="Regex"> Regex
+        </div>
+        <div class="input-group-text">
+          <input type="checkbox" class="filter-case-sensitive" title="Case Sensitive"> Case Sensitive
+        </div>
+      </div>
+      <button type="button" class="btn btn-danger remove-filter-btn">Remove</button>
+    </div>
+  `;
+  filterList.insertAdjacentHTML('beforeend', filterHTML);
+};
+
+const saveFilterGroup = () => {
+  const title = document.getElementById("filter-group-title").value.trim();
+  const description = document.getElementById("filter-group-description").value.trim();
+  const filters = [];
+
+  // collect all filters
+  document.querySelectorAll("#filter-list .input-group").forEach((group) => {
+    const text = group.querySelector(".filter-text").value.trim();
+    const regex = group.querySelector(".filter-regex").checked;
+    const caseSensitive = group.querySelector(".filter-case-sensitive").checked;
+
+    if (text) {
+      filters.push({ text, regex, caseSensitive });
+    }
+  });
+
+  // validate inputs
+  if (!title) {
+    alert("Please provide a title for the filter group.");
+    return;
+  }
+  if (!description) {
+    alert("Please provide a description for the filter group.");
+    return;
+  }
+  if (filters.length === 0) {
+    alert("Please add at least one filter.");
+    return;
+  }
+
+  // add new filter group to filterGroups array
+  filterGroups.push({ title, description, filters });
+  populateFilterGroups(); // update dropdown
+  $('#filterGroupModal').modal('hide'); // close modal
 };
 
 const setupDropdown = () => {
@@ -128,13 +212,41 @@ const setupDropdown = () => {
   });
 };
 
-// initialize the App
 const initializeApp = () => {
-  document.getElementById("log-search").addEventListener("input", updateFilters);
-  document.getElementById("use-regex").addEventListener("change", updateFilters);
-  document.getElementById("case-sensitive").addEventListener("change", updateFilters);
-  populatePremadeFilters();
+  // attach event listeners for text filters
+  document.getElementById("log-search").addEventListener("input", updateTextFilter);
+  document.getElementById("use-regex").addEventListener("change", updateTextFilter);
+  document.getElementById("case-sensitive").addEventListener("change", updateTextFilter);
+
+  // attach event listener for adding filter groups
+  document.getElementById("add-filter-group-btn").addEventListener("click", () => {
+    document.getElementById("filter-group-title").value = '';
+    document.getElementById("filter-group-description").value = '';
+    document.getElementById("filter-list").innerHTML = '';
+    $('#filterGroupModal').modal('show');
+  });
+
+  // attach event listener for dynamically adding filters
+  document.getElementById("add-filter-btn").addEventListener("click", addFilterInput);
+
+  // attach event listener for saving filter groups
+  document.getElementById("save-filter-group-btn").addEventListener("click", saveFilterGroup);
+
+  // attach event delegation for removing filter rows
+  document.getElementById("filter-list").addEventListener("click", (e) => {
+    if (e.target.classList.contains("remove-filter-btn")) {
+      const inputGroup = e.target.closest(".input-group");
+      if (inputGroup) {
+        inputGroup.remove();
+      }
+    }
+  });
+
+  // initialize dropdown behavior
   setupDropdown();
+
+  // populate filter groups and load logs
+  populateFilterGroups();
   loadLogs();
 };
 

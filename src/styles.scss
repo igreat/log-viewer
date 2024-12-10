@@ -1,7 +1,5 @@
-@import "bootstrap/scss/bootstrap";
-
 .dropdown-menu {
-  position: absolute;
-  z-index: 1000; 
-  will-change: transform; 
+    position: absolute;
+    top: 100%;
+    z-index: 1000;
 }

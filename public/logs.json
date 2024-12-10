@@ -40,5 +40,12 @@
         "messages": ["Failed to save user preferences."],
         "user": "abdullah",
         "ip": "192.168.1.6"
+    },
+    {
+        "timestamp": "2024-04-01T11:05:00Z",
+        "level": "INFO",
+        "messages": ["User logged out.", "Session ended."],
+        "user": "bob",
+        "ip": "192.420.1.2"
     }
 ]
