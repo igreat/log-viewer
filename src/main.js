@@ -180,10 +180,10 @@ function addFilterGroup() {
       <input type="text" class="form-control filter-text" placeholder="Filter text">
       <div class="input-group-prepend">
         <div class="input-group-text">
-          <input type="checkbox" class="filter-regex" title="Regex"> Regex
+          <input type="checkbox" class="filter-regex mr-1" title="Regex"> <span>Regex</span>
         </div>
         <div class="input-group-text">
-          <input type="checkbox" class="filter-case-sensitive" title="Case Sensitive"> Case Sensitive
+          <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case"> <span>Match Case</span>
         </div>
       </div>
       <button type="button" class="btn btn-danger remove-filter-btn">Remove</button>
@@ -211,10 +211,10 @@ const editFilterGroup = (index) => {
         <input type="text" class="form-control filter-text" placeholder="Filter text" value="${filter.text}">
         <div class="input-group-prepend">
           <div class="input-group-text">
-            <input type="checkbox" class="filter-regex" title="Regex" ${filter.regex ? "checked" : ""}> Regex
+            <input type="checkbox" class="filter-regex mr-1" title="Regex" ${filter.regex ? "checked" : ""}> <span>Regex</span>
           </div>
           <div class="input-group-text">
-            <input type="checkbox" class="filter-case-sensitive" title="Case Sensitive" ${filter.caseSensitive ? "checked" : ""}> Case Sensitive
+            <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case" ${filter.caseSensitive ? "checked" : ""}> <span>Match Case</span>
           </div>
         </div>
         <button type="button" class="btn btn-danger remove-filter-btn">Remove</button>
