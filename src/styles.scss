@@ -23,3 +23,27 @@ $breakpoint-lg: 992px;
     max-width: 75%;
   }
 }
+
+#filter-title-description {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  #filter-title,
+  #filter-description {
+    width: 100%;
+  }
+
+  @media (min-width: $breakpoint-sm) {
+    flex-direction: row;
+    gap: 1rem;
+
+    #filter-title {
+      width: 30%;
+    }
+
+    #filter-description {
+      width: 70%;
+    }
+  }
+}
