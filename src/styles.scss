@@ -1,5 +1,53 @@
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+
 .dropdown-menu {
-    position: absolute;
-    top: 100%;
-    z-index: 1000;
+  position: absolute;
+  top: 100%;
+  z-index: 1000;
+}
+
+#filterGroupModal .modal-dialog {
+  max-width: 95%;
+
+  @media (min-width: $breakpoint-sm) {
+    max-width: 90%;
+  }
+
+  @media (min-width: $breakpoint-md) {
+    max-width: 80%;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    max-width: 75%;
+  }
+}
+
+#filter-title-description {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  #filter-title,
+  #filter-description {
+    width: 100%;
+  }
+
+  @media (min-width: $breakpoint-sm) {
+    flex-direction: row;
+    gap: 1rem;
+
+    #filter-title {
+      width: 30%;
+    }
+
+    #filter-description {
+      width: 70%;
+    }
+  }
+}
+
+button .svg-icon {
+  pointer-events: none;
 }
