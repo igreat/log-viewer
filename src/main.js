@@ -267,27 +267,58 @@ const saveFilterGroup = (index = null) => {
     filterGroups[index] = { title, description, filters };
   }
 
-  populateFilterGroups(); // Update dropdown
-  $('#filterGroupModal').modal('hide'); // Close modal
+  // After saving, the filtered output table should should automatically updates without unchecking any boxes for current filtered groups options in the drop down list
+  // Preserve the state of selected checkboxes
+  const selectedIndices = Array.from(
+    document.querySelectorAll(".dropdown-menu .form-check-input:checked")
+  ).map((input) => parseInt(input.value));
+
+  // Refresh the dropdown while preserving checked state
+  populateFilterGroups();
+
+  // Re-check the previously selected checkboxes
+  selectedIndices.forEach((index) => {
+    const checkbox = document.querySelector(`#filter-group-${index}`);
+    if (checkbox) checkbox.checked = true;
+  });
+
+  // Update the current filters and apply them to the table
+  currentFilters = selectedIndices.flatMap((index) => filterGroups[index].filters);
+  applyFilters(currentFilters);
+
+  // Close the modal
+  $('#filterGroupModal').modal('hide');
 };
 
 const setupDropdown = () => {
   const dropdownButton = document.getElementById("premade-filters-dropdown");
   const dropdownMenu = dropdownButton.nextElementSibling;
 
-  dropdownButton.addEventListener("click", () => {
+  dropdownButton.addEventListener("click", (event) => {
     const isExpanded = dropdownButton.getAttribute("aria-expanded") === "true";
 
-    // toggle the dropdown menu
+    // Toggle the dropdown menu
     dropdownMenu.classList.toggle("show", !isExpanded);
 
-    // update ARIA attributes for accessibility
+    // Update ARIA attributes for accessibility
     dropdownButton.setAttribute("aria-expanded", !isExpanded);
+
+    // Prevent dropdown from closing immediately when clicked
+    event.stopPropagation();
   });
 
-  // close dropdown if clicked outside
+  // Prevent dropdown from closing when interacting with its content
+  dropdownMenu.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
+
+  // Close the dropdown only when clicking outside both the dropdown and modal
   document.addEventListener("click", (event) => {
-    if (!dropdownButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+    if (
+      !dropdownButton.contains(event.target) &&
+      !dropdownMenu.contains(event.target) &&
+      !document.querySelector(".modal").contains(event.target)
+    ) {
       dropdownMenu.classList.remove("show");
       dropdownButton.setAttribute("aria-expanded", "false");
     }
@@ -329,6 +360,7 @@ const initializeApp = () => {
       if (inputGroup) {
         inputGroup.remove();
       }
+      e.stopPropagation(); // Prevent the event from propagating to other handlers
     }
   });
 
