@@ -47,3 +47,7 @@ $breakpoint-lg: 992px;
     }
   }
 }
+
+button .svg-icon {
+  pointer-events: none;
+}
