@@ -130,36 +130,50 @@ const updateTextFilter = () => {
 const populateFilterGroups = () => {
   const dropdownMenu = document.querySelector(".dropdown-menu");
   dropdownMenu.innerHTML = ''; // Clear existing items
+
   filterGroups.forEach((group, index) => {
     const groupHTML = `
-      <div class="form-check">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          id="filter-group-${index}"
-          value="${index}"
-        >
-        <label class="form-check-label" for="filter-group-${index}">
-          ${group.title} - ${group.description}
-        </label>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="filter-group-${index}"
+            value="${index}"
+          >
+          <label class="form-check-label" for="filter-group-${index}">
+            ${group.title} - ${group.description}
+          </label>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary edit-filter-group-btn" data-index="${index}">
+          Edit
+        </button>
       </div>
     `;
     dropdownMenu.insertAdjacentHTML('beforeend', groupHTML);
   });
 
-  // handle selection of filter groups
-  dropdownMenu.addEventListener("change", (event) => {
-    if (event.target.classList.contains("form-check-input")) {
+  // Attach event listeners to the checkboxes
+  dropdownMenu.querySelectorAll(".form-check-input").forEach((checkbox) => {
+    checkbox.addEventListener("change", (event) => {
       const selectedIndices = Array.from(
         dropdownMenu.querySelectorAll("input:checked")
       ).map(input => parseInt(input.value));
       currentFilters = selectedIndices.flatMap(index => filterGroups[index].filters);
-      updateTextFilter(); // in case there is text in the search box
-    }
+      updateTextFilter(); // Update logs based on active filters
+    });
+  });
+
+  // Attach event listeners to the Edit buttons
+  dropdownMenu.querySelectorAll(".edit-filter-group-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const index = parseInt(event.target.getAttribute("data-index"));
+      editFilterGroup(index);
+    });
   });
 };
 
-const addFilterInput = () => {
+function addFilterGroup() {
   const filterList = document.getElementById("filter-list");
   const filterHTML = `
     <div class="input-group mb-2">
@@ -176,14 +190,50 @@ const addFilterInput = () => {
     </div>
   `;
   filterList.insertAdjacentHTML('beforeend', filterHTML);
+}
+
+const editFilterGroup = (index) => {
+  const group = filterGroups[index];
+
+  // Set the modal title to "Edit Custom Filter Group"
+  document.querySelector("#filterGroupModal .modal-title").textContent = "Edit Custom Filter Group";
+
+  // Populate modal fields with the group's current data
+  document.getElementById("filter-group-title").value = group.title;
+  document.getElementById("filter-group-description").value = group.description;
+
+  // Clear the filter list and populate it with the group's filters
+  const filterList = document.getElementById("filter-list");
+  filterList.innerHTML = ""; // Clear existing filters
+  group.filters.forEach((filter) => {
+    const filterHTML = `
+      <div class="input-group mb-2">
+        <input type="text" class="form-control filter-text" placeholder="Filter text" value="${filter.text}">
+        <div class="input-group-prepend">
+          <div class="input-group-text">
+            <input type="checkbox" class="filter-regex" title="Regex" ${filter.regex ? "checked" : ""}> Regex
+          </div>
+          <div class="input-group-text">
+            <input type="checkbox" class="filter-case-sensitive" title="Case Sensitive" ${filter.caseSensitive ? "checked" : ""}> Case Sensitive
+          </div>
+        </div>
+        <button type="button" class="btn btn-danger remove-filter-btn">Remove</button>
+      </div>
+    `;
+    filterList.insertAdjacentHTML("beforeend", filterHTML);
+  });
+
+  // Show the modal and bind the save button to save with the index
+  $('#filterGroupModal').modal('show');
+  document.getElementById("save-filter-group-btn").onclick = () => saveFilterGroup(index);
 };
 
-const saveFilterGroup = () => {
+const saveFilterGroup = (index = null) => {
   const title = document.getElementById("filter-group-title").value.trim();
   const description = document.getElementById("filter-group-description").value.trim();
   const filters = [];
 
-  // collect all filters
+  // Collect all filters
   document.querySelectorAll("#filter-list .input-group").forEach((group) => {
     const text = group.querySelector(".filter-text").value.trim();
     const regex = group.querySelector(".filter-regex").checked;
@@ -194,7 +244,7 @@ const saveFilterGroup = () => {
     }
   });
 
-  // validate inputs
+  // Validate inputs
   if (!title) {
     alert("Please provide a title for the filter group.");
     return;
@@ -208,29 +258,67 @@ const saveFilterGroup = () => {
     return;
   }
 
-  // add new filter group to filterGroups array
-  filterGroups.push({ title, description, filters });
-  populateFilterGroups(); // update dropdown
-  $('#filterGroupModal').modal('hide'); // close modal
+  //Defines whether the saving pross is for an add or edit process 
+  if (index === null) {
+    // Add new filter group
+    filterGroups.push({ title, description, filters });
+  } else {
+    // Edit existing filter group
+    filterGroups[index] = { title, description, filters };
+  }
+
+  // After saving, the filtered output table should should automatically updates without unchecking any boxes for current filtered groups options in the drop down list
+  // Preserve the state of selected checkboxes
+  const selectedIndices = Array.from(
+    document.querySelectorAll(".dropdown-menu .form-check-input:checked")
+  ).map((input) => parseInt(input.value));
+
+  // Refresh the dropdown while preserving checked state
+  populateFilterGroups();
+
+  // Re-check the previously selected checkboxes
+  selectedIndices.forEach((index) => {
+    const checkbox = document.querySelector(`#filter-group-${index}`);
+    if (checkbox) checkbox.checked = true;
+  });
+
+  // Update the current filters and apply them to the table
+  currentFilters = selectedIndices.flatMap((index) => filterGroups[index].filters);
+  applyFilters(currentFilters);
+
+  // Close the modal
+  $('#filterGroupModal').modal('hide');
 };
 
 const setupDropdown = () => {
   const dropdownButton = document.getElementById("premade-filters-dropdown");
   const dropdownMenu = dropdownButton.nextElementSibling;
 
-  dropdownButton.addEventListener("click", () => {
+  dropdownButton.addEventListener("click", (event) => {
     const isExpanded = dropdownButton.getAttribute("aria-expanded") === "true";
 
-    // toggle the dropdown menu
+    // Toggle the dropdown menu
     dropdownMenu.classList.toggle("show", !isExpanded);
 
-    // update ARIA attributes for accessibility
+    // Update ARIA attributes for accessibility
     dropdownButton.setAttribute("aria-expanded", !isExpanded);
+
+    // Prevent dropdown from closing immediately when clicked
+    event.stopPropagation();
   });
 
-  // close dropdown if clicked outside
+  // Prevent dropdown from closing when interacting with its content
+  dropdownMenu.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
+
+  // Close the dropdown only when clicking outside both the dropdown and modal
   document.addEventListener("click", (event) => {
-    if (!dropdownButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+    if (
+      !dropdownButton.contains(event.target) &&
+      !dropdownMenu.contains(event.target) &&
+      !document.querySelector(".modal").contains(event.target)
+    ) {
       dropdownMenu.classList.remove("show");
       dropdownButton.setAttribute("aria-expanded", "false");
     }
@@ -238,44 +326,51 @@ const setupDropdown = () => {
 };
 
 const initializeApp = () => {
-  // attach event listeners for file input
+  // Attach event listeners for file input
   document.getElementById("log-file-input").value = '';
   document.getElementById("log-file-input").addEventListener("change", handleFileUpload);
 
-  // attach event listeners for text filters
+  // Attach event listeners for text filters
   document.getElementById("log-search").addEventListener("input", updateTextFilter);
   document.getElementById("use-regex").addEventListener("change", updateTextFilter);
   document.getElementById("case-sensitive").addEventListener("change", updateTextFilter);
 
-  // attach event listener for adding filter groups
+  // Attach event listener for adding new filter groups
   document.getElementById("add-filter-group-btn").addEventListener("click", () => {
+    // Set the modal title to "Add Custom Filter Group"
+    document.querySelector("#filterGroupModal .modal-title").textContent = "Add Custom Filter Group";
+
+    // Clear modal inputs for creating a new filter group
     document.getElementById("filter-group-title").value = '';
     document.getElementById("filter-group-description").value = '';
     document.getElementById("filter-list").innerHTML = '';
-    $('#filterGroupModal').modal('show');
+
+    // Bind saveFilterGroup without index for adding
+    document.getElementById("save-filter-group-btn").onclick = () => saveFilterGroup();
+    $('#filterGroupModal').modal('show'); // Show the modal
   });
 
-  // attach event listener for dynamically adding filters
-  document.getElementById("add-filter-btn").addEventListener("click", addFilterInput);
+  // Attach event listener for dynamically adding filters in the modal
+  document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
 
-  // attach event listener for saving filter groups
-  document.getElementById("save-filter-group-btn").addEventListener("click", saveFilterGroup);
-
-  // attach event delegation for removing filter rows
+  // Attach event delegation for removing filter rows in the modal
   document.getElementById("filter-list").addEventListener("click", (e) => {
     if (e.target.classList.contains("remove-filter-btn")) {
       const inputGroup = e.target.closest(".input-group");
       if (inputGroup) {
         inputGroup.remove();
       }
+      e.stopPropagation(); // Prevent the event from propagating to other handlers
     }
   });
 
-  // initialize dropdown behavior
+  // Initialize dropdown behavior for toggling
   setupDropdown();
 
-  // populate filter groups and load logs
+  // Populate filter groups in the dropdown
   populateFilterGroups();
+
+  // Load logs from the JSON file
   loadLogs();
 };
 
