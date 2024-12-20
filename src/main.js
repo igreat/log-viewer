@@ -308,22 +308,35 @@ const saveFilterGroup = (index = null) => {
 };
 
 const deleteFilterGroup = (index) => {
-  const confirmation = confirm(`Are you sure you want to delete the filter group "${filterGroups[index].title}"?`);
-  if (confirmation) {
-    // Remove the filter group
-    filterGroups.splice(index, 1);
+  const confirmDelete = confirm("Are you sure you want to delete this filter group?");
+  if (!confirmDelete) return;
 
-    // Refresh the dropdown menu
-    populateFilterGroups();
+  // Preserve the current state of selected checkboxes
+  const selectedIndices = Array.from(
+    document.querySelectorAll(".dropdown-menu .form-check-input:checked")
+  ).map((input) => parseInt(input.value));
 
-    // Update the table based on the currently selected filters
-    const selectedIndices = Array.from(
-      document.querySelectorAll(".dropdown-menu .form-check-input:checked")
-    ).map((input) => parseInt(input.value));
+  // Remove the selected filter group from the filterGroups array
+  filterGroups.splice(index, 1);
 
-    currentFilters = selectedIndices.flatMap((i) => filterGroups[i]?.filters || []);
-    applyFilters(currentFilters);
-  }
+  // Refresh the dropdown while preserving the checked state
+  populateFilterGroups();
+
+  // Re-check the previously selected checkboxes (adjust indices if necessary)
+  selectedIndices
+    .filter((i) => i !== index) // Exclude the deleted index
+    .forEach((i) => {
+      const adjustedIndex = i > index ? i - 1 : i; // Adjust index for subsequent elements
+      const checkbox = document.querySelector(`#filter-group-${adjustedIndex}`);
+      if (checkbox) checkbox.checked = true;
+    });
+
+  // Update the current filters and apply them to the table
+  const activeFilterIndices = Array.from(
+    document.querySelectorAll(".dropdown-menu .form-check-input:checked")
+  ).map((input) => parseInt(input.value));
+  currentFilters = activeFilterIndices.flatMap((i) => filterGroups[i].filters);
+  applyFilters(currentFilters);
 };
 
 const setupDropdown = () => {
