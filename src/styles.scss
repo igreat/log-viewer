@@ -51,3 +51,11 @@ $breakpoint-lg: 992px;
 button .svg-icon {
   pointer-events: none;
 }
+
+.gap-2 {
+  gap: 0.5rem; /* Adjust the gap value between the icon of the edit and delete filter group button in the dropdown list */
+}
+
+.form-check .form-check-label {
+  margin-right: 1rem; /* Adjust to ensure a consistent gap between the label and buttons */
+}
