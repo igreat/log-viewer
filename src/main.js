@@ -4,12 +4,12 @@ const filterGroups = [
   {
     title: 'Error Logs',
     description: 'Filters logs containing "ERROR"',
-    filters: [{ regex: false, caseSensitive: false, text: 'ERROR' }]
+    filters: [{ regex: false, caseSensitive: false, text: 'ERROR', color: "#ff8282" }]
   },
   {
     title: 'User Alice',
     description: 'Filters logs mentioning user Alice',
-    filters: [{ regex: false, caseSensitive: false, text: 'Alice' }]
+    filters: [{ regex: false, caseSensitive: false, text: 'Alice', color: "#ffB6C1" }]
   },
   {
     title: 'ip of shape 192.*.1.2',
@@ -26,20 +26,19 @@ let generalFilter = null // the single search bar filter
 function highlightText(text, filters) {
   let highlighted = text;
 
-  filters.forEach(({ text: filterText, regex, caseSensitive }) => {
+  filters.forEach(({ text: filterText, regex, caseSensitive, color }) => {
+    color = color || '#ffff00'; // default to yellow if no color is provided
     if (regex) {
       const pattern = new RegExp(filterText, caseSensitive ? '' : 'i');
       highlighted = highlighted.replace(pattern, (match) => {
-        // just give it a yellow highlight for now, later each filter can have a different color
-        return `<span style="background-color: yellow;">${match}</span>`;
+        return `<span style="background-color: ${color};">${match}</span>`;
       });
     } else {
       // for safety, escape any special regex characters in the filter text
       const escapedFilterText = filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const pattern = new RegExp(escapedFilterText, caseSensitive ? '' : 'i');
       highlighted = highlighted.replace(pattern, (match) => {
-        // just give it a yellow highlight for now, later each filter can have a different color
-        return `<span style="background-color: yellow;">${match}</span>`;
+        return `<span style="background-color: ${color};">${match}</span>`;
       });
     }
   });
@@ -218,7 +217,8 @@ const populateFilterGroups = () => {
 function addFilterGroup() {
   const filterList = document.getElementById("filter-list");
   const filterHTML = `
-    <div class="input-group mb-2">
+    <div class="input-group mb-2 d-flex align-items-center">
+      <input type="color" class="filter-color" value="#ffff00" title="Pick a color">
       <input type="text" class="form-control filter-text" placeholder="Filter text">
       <div class="input-group-prepend mr-2">
         <div class="input-group-text">
@@ -251,20 +251,23 @@ const editFilterGroup = (index) => {
   filterList.innerHTML = ""; // Clear existing filters
   group.filters.forEach((filter) => {
     const filterHTML = `
-      <div class="input-group mb-2">
-        <input type="text" class="form-control filter-text" placeholder="Filter text" value="${filter.text}">
-        <div class="input-group-prepend mr-2">
-          <div class="input-group-text">
-            <input type="checkbox" class="filter-regex mr-1" title="Regex" ${filter.regex ? "checked" : ""}> <span>Regex</span>
-          </div>
-          <div class="input-group-text">
-            <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case" ${filter.caseSensitive ? "checked" : ""}> <span>Match Case</span>
-          </div>
+    <div class="input-group mb-2 d-flex align-items-center">
+      <input type="color" class="filter-color" value="${filter.color ? filter.color : '#ffff00'}" title="Pick a color">
+      <input type="text" class="form-control filter-text" placeholder="Filter text" value="${filter.text}">
+      <div class="input-group-prepend mr-2">
+        <div class="input-group-text">
+          <input type="checkbox" class="filter-regex mr-1" title="Regex" ${filter.regex ? "checked" : ""}> <span>Regex</span>
         </div>
-        <button type="button" class="btn btn-danger remove-filter-btn d-flex justify-content-center align-items-center">
-          <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
-        </button>
+        <div class="input-group-text rounded-right">
+          <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case" ${filter.caseSensitive ? "checked" : ""}> <span>Match Case</span>
+        </div>
       </div>
+      <button type="button" class="btn btn-danger remove-filter-btn d-flex justify-content-center align-items-center">
+        <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white">
+          <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+        </svg>
+      </button>
+    </div>
     `;
     filterList.insertAdjacentHTML("beforeend", filterHTML);
   });
@@ -284,9 +287,10 @@ const saveFilterGroup = (index = null) => {
     const text = group.querySelector(".filter-text").value.trim();
     const regex = group.querySelector(".filter-regex").checked;
     const caseSensitive = group.querySelector(".filter-case-sensitive").checked;
+    const color = group.querySelector(".filter-color").value;
 
     if (text) {
-      filters.push({ text, regex, caseSensitive });
+      filters.push({ text, regex, caseSensitive, color });
     }
   });
 
@@ -304,7 +308,7 @@ const saveFilterGroup = (index = null) => {
     return;
   }
 
-  //Defines whether the saving pross is for an add or edit process 
+  // Defines whether the saving pross is for an add or edit process 
   if (index === null) {
     // Add new filter group
     filterGroups.push({ title, description, filters });

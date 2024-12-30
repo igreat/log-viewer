@@ -48,6 +48,38 @@ $breakpoint-lg: 992px;
   }
 }
 
+/* a small circular color picker button */
+.filter-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  padding: 0;
+  margin-right: 8px; 
+  border: 1px solid #d2d2d2;
+  cursor: pointer;
+}
+
+/* Chrome, Safari, and other WebKit-based browsers: remove default swatch padding */
+.filter-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+}
+
+/* remove the rectangular border on the swatch itself */
+.filter-color::-webkit-color-swatch {
+  border: none;
+  margin: 0;
+  border-radius: 50%;
+}
+
+/* Firefox: remove swatch border */
+.filter-color::-moz-color-swatch {
+  border: none;
+  margin: 0;
+  border-radius: 50%;
+}
+
 button .svg-icon {
   pointer-events: none;
 }
