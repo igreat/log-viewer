@@ -18,6 +18,7 @@ const filterGroups = [
   }
 ];
 
+const DEFAULT_HIGHLIGHT_COLOR = "#ffbf00";
 let allLogs = [];
 let currentFilters = [];
 let generalFilter = null // the single search bar filter
@@ -27,7 +28,7 @@ function highlightText(text, filters) {
   let highlighted = text;
 
   filters.forEach(({ text: filterText, regex, caseSensitive, color }) => {
-    color = color || '#ffff00'; // default to yellow if no color is provided
+    color = color || DEFAULT_HIGHLIGHT_COLOR; // default to yellow if no color is provided
     if (regex) {
       const pattern = new RegExp(filterText, caseSensitive ? '' : 'i');
       highlighted = highlighted.replace(pattern, (match) => {
@@ -218,7 +219,7 @@ function addFilterGroup() {
   const filterList = document.getElementById("filter-list");
   const filterHTML = `
     <div class="input-group mb-2 d-flex align-items-center">
-      <input type="color" class="filter-color" value="#ffff00" title="Pick a color">
+      <input type="color" class="filter-color" value="${DEFAULT_HIGHLIGHT_COLOR}" title="Pick a color">
       <input type="text" class="form-control filter-text" placeholder="Filter text">
       <div class="input-group-prepend mr-2">
         <div class="input-group-text">
@@ -252,7 +253,7 @@ const editFilterGroup = (index) => {
   group.filters.forEach((filter) => {
     const filterHTML = `
     <div class="input-group mb-2 d-flex align-items-center">
-      <input type="color" class="filter-color" value="${filter.color ? filter.color : '#ffff00'}" title="Pick a color">
+      <input type="color" class="filter-color" value="${filter.color ? filter.color : DEFAULT_HIGHLIGHT_COLOR}" title="Pick a color">
       <input type="text" class="form-control filter-text" placeholder="Filter text" value="${filter.text}">
       <div class="input-group-prepend mr-2">
         <div class="input-group-text">
