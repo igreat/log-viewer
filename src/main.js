@@ -21,6 +21,31 @@ const filterGroups = [
 let allLogs = [];
 let currentFilters = [];
 
+// TODO: need to think more about how to deal with overlapping filters
+function highlightText(text, filters) {
+  let highlighted = text;
+
+  filters.forEach(({ text: filterText, regex, caseSensitive }) => {
+    if (regex) {
+      const pattern = new RegExp(filterText, caseSensitive ? '' : 'i');
+      highlighted = highlighted.replace(pattern, (match) => {
+        // just give it a yellow highlight for now, later each filter can have a different color
+        return `<span style="background-color: yellow;">${match}</span>`;
+      });
+    } else {
+      // for safety, escape any special regex characters in the filter text
+      const escapedFilterText = filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(escapedFilterText, caseSensitive ? '' : 'i');
+      highlighted = highlighted.replace(pattern, (match) => {
+        // just give it a yellow highlight for now, later each filter can have a different color
+        return `<span style="background-color: yellow;">${match}</span>`;
+      });
+    }
+  });
+
+  return highlighted;
+}
+
 const renderTable = (logs) => {
   const logViewer = document.getElementById("log-viewer");
   if (logs.length === 0) {
@@ -29,6 +54,7 @@ const renderTable = (logs) => {
   }
 
   const headers = Object.keys(logs[0]);
+  console.log(currentFilters);
   const tableHTML = `
     <table class="table table-striped table-bordered">
       <thead class="table-dark">
@@ -36,7 +62,7 @@ const renderTable = (logs) => {
       </thead>
       <tbody>
         ${logs.map(log => `
-          <tr>${headers.map(header => `<td>${log[header]}</td>`).join('')}</tr>
+          <tr>${headers.map(header => `<td>${highlightText(String(log[header]), currentFilters)}</td>`).join('')}</tr>
         `).join('')}
       </tbody>
     </table>
