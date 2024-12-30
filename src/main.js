@@ -23,9 +23,11 @@ let allLogs = [];
 let currentFilters = [];
 let generalFilter = null // the single search bar filter
 
-// TODO: need to think more about how to deal with overlapping filters
 function highlightText(text, filters) {
   let highlighted = text;
+
+  // sort filters by length of text to avoid overlapping highlights
+  filters.sort((a, b) => b.text.length - a.text.length);
 
   filters.forEach(({ text: filterText, regex, caseSensitive, color }) => {
     color = color || DEFAULT_HIGHLIGHT_COLOR; // default to yellow if no color is provided
