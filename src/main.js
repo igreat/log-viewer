@@ -335,7 +335,8 @@ const saveFilterGroup = (index = null) => {
 
   // Update the current filters and apply them to the table
   currentFilters = selectedIndices.flatMap((index) => filterGroups[index].filters);
-  applyFilters(currentFilters);
+  const filterToApply = generalFilter && generalFilter.text ? [generalFilter, ...currentFilters] : currentFilters;
+  applyFilters(filterToApply);
 
   // Close the modal
   $('#filterGroupModal').modal('hide');
