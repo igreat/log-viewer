@@ -20,6 +20,7 @@ const filterGroups = [
 
 let allLogs = [];
 let currentFilters = [];
+let generalFilter = null // the single search bar filter
 
 // TODO: need to think more about how to deal with overlapping filters
 function highlightText(text, filters) {
@@ -54,7 +55,7 @@ const renderTable = (logs) => {
   }
 
   const headers = Object.keys(logs[0]);
-  console.log(currentFilters);
+  const filters = generalFilter && generalFilter.text ? [generalFilter, ...currentFilters] : currentFilters;
   const tableHTML = `
     <table class="table table-striped table-bordered">
       <thead class="table-dark">
@@ -62,7 +63,7 @@ const renderTable = (logs) => {
       </thead>
       <tbody>
         ${logs.map(log => `
-          <tr>${headers.map(header => `<td>${highlightText(String(log[header]), currentFilters)}</td>`).join('')}</tr>
+          <tr>${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}</tr>
         `).join('')}
       </tbody>
     </table>
@@ -145,12 +146,10 @@ const updateTextFilter = () => {
   const text = document.getElementById("log-search").value.trim();
   const regex = document.getElementById("use-regex").checked;
   const caseSensitive = document.getElementById("case-sensitive").checked;
+  generalFilter = { text, regex, caseSensitive };
 
-  if (text) {
-    applyFilters([...currentFilters, { text, regex, caseSensitive }]);
-  } else {
-    applyFilters(currentFilters);
-  }
+  const filters = generalFilter.text ? [...currentFilters, generalFilter] : currentFilters;
+  applyFilters(filters);
 }
 
 const populateFilterGroups = () => {
