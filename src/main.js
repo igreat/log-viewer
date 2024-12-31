@@ -4,12 +4,12 @@ const filterGroups = [
   {
     title: 'Error Logs',
     description: 'Filters logs containing "ERROR"',
-    filters: [{ regex: false, caseSensitive: false, text: 'ERROR' }]
+    filters: [{ regex: false, caseSensitive: false, text: 'ERROR', color: "#ff8282" }]
   },
   {
     title: 'User Alice',
     description: 'Filters logs mentioning user Alice',
-    filters: [{ regex: false, caseSensitive: false, text: 'Alice' }]
+    filters: [{ regex: false, caseSensitive: false, text: 'Alice', color: "#ffB6C1" }]
   },
   {
     title: 'ip of shape 192.*.1.2',
@@ -18,8 +18,36 @@ const filterGroups = [
   }
 ];
 
+const DEFAULT_HIGHLIGHT_COLOR = "#ffbf00";
 let allLogs = [];
 let currentFilters = [];
+let generalFilter = null // the single search bar filter
+
+function highlightText(text, filters) {
+  let highlighted = text;
+
+  // sort filters by length of text to avoid overlapping highlights
+  filters.sort((a, b) => b.text.length - a.text.length);
+
+  filters.forEach(({ text: filterText, regex, caseSensitive, color }) => {
+    color = color || DEFAULT_HIGHLIGHT_COLOR; // default to yellow if no color is provided
+    if (regex) {
+      const pattern = new RegExp(filterText, caseSensitive ? '' : 'i');
+      highlighted = highlighted.replace(pattern, (match) => {
+        return `<span style="background-color: ${color};">${match}</span>`;
+      });
+    } else {
+      // for safety, escape any special regex characters in the filter text
+      const escapedFilterText = filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(escapedFilterText, caseSensitive ? '' : 'i');
+      highlighted = highlighted.replace(pattern, (match) => {
+        return `<span style="background-color: ${color};">${match}</span>`;
+      });
+    }
+  });
+
+  return highlighted;
+}
 
 const renderTable = (logs) => {
   const logViewer = document.getElementById("log-viewer");
@@ -29,6 +57,7 @@ const renderTable = (logs) => {
   }
 
   const headers = Object.keys(logs[0]);
+  const filters = generalFilter && generalFilter.text ? [generalFilter, ...currentFilters] : currentFilters;
   const tableHTML = `
     <table class="table table-striped table-bordered">
       <thead class="table-dark">
@@ -36,7 +65,7 @@ const renderTable = (logs) => {
       </thead>
       <tbody>
         ${logs.map(log => `
-          <tr>${headers.map(header => `<td>${log[header]}</td>`).join('')}</tr>
+          <tr>${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}</tr>
         `).join('')}
       </tbody>
     </table>
@@ -119,12 +148,10 @@ const updateTextFilter = () => {
   const text = document.getElementById("log-search").value.trim();
   const regex = document.getElementById("use-regex").checked;
   const caseSensitive = document.getElementById("case-sensitive").checked;
+  generalFilter = { text, regex, caseSensitive };
 
-  if (text) {
-    applyFilters([...currentFilters, { text, regex, caseSensitive }]);
-  } else {
-    applyFilters(currentFilters);
-  }
+  const filters = generalFilter.text ? [...currentFilters, generalFilter] : currentFilters;
+  applyFilters(filters);
 }
 
 const populateFilterGroups = () => {
@@ -193,7 +220,8 @@ const populateFilterGroups = () => {
 function addFilterGroup() {
   const filterList = document.getElementById("filter-list");
   const filterHTML = `
-    <div class="input-group mb-2">
+    <div class="input-group mb-2 d-flex align-items-center">
+      <input type="color" class="filter-color" value="${DEFAULT_HIGHLIGHT_COLOR}" title="Pick a color">
       <input type="text" class="form-control filter-text" placeholder="Filter text">
       <div class="input-group-prepend mr-2">
         <div class="input-group-text">
@@ -226,20 +254,23 @@ const editFilterGroup = (index) => {
   filterList.innerHTML = ""; // Clear existing filters
   group.filters.forEach((filter) => {
     const filterHTML = `
-      <div class="input-group mb-2">
-        <input type="text" class="form-control filter-text" placeholder="Filter text" value="${filter.text}">
-        <div class="input-group-prepend mr-2">
-          <div class="input-group-text">
-            <input type="checkbox" class="filter-regex mr-1" title="Regex" ${filter.regex ? "checked" : ""}> <span>Regex</span>
-          </div>
-          <div class="input-group-text">
-            <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case" ${filter.caseSensitive ? "checked" : ""}> <span>Match Case</span>
-          </div>
+    <div class="input-group mb-2 d-flex align-items-center">
+      <input type="color" class="filter-color" value="${filter.color ? filter.color : DEFAULT_HIGHLIGHT_COLOR}" title="Pick a color">
+      <input type="text" class="form-control filter-text" placeholder="Filter text" value="${filter.text}">
+      <div class="input-group-prepend mr-2">
+        <div class="input-group-text">
+          <input type="checkbox" class="filter-regex mr-1" title="Regex" ${filter.regex ? "checked" : ""}> <span>Regex</span>
         </div>
-        <button type="button" class="btn btn-danger remove-filter-btn d-flex justify-content-center align-items-center">
-          <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
-        </button>
+        <div class="input-group-text rounded-right">
+          <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case" ${filter.caseSensitive ? "checked" : ""}> <span>Match Case</span>
+        </div>
       </div>
+      <button type="button" class="btn btn-danger remove-filter-btn d-flex justify-content-center align-items-center">
+        <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white">
+          <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+        </svg>
+      </button>
+    </div>
     `;
     filterList.insertAdjacentHTML("beforeend", filterHTML);
   });
@@ -259,9 +290,10 @@ const saveFilterGroup = (index = null) => {
     const text = group.querySelector(".filter-text").value.trim();
     const regex = group.querySelector(".filter-regex").checked;
     const caseSensitive = group.querySelector(".filter-case-sensitive").checked;
+    const color = group.querySelector(".filter-color").value;
 
     if (text) {
-      filters.push({ text, regex, caseSensitive });
+      filters.push({ text, regex, caseSensitive, color });
     }
   });
 
@@ -279,7 +311,7 @@ const saveFilterGroup = (index = null) => {
     return;
   }
 
-  //Defines whether the saving pross is for an add or edit process 
+  // Defines whether the saving pross is for an add or edit process 
   if (index === null) {
     // Add new filter group
     filterGroups.push({ title, description, filters });
@@ -305,7 +337,8 @@ const saveFilterGroup = (index = null) => {
 
   // Update the current filters and apply them to the table
   currentFilters = selectedIndices.flatMap((index) => filterGroups[index].filters);
-  applyFilters(currentFilters);
+  const filterToApply = generalFilter && generalFilter.text ? [generalFilter, ...currentFilters] : currentFilters;
+  applyFilters(filterToApply);
 
   // Close the modal
   $('#filterGroupModal').modal('hide');
