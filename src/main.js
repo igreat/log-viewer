@@ -157,8 +157,8 @@ const updateTextFilter = () => {
 const populateFilterGroups = () => {
   const dropdownMenu = document.querySelector(".dropdown-menu");
   dropdownMenu.innerHTML = ''; // Clear existing items
-
-  filterGroups.forEach((group, index) => {
+  let filters = JSON.parse(window.localStorage.getItem('filterGroups'));
+  filters.forEach((group, index) => {
     const groupHTML = `
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="form-check flex-grow-1 d-flex">
@@ -337,7 +337,7 @@ const saveFilterGroup = (index = null) => {
     // Edit existing filter group
     filterGroups[index] = { title, description, filters };
   }
-
+  window.localStorage.setItem('filterGroups', JSON.stringify(filterGroups));
   // After saving, the filtered output table should automatically update without unchecking any boxes for current filtered groups options in the dropdown list
   // Preserve the state of selected checkboxes
   const selectedIndices = Array.from(
@@ -430,6 +430,9 @@ const setupDropdown = () => {
 };
 
 const initializeApp = () => {
+  if (!window.localStorage.getItem('filterGroups')) {
+    window.localStorage.setItem('filterGroups', JSON.stringify(filterGroups));
+  }
   // Attach event listeners for file input
   document.getElementById("log-file-input").value = '';
   document.getElementById("log-file-input").addEventListener("change", handleFileUpload);
