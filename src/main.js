@@ -226,7 +226,7 @@ function addFilterGroup() {
           <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case"> <span>Match Case</span>
         </div>
       </div>
-      <input type="text" class="form-control filter-description" placeholder="Filter description">
+      <input type="text" class="form-control filter-description mr-2" placeholder="Filter description">
       <button type="button" class="btn btn-danger remove-filter-btn d-flex justify-content-center align-items-center">
         <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
       </button>
@@ -261,7 +261,7 @@ const editFilterGroup = (index) => {
           <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case" ${filter.caseSensitive ? "checked" : ""}> <span>Match Case</span>
         </div>
       </div>
-      <input type="text" class="form-control filter-description" placeholder="Filter description" value="${filter.description || ''}">
+      <input type="text" class="form-control filter-description mr-2" placeholder="Filter description" value="${filter.description || ''}">
       <button type="button" class="btn btn-danger remove-filter-btn d-flex justify-content-center align-items-center">
         <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white">
           <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
