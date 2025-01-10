@@ -20,6 +20,7 @@ const filterGroups = [
 
 let allLogs = [];
 let currentFilters = [];
+let defaultValuesAdded = false;
 
 const renderTable = (logs) => {
   const logViewer = document.getElementById("log-viewer");
@@ -130,7 +131,9 @@ const updateTextFilter = () => {
 const populateFilterGroups = () => {
   const dropdownMenu = document.querySelector(".dropdown-menu");
   dropdownMenu.innerHTML = ''; // Clear existing items
-  filterGroups.forEach((group, index) => {
+  let filters = window.localStorage.getItem('filters');
+  filters = JSON.parse(filters);
+  filters.forEach((group, index) => {
     const groupHTML = `
       <div class="form-check">
         <input
@@ -210,6 +213,7 @@ const saveFilterGroup = () => {
 
   // add new filter group to filterGroups array
   filterGroups.push({ title, description, filters });
+  window.localStorage.setItem('filters', JSON.stringify(filterGroups));
   populateFilterGroups(); // update dropdown
   $('#filterGroupModal').modal('hide'); // close modal
 };
@@ -238,6 +242,9 @@ const setupDropdown = () => {
 };
 
 const initializeApp = () => {
+  if (!window.localStorage.getItem('filters')) {
+    window.localStorage.setItem('filters', JSON.stringify(filterGroups));
+  }
   // attach event listeners for file input
   document.getElementById("log-file-input").value = '';
   document.getElementById("log-file-input").addEventListener("change", handleFileUpload);
