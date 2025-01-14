@@ -27,7 +27,6 @@ export class Trie {
 
   constructor() {
     this.root = null;
-    this.matches = [];
   }
 
   insertWord(s) {
@@ -72,37 +71,36 @@ export class Trie {
   }
 
   collect(prefix) {
+    let matches = [];
     if (prefix == "") {
-      this._collect(this.root, "");
+      this._collect(this.root, "", matches);
     } else {
       var currNode = this.getStartNode(prefix);
-      this.matches = []
       if (currNode == null) {
         return;
       }
       if (currNode != null && currNode.freq > 0) {
         this.matches.push(new Pair(prefix, currNode.freq));
       }
-      this._collect(currNode.middle, prefix);
+      this._collect(currNode.middle, prefix, matches);
     }
-    this.matches = this.matches.sort((a, b) => b.freq - a.freq); // sorts matches in desc
-    this._printMatches();
+    this._printMatches(matches);
   }
 
-  _collect(currNode, word) {
+  _collect(currNode, word, matches) {
     if (currNode == null) {
       return;
     }
     if (currNode.freq > 0) {
-      this.matches.push(new Pair(word + currNode.character, currNode.freq));
+      matches.push(new Pair(word + currNode.character, currNode.freq));
       currNode.freq++;
     }
-    this._collect(currNode.left, word);
-    this._collect(currNode.middle, word + currNode.character);
-    this._collect(currNode.right, word);
+    this._collect(currNode.left, word, matches);
+    this._collect(currNode.middle, word + currNode.character, matches);
+    this._collect(currNode.right, word, matches);
   }
 
-  _printMatches() {
-    this.matches.forEach((e) => {console.log(e.word + " " + e.freq)});
+  _printMatches(matches) {
+    matches.forEach((e) => {console.log(e.word + " " + e.freq)});
   }
 }
