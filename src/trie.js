@@ -73,7 +73,7 @@ export class Trie {
 
   collect(prefix) {
     if (prefix == "") {
-      this.collectAllWords();
+      this._collect(this.root, "");
     } else {
       var currNode = this.getStartNode(prefix);
       this.matches = []
@@ -84,8 +84,9 @@ export class Trie {
         this.matches.push(new Pair(prefix, currNode.freq));
       }
       this._collect(currNode.middle, prefix);
-      this._printMatches();
     }
+    
+    this._printMatches();
   }
 
   _collect(currNode, word) {
@@ -94,28 +95,11 @@ export class Trie {
     }
     if (currNode.freq > 0) {
       this.matches.push(new Pair(word + currNode.character, currNode.freq));
+      currNode.freq++;
     }
     this._collect(currNode.left, word);
     this._collect(currNode.middle, word + currNode.character);
     this._collect(currNode.right, word);
-  }
-
-  collectAllWords() {
-    this.matches = [];
-    this._collectAllWords(this.root, "");
-    this._printMatches();
-  }
-
-  _collectAllWords(currNode, word) {
-    if (currNode == null) {
-      return;
-    }
-    if (currNode.freq > 0) {
-      this.matches.push(new Pair(word + currNode.character, currNode.freq));
-    }
-    this._collectAllWords(currNode.left, word);
-    this._collectAllWords(currNode.right, word);
-    this._collectAllWords(currNode.middle, word + currNode.character);
   }
 
   _printMatches() {

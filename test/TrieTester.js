@@ -28,7 +28,6 @@ function main() {
   console.log("TEST STARTING");
   let tester = new TrieTester();
   tester.insertWords(["sea", "seaborn", "seafhasd", "varun", "varuqweh", "hello"]);
-  tester.matchAllWords();
   tester.matchPrefix("se");
   tester.matchPrefix("fhjkf");
   tester.matchPrefix("");
