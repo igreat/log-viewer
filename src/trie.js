@@ -85,7 +85,7 @@ export class Trie {
       }
       this._collect(currNode.middle, prefix);
     }
-    
+    this.matches = this.matches.sort((a, b) => b.freq - a.freq); // sorts matches in desc
     this._printMatches();
   }
 
