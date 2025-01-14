@@ -1,6 +1,6 @@
 import './styles.scss';
 
-const filterGroups = [
+const DEFAULT_FILTER_GROUPS = [
   {
     title: 'Error Logs',
     description: 'Filters logs containing "ERROR"',
@@ -16,12 +16,14 @@ const filterGroups = [
     description: 'Filters logs containing ip of shape 192.*.1.2',
     filters: [{ regex: true, caseSensitive: false, text: '192\..*\.1\.2' }]
   }
-];
+]
+
 
 const DEFAULT_HIGHLIGHT_COLOR = "#ffbf00";
 let allLogs = [];
 let currentFilters = [];
 let generalFilter = null // the single search bar filter
+let filterGroups = [];
 
 function highlightText(text, filters) {
   let highlighted = text;
@@ -157,8 +159,7 @@ const updateTextFilter = () => {
 const populateFilterGroups = () => {
   const dropdownMenu = document.querySelector(".dropdown-menu");
   dropdownMenu.innerHTML = ''; // Clear existing items
-  let filters = JSON.parse(window.localStorage.getItem('filterGroups'));
-  filters.forEach((group, index) => {
+  filterGroups.forEach((group, index) => {
     const groupHTML = `
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="form-check flex-grow-1 d-flex">
@@ -373,7 +374,7 @@ const deleteFilterGroup = (index) => {
 
   // Remove the selected filter group from the filterGroups array
   filterGroups.splice(index, 1);
-
+  window.localStorage.setItem("filterGroups", JSON.stringify(filterGroups));
   // Refresh the dropdown while preserving the checked state
   populateFilterGroups();
 
@@ -431,7 +432,10 @@ const setupDropdown = () => {
 
 const initializeApp = () => {
   if (!window.localStorage.getItem('filterGroups')) {
-    window.localStorage.setItem('filterGroups', JSON.stringify(filterGroups));
+    window.localStorage.setItem('filterGroups', JSON.stringify(DEFAULT_FILTER_GROUPS));
+    filterGroups = DEFAULT_FILTER_GROUPS;
+  } else {
+    filterGroups = JSON.parse(window.localStorage.getItem('filterGroups'));
   }
   // Attach event listeners for file input
   document.getElementById("log-file-input").value = '';
