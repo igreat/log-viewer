@@ -18,6 +18,19 @@ const DEFAULT_FILTER_GROUPS = [
   }
 ]
 
+let colorCounter = 0;
+const COLORS = [
+  "#FFFF99", // Light Yellow
+  "#FFD580", // Pale Orange
+  "#FFB6C1", // Soft Pink
+  "#CCFFCC", // Light Green
+  "#ADD8E6", // Sky Blue
+  "#E6E6FA", // Lavender
+  "#FFC0CB", // Pink
+  "#FFDAB9", // Peach Puff
+  "#FFFACD", // Lemon Chiffon
+  "#E0FFFF", // Light Cyan
+];
 
 const DEFAULT_HIGHLIGHT_COLOR = "#ffbf00";
 let allLogs = [];
@@ -217,14 +230,16 @@ function addFilterGroup() {
   const filterList = document.getElementById("filter-list");
   const filterHTML = `
     <div class="input-group mb-2 d-flex align-items-center">
-      <input type="color" class="filter-color" value="${DEFAULT_HIGHLIGHT_COLOR}" title="Pick a color">
       <input type="text" class="form-control filter-text" placeholder="Filter text">
       <div class="input-group-prepend mr-2">
         <div class="input-group-text">
           <input type="checkbox" class="filter-regex mr-1" title="Regex"> <span>Regex</span>
         </div>
-        <div class="input-group-text rounded-right">
+        <div class="input-group-text">
           <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case"> <span>Match Case</span>
+        </div>
+        <div class="input-group-text rounded-right" style="background-color: transparent;">
+          <input type="color" class="filter-color" value="${COLORS[colorCounter]}" title="Pick a color">
         </div>
       </div>
       <input type="text" class="form-control filter-description mr-2" placeholder="Filter description">
@@ -233,6 +248,7 @@ function addFilterGroup() {
       </button>
     </div>
   `;
+  colorCounter = (colorCounter + 1) % COLORS.length;
   filterList.insertAdjacentHTML('beforeend', filterHTML);
 }
 
@@ -252,14 +268,16 @@ const editFilterGroup = (index) => {
   group.filters.forEach((filter) => {
     const filterHTML = `
     <div class="input-group mb-2 d-flex align-items-center">
-      <input type="color" class="filter-color" value="${filter.color ? filter.color : DEFAULT_HIGHLIGHT_COLOR}" title="Pick a color">
       <input type="text" class="form-control filter-text" placeholder="Filter text" value="${filter.text}">
       <div class="input-group-prepend mr-2">
         <div class="input-group-text">
           <input type="checkbox" class="filter-regex mr-1" title="Regex" ${filter.regex ? "checked" : ""}> <span>Regex</span>
         </div>
-        <div class="input-group-text rounded-right">
+        <div class="input-group-text">
           <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case" ${filter.caseSensitive ? "checked" : ""}> <span>Match Case</span>
+        </div>
+        <div class="input-group-text rounded-right" style="background-color: transparent;">
+          <input type="color" class="filter-color" value="${filter.color ? filter.color : DEFAULT_HIGHLIGHT_COLOR}" title="Pick a color">
         </div>
       </div>
       <input type="text" class="form-control filter-description mr-2" placeholder="Filter description" value="${filter.description || ''}">
