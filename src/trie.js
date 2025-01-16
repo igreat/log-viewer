@@ -70,7 +70,7 @@ export class Trie {
     return this._getStartNode(currNode.middle, prefix, idx + 1);
   }
 
-  collect(prefix) {
+  collect(prefix, numberOfMatches) {
     let matches = [];
     if (prefix == "") {
       return matches;
@@ -85,6 +85,14 @@ export class Trie {
       }
       this._collect(currNode.middle, prefix, matches);
     }
+
+    // sort the matches by frequency
+    matches.sort((a, b) => {
+      return b.freq - a.freq;
+    });
+
+    // return the top numberOfMatches
+    matches = matches.slice(0, numberOfMatches);
     return matches;
   }
 
@@ -94,7 +102,6 @@ export class Trie {
     }
     if (currNode.freq > 0) {
       matches.push(new Pair(word + currNode.character, currNode.freq));
-      currNode.freq++;
     }
     this._collect(currNode.left, word, matches);
     this._collect(currNode.middle, word + currNode.character, matches);

@@ -1,6 +1,7 @@
 import './styles.scss';
 import { Trie } from './Trie';
 
+const TOP_K = 5; // Number of search suggestions to show
 const DEFAULT_FILTER_GROUPS = [
   {
     title: 'Error Logs',
@@ -461,7 +462,7 @@ const updateSearchSugggestionTrie = () => {
 
 const getSearchSuggestions = () => {
   const text = document.getElementById("log-search").value.trim();
-  let results = suggestionTrie.collect(text);
+  let results = suggestionTrie.collect(text, TOP_K);
   return results;
 }
 
@@ -492,6 +493,7 @@ const initializeApp = () => {
   document.getElementById("log-search").addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
+      console.log("Enter key pressed");
       updateSearchSugggestionTrie();
     }
   })
