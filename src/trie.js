@@ -81,7 +81,7 @@ export class Trie {
         return matches;
       }
       if (currNode != null && currNode.freq > 0) {
-        this.matches.push(new Pair(prefix, currNode.freq));
+        matches.push(new Pair(prefix, currNode.freq));
       }
       this._collect(currNode.middle, prefix, matches);
     }
