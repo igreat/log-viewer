@@ -91,3 +91,58 @@ button .svg-icon {
 .form-check .form-check-label {
   margin-right: 1rem; /* Adjust to ensure a consistent gap between the label and buttons */
 }
+
+.enter-button {
+  background-color: #28a745;
+  width: 40px;
+}
+
+/* Basic styling */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.dropdown-button:hover {
+  background-color: #0056b3;
+}
+
+.dropdown-suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  top: 100%; /* Position below the button */
+  left: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  display: none; /* Initially hidden */
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+
+/* Show the dropdown menu */
+.dropdown.show .dropdown-suggestions {
+  display: block;
+}
+

@@ -59,13 +59,13 @@ export class Trie {
     if (currNode == null) {
       return null;
     }
-    if (idx == prefix.length - 1) {
-      return currNode;
-    }
     if (prefix[idx] > currNode.character) {
       return this._getStartNode(currNode.right, prefix, idx);
     } else if (prefix[idx] < currNode.character) {
       return this._getStartNode(currNode.left, prefix, idx);
+    }
+    if (idx == prefix.length - 1) {
+      return currNode;
     }
     return this._getStartNode(currNode.middle, prefix, idx + 1);
   }
@@ -73,18 +73,19 @@ export class Trie {
   collect(prefix) {
     let matches = [];
     if (prefix == "") {
-      this._collect(this.root, "", matches);
+      return matches;
+      // this._collect(this.root, "", matches);
     } else {
       var currNode = this.getStartNode(prefix);
       if (currNode == null) {
-        return;
+        return matches;
       }
       if (currNode != null && currNode.freq > 0) {
         this.matches.push(new Pair(prefix, currNode.freq));
       }
       this._collect(currNode.middle, prefix, matches);
     }
-    this._printMatches(matches);
+    return matches;
   }
 
   _collect(currNode, word, matches) {
