@@ -36,7 +36,7 @@
           <div class="col-md-2">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="case-sensitive">
-              <label class="form-check-label" for="case-sensitive">Case Sensitive</label>
+              <label class="form-check-label" for="case-sensitive">Match Case</label>
             </div>
           </div>
         </div>
@@ -44,14 +44,19 @@
         <!-- Premade Filters Dropdown and Add Button -->
         <div class="dropdown d-flex align-items-center mb-4">
           <button id="premade-filters-dropdown" class="btn btn-secondary dropdown-toggle w-100" type="button"
-            aria-haspopup="true" aria-expanded="false">
+            aria-haspopup="true" aria-expanded="false" data-bs-auto-close="outside">
             Select Filter Groups
           </button>
           <div class="dropdown-menu p-3" aria-labelledby="premade-filters-dropdown"
             style="max-height: 300px; overflow-y: auto;">
             <!-- Filter groups will be populated here -->
           </div>
-          <button id="add-filter-group-btn" class="btn btn-success ml-2">+</button>
+          <button id="add-filter-group-btn"
+            class="btn btn-success ml-2 d-flex justify-content-center align-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white">
+              <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+            </svg>
+          </button>
         </div>
 
         <!-- Modal for Adding Custom Filter Group -->
@@ -59,25 +64,27 @@
           <div class="modal-dialog" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title">Add Custom Filter Group</h5>
+                <h5 class="modal-title">Dynamic Title: Add or Edit Custom Filter Group</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
               </div>
               <div class="modal-body">
                 <form id="filter-group-form">
-                  <!-- Title Input -->
-                  <div class="form-group">
-                    <label for="filter-group-title">Title</label>
-                    <input type="text" id="filter-group-title" class="form-control"
-                      placeholder="Enter a title for the filter group" required>
-                  </div>
+                  <div id="filter-title-description" class="d-flex mb-3">
+                    <!-- Title Input -->
+                    <div id="filter-title">
+                      <label for="filter-group-title" class="form-label">Title</label>
+                      <input type="text" id="filter-group-title" class="form-control"
+                        placeholder="Enter a title for the filter group" required>
+                    </div>
 
-                  <!-- Description Input -->
-                  <div class="form-group">
-                    <label for="filter-group-description">Description</label>
-                    <input type="text" id="filter-group-description" class="form-control"
-                      placeholder="Enter description" required>
+                    <!-- Description Input -->
+                    <div id="filter-description">
+                      <label for="filter-group-description" class="form-label">Description</label>
+                      <input type="text" id="filter-group-description" class="form-control"
+                        placeholder="Enter description" required>
+                    </div>
                   </div>
 
                   <!-- Filters List -->
@@ -86,6 +93,7 @@
                   </div>
                   <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
                 </form>
+
               </div>
               <div class="modal-footer">
                 <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>

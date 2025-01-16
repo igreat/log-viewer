@@ -1,5 +1,93 @@
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+
 .dropdown-menu {
-    position: absolute;
-    top: 100%;
-    z-index: 1000;
+  position: absolute;
+  top: 100%;
+  z-index: 1000;
+}
+
+#filterGroupModal .modal-dialog {
+  max-width: 95%;
+
+  @media (min-width: $breakpoint-sm) {
+    max-width: 90%;
+  }
+
+  @media (min-width: $breakpoint-md) {
+    max-width: 80%;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    max-width: 75%;
+  }
+}
+
+#filter-title-description {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  #filter-title,
+  #filter-description {
+    width: 100%;
+  }
+
+  @media (min-width: $breakpoint-sm) {
+    flex-direction: row;
+    gap: 1rem;
+
+    #filter-title {
+      width: 30%;
+    }
+
+    #filter-description {
+      width: 70%;
+    }
+  }
+}
+
+/* a small circular color picker button */
+.filter-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  padding: 0;
+  margin-right: 8px; 
+  border: 1px solid #d2d2d2;
+  cursor: pointer;
+}
+
+/* Chrome, Safari, and other WebKit-based browsers: remove default swatch padding */
+.filter-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+}
+
+/* remove the rectangular border on the swatch itself */
+.filter-color::-webkit-color-swatch {
+  border: none;
+  margin: 0;
+  border-radius: 50%;
+}
+
+/* Firefox: remove swatch border */
+.filter-color::-moz-color-swatch {
+  border: none;
+  margin: 0;
+  border-radius: 50%;
+}
+
+button .svg-icon {
+  pointer-events: none;
+}
+
+.gap-2 {
+  gap: 0.5rem; /* Adjust the gap value between the icon of the edit and delete filter group button in the dropdown list */
+}
+
+.form-check .form-check-label {
+  margin-right: 1rem; /* Adjust to ensure a consistent gap between the label and buttons */
 }
