@@ -1,5 +1,7 @@
 import './styles.scss';
+import { Trie } from './Trie';
 
+const TOP_K = 5; // Number of search suggestions to show
 const DEFAULT_FILTER_GROUPS = [
   {
     title: 'Error Logs',
@@ -31,8 +33,9 @@ const COLORS = [
   "#FFFACD", // Lemon Chiffon
   "#E0FFFF", // Light Cyan
 ];
-
 const DEFAULT_HIGHLIGHT_COLOR = "#ffbf00";
+
+const suggestionTrie = new Trie();
 let allLogs = [];
 let currentFilters = [];
 let generalFilter = null // the single search bar filter
@@ -166,6 +169,9 @@ const updateTextFilter = () => {
   generalFilter = { text, regex, caseSensitive };
 
   const filters = generalFilter.text ? [...currentFilters, generalFilter] : currentFilters;
+  let searchResults = getSearchSuggestions();
+  searchResults = searchResults.map(p => p.word);
+  populateSearchSuggestions(searchResults);
   applyFilters(filters);
 }
 
@@ -448,6 +454,44 @@ const setupDropdown = () => {
   });
 };
 
+const populateSearchSuggestions = (results) => {
+  const suggestionsBox = document.getElementById("search-suggestions");
+  suggestionsBox.innerHTML = "";
+
+  if (results.length == 0) {
+    suggestionsBox.style.display = "none";
+    return;
+  }
+  results.forEach((item) =>  {
+    const li = document.createElement("li");
+    li.textContent = item;
+    li.addEventListener("click", () =>  {
+      document.getElementById("log-search").value = item;
+      suggestionsBox.style.display = "none";
+    });
+    suggestionsBox.appendChild(li);
+  })
+  suggestionsBox.style.display = "block";
+}
+
+const updateSearchSugggestionTrie = () => {
+  const text = document.getElementById("log-search").value.trim();
+  suggestionTrie.insertWord(text);
+}
+
+const getSearchSuggestions = () => {
+  const text = document.getElementById("log-search").value.trim();
+  let results = suggestionTrie.collect(text, TOP_K);
+  return results;
+}
+
+const setDefaultTrie = () => {
+  let defaultWords = ["ERROR", "Failed", "Application", "fdsa", "ERRNO"];
+  defaultWords.forEach((word) => {
+    suggestionTrie.insertWord(word);
+  })
+}
+
 const initializeApp = () => {
   if (!window.localStorage.getItem('filterGroups')) {
     window.localStorage.setItem('filterGroups', JSON.stringify(DEFAULT_FILTER_GROUPS));
@@ -455,6 +499,7 @@ const initializeApp = () => {
   } else {
     filterGroups = JSON.parse(window.localStorage.getItem('filterGroups'));
   }
+  setDefaultTrie();
   // Attach event listeners for file input
   document.getElementById("log-file-input").value = '';
   document.getElementById("log-file-input").addEventListener("change", handleFileUpload);
@@ -463,6 +508,14 @@ const initializeApp = () => {
   document.getElementById("log-search").addEventListener("input", updateTextFilter);
   document.getElementById("use-regex").addEventListener("change", updateTextFilter);
   document.getElementById("case-sensitive").addEventListener("change", updateTextFilter);
+  document.getElementById("enter-btn").addEventListener("click", updateSearchSugggestionTrie);
+  document.getElementById("log-search").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      console.log("Enter key pressed");
+      updateSearchSugggestionTrie();
+    }
+  })
 
   // Attach event listener for adding new filter groups
   document.getElementById("add-filter-group-btn").addEventListener("click", () => {
