@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Log Viewer</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 
 <body>
@@ -25,7 +26,13 @@
         <!-- Filters bar -->
         <div class="row g-3 align-items-center mb-4">
           <div class="col-md-8">
-            <input type="text" id="log-search" class="form-control" placeholder="Search logs...">
+            <div class="input-group" style="gap: 10px;">
+              <input type="text" id="log-search" class="form-control" placeholder="Search logs...">
+              <button type="submit" class="btn btn-primary enter-button" id="enter-btn">
+                <i class="bi bi-arrow-return-right"></i>
+              </button>
+              <ul class="dropdown-suggestions" id="search-suggestions"></ul>
+            </div>
           </div>
           <div class="col-md-2">
             <div class="form-check">
