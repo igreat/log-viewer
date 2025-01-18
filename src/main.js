@@ -1,5 +1,8 @@
 import './styles.scss';
+import { Trie } from './Trie';
+import { Node } from './Trie';
 
+const TOP_K = 5;
 const DEFAULT_FILTER_GROUPS = [
   {
     title: 'Error Logs',
@@ -33,6 +36,8 @@ const COLORS = [
 ];
 
 const DEFAULT_HIGHLIGHT_COLOR = "#ffbf00";
+
+let suggestionTrie = new Trie();
 let allLogs = [];
 let currentFilters = [];
 let generalFilter = null // the single search bar filter
@@ -159,12 +164,18 @@ const applyFilters = (filters) => {
   renderTable(filteredLogs);
 };
 
+const updateSearchSuggestions = () => {
+  let searchSuggestions = getSearchSuggestions();
+  searchSuggestions = searchSuggestions.map(p => p.word);
+  console.log("SEARCH SUGGESTIONS: " + searchSuggestions);
+  populateSearchSuggestions(searchSuggestions);
+}
+
 const updateTextFilter = () => {
   const text = document.getElementById("log-search").value.trim();
   const regex = document.getElementById("use-regex").checked;
   const caseSensitive = document.getElementById("case-sensitive").checked;
   generalFilter = { text, regex, caseSensitive };
-
   const filters = generalFilter.text ? [...currentFilters, generalFilter] : currentFilters;
   applyFilters(filters);
 }
@@ -448,6 +459,90 @@ const setupDropdown = () => {
   });
 };
 
+const populateSearchSuggestions = (results) => {
+  const suggestionsBox = document.getElementById("search-suggestions");
+  suggestionsBox.innerHTML = "";
+
+  if (results.length == 0) {
+    suggestionsBox.style.display = "none";
+    return;
+  }
+  results.forEach((item) =>  {
+    const li = document.createElement("li");
+    li.textContent = item;
+    li.addEventListener("click", () =>  {
+      document.getElementById("log-search").value = item;
+      updateTextFilter();
+      suggestionsBox.style.display = "none";
+    });
+    suggestionsBox.appendChild(li);
+  })
+  suggestionsBox.style.display = "block";
+}
+
+const updateSearchSugggestionTrie = () => {
+  const text = document.getElementById("log-search").value.trim();
+  suggestionTrie.insertWord(text);
+  let trieJSON = trieToJSON();
+  window.localStorage.setItem('suggestionTrie', trieJSON);
+}
+
+const getSearchSuggestions = () => {
+  const text = document.getElementById("log-search").value.trim();
+  let results = suggestionTrie.collect(text, TOP_K);
+  return results;
+}
+
+const buildTrieJSON = (node, trieJSON) => {
+  if (node == null) {
+    return null;
+  }
+  trieJSON['character'] = node.character;
+  trieJSON['freq'] = node.freq;
+  if (!trieJSON['left']){
+    trieJSON['left'] = {};
+  }
+  trieJSON['left'] = buildTrieJSON(node.left, trieJSON['left']);
+  if (!trieJSON['middle']){
+    trieJSON['middle'] = {};
+  }
+  trieJSON['middle'] = buildTrieJSON(node.middle, trieJSON['middle']);
+  if (!trieJSON['right']) {
+    trieJSON['right'] = {};
+  }
+  trieJSON['right'] = buildTrieJSON(node.right, trieJSON['right']);
+  return trieJSON;
+}
+
+const trieToJSON = () => {
+  let trieJSON = buildTrieJSON(suggestionTrie.root, {});
+  if (trieJSON == null) {
+    return {};
+  }
+  // console.log("JSON: " + JSON.stringify(trieJSON));
+  return (trieJSON);
+}
+
+const buildTrie = (trieJSON) => {
+  if (trieJSON == null) {
+    return null;
+  }
+  let node = new Node();
+  node.character = trieJSON['character'];
+  node.freq= trieJSON['freq'];
+  node.left = buildTrie(trieJSON['left']);
+  node.right = buildTrie(trieJSON['right']);
+  node.middle = buildTrie(trieJSON['middle']);
+  return node;
+}
+
+const trieFromJSON = (trieJSON) => {
+  let newTrie = new Trie();
+  let rootNode = buildTrie(trieJSON);
+  newTrie.root = rootNode;
+  return newTrie;
+}
+
 const initializeApp = () => {
   if (!window.localStorage.getItem('filterGroups')) {
     window.localStorage.setItem('filterGroups', JSON.stringify(DEFAULT_FILTER_GROUPS));
@@ -455,12 +550,26 @@ const initializeApp = () => {
   } else {
     filterGroups = JSON.parse(window.localStorage.getItem('filterGroups'));
   }
+
+  if (!window.localStorage.getItem('suggestionTrie')) {
+    window.localStorage.setItem("suggestionTrie", JSON.stringify(trieToJSON(suggestionTrie)));
+  }
+  let trieJSON = window.localStorage.getItem("suggestionTrie");
+  console.log(JSON.stringify(trieJSON));
+  suggestionTrie = trieFromJSON(trieJSON);
+
   // Attach event listeners for file input
   document.getElementById("log-file-input").value = '';
   document.getElementById("log-file-input").addEventListener("change", handleFileUpload);
 
   // Attach event listeners for text filters
   document.getElementById("log-search").addEventListener("input", updateTextFilter);
+  document.getElementById("log-search").addEventListener("keydown", (e) => {
+    if (e.key == "Enter") {
+      updateSearchSugggestionTrie();
+    }
+  })
+  document.getElementById("log-search").addEventListener("input", updateSearchSuggestions);
   document.getElementById("use-regex").addEventListener("change", updateTextFilter);
   document.getElementById("case-sensitive").addEventListener("change", updateTextFilter);
 
