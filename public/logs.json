@@ -1,51 +1,44 @@
 [
     {
-        "timestamp": "2024-04-01T09:00:00Z",
-        "level": "INFO",
-        "messages": ["Application started successfully."],
-        "user": "system",
-        "ip": "192.168.1.1"
+        "timestamp": "2025-01-16T14:18:52.024Z",
+        "level": "Debug",
+        "thread ID": "[0xd1ba62]",
+        "messages": ["[]MediaApplication.cpp:318 startLogger::Started media logger. LogFile = ********/Library/Logs/SparkMacDesktop/media/calls/1737037131593_0e6b4dfa-ca34-4422-8f4a-9e260cad346c.log"]
     },
     {
-        "timestamp": "2024-04-01T09:15:23Z",
-        "level": "WARN",
-        "messages": ["Low memory warning."],
-        "user": "system",
-        "ip": "192.168.1.1"
+        "timestamp": "2025-01-16T14:18:52.024Z",
+        "level": "Debug",
+        "thread ID": "[0xd1ba62]",
+        "messages": ["[]MediaApplication.cpp:556 onCommandReceived::Received ipc::Command::Type::CreateConnection, Creating Media Connection"]
     },
     {
-        "timestamp": "2024-04-01T09:45:10Z",
-        "level": "ERROR",
-        "messages": ["Failed to load user data."],
-        "user": "alice",
-        "ip": "192.168.1.2"
+        "timestamp": "2025-01-16T14:18:52.024Z",
+        "level": "Debug",
+        "thread ID": "[0xd1b92b]",
+        "messages": ["[]MediaApplication.cpp:334 createConnection::"]
     },
     {
-        "timestamp": "2024-04-01T10:05:45Z",
-        "level": "INFO",
-        "messages": ["User logged in.", "Session started."],
-        "user": "bob",
-        "ip": "192.168.1.3"
+        "timestamp": "2025-01-16T14:18:52.027Z",
+        "level": "Info",
+        "thread ID": "[0xd1b92b]",
+        "messages": ["[]WME:0 ::[WSE] CFrameRateFilter::Reset Target fps is 1.000"]
     },
     {
-        "timestamp": "2024-04-01T10:25:30Z",
-        "level": "DEBUG",
-        "messages": ["Fetching user preferences."],
-        "user": "alice",
-        "ip": "192.168.1.2"
+        "timestamp": "2025-01-16T14:18:52.027Z",
+        "level": "Info",
+        "thread ID": "[0xd1b92b]",
+        "messages": ["[]WME:0 ::[WSE] CWseVideoPortraitFilterCoreML::CWseVideoPortraitFilterCoreML() end, this=0x138368000"]
     },
     {
-        "timestamp": "2024-04-01T10:45:15Z",
-        "level": "ERROR",
-        "messages": ["Failed to save user preferences."],
-        "user": "abdullah",
-        "ip": "192.168.1.6"
+        "timestamp": "2025-01-16T14:18:52.042Z",
+        "level": "Warn",
+        "thread ID": "[0xd1b92b]",
+        "messages": ["[]MediaDeviceManager.cpp:2480 setDeviceMuteState::Set device mute state, device type: 1"]
     },
     {
-        "timestamp": "2024-04-01T11:05:00Z",
-        "level": "INFO",
-        "messages": ["User logged out.", "Session ended."],
-        "user": "bob",
-        "ip": "192.420.1.2"
+        "timestamp": "2025-01-16T14:18:52.049Z",
+        "level": "Warn",
+        "thread ID": "[0xd1b92b]",
+        "messages": ["[]WME:0 ::[UTIL] thread type is TT_UNKNOWN"]
     }
 ]
