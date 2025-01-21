@@ -305,12 +305,9 @@ const editFilterGroup = (index) => {
   // Set up modal footer buttons
   const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
   modalFooter.innerHTML = `
-    <div class="d-flex justify-content-between w-100">
+    <div class="d-flex justify-content-end w-100 gap-2">
+      <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
       <button type="button" class="btn btn-danger" id="delete-filter-group-btn">Delete</button>
-      <div>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-      </div>
     </div>
   `;
 
@@ -587,6 +584,14 @@ const initializeApp = () => {
     // Add one blank filter by default
     addFilterGroup();
 
+    // Set up modal footer buttons without the Cancel button
+    const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
+    modalFooter.innerHTML = `
+    <div class="d-flex justify-content-end w-100 gap-2">
+      <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+    </div>
+  `;
+    
     // Bind saveFilterGroup without index for adding
     document.getElementById("save-filter-group-btn").onclick = () => saveFilterGroup();
     $('#filterGroupModal').modal('show'); // Show the modal
