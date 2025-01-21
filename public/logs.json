@@ -1,0 +1,44 @@
+[
+    {
+        "timestamp": "2025-01-16T14:18:52.024Z",
+        "level": "Debug",
+        "thread ID": "[0xd1ba62]",
+        "messages": ["[]MediaApplication.cpp:318 startLogger::Started media logger. LogFile = ********/Library/Logs/SparkMacDesktop/media/calls/1737037131593_0e6b4dfa-ca34-4422-8f4a-9e260cad346c.log"]
+    },
+    {
+        "timestamp": "2025-01-16T14:18:52.024Z",
+        "level": "Debug",
+        "thread ID": "[0xd1ba62]",
+        "messages": ["[]MediaApplication.cpp:556 onCommandReceived::Received ipc::Command::Type::CreateConnection, Creating Media Connection"]
+    },
+    {
+        "timestamp": "2025-01-16T14:18:52.024Z",
+        "level": "Debug",
+        "thread ID": "[0xd1b92b]",
+        "messages": ["[]MediaApplication.cpp:334 createConnection::"]
+    },
+    {
+        "timestamp": "2025-01-16T14:18:52.027Z",
+        "level": "Info",
+        "thread ID": "[0xd1b92b]",
+        "messages": ["[]WME:0 ::[WSE] CFrameRateFilter::Reset Target fps is 1.000"]
+    },
+    {
+        "timestamp": "2025-01-16T14:18:52.027Z",
+        "level": "Info",
+        "thread ID": "[0xd1b92b]",
+        "messages": ["[]WME:0 ::[WSE] CWseVideoPortraitFilterCoreML::CWseVideoPortraitFilterCoreML() end, this=0x138368000"]
+    },
+    {
+        "timestamp": "2025-01-16T14:18:52.042Z",
+        "level": "Warn",
+        "thread ID": "[0xd1b92b]",
+        "messages": ["[]MediaDeviceManager.cpp:2480 setDeviceMuteState::Set device mute state, device type: 1"]
+    },
+    {
+        "timestamp": "2025-01-16T14:18:52.049Z",
+        "level": "Warn",
+        "thread ID": "[0xd1b92b]",
+        "messages": ["[]WME:0 ::[UTIL] thread type is TT_UNKNOWN"]
+    }
+]
