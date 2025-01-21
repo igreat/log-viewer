@@ -1,4 +1,4 @@
-class Node {
+export class Node {
   left;
   right;
   middle;
@@ -12,7 +12,7 @@ class Node {
   }
 }
 
-class Pair {
+export class Pair {
   word;
   freq;
   constructor(word, freq) {
