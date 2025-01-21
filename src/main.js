@@ -467,10 +467,10 @@ const populateSearchSuggestions = (results) => {
     suggestionsBox.style.display = "none";
     return;
   }
-  results.forEach((item) =>  {
+  results.forEach((item) => {
     const li = document.createElement("li");
     li.textContent = item;
-    li.addEventListener("click", () =>  {
+    li.addEventListener("click", () => {
       document.getElementById("log-search").value = item;
       updateTextFilter();
       suggestionsBox.style.display = "none";
@@ -482,9 +482,11 @@ const populateSearchSuggestions = (results) => {
 
 const updateSearchSugggestionTrie = () => {
   const text = document.getElementById("log-search").value.trim();
+  console.log("UPDATE SUGGESTION TRIE: " + text)
   suggestionTrie.insertWord(text);
+  console.log("TRIE: " + suggestionTrie.root);
   let trieJSON = trieToJSON();
-  window.localStorage.setItem('suggestionTrie', trieJSON);
+  window.localStorage.setItem('suggestionTrie', JSON.stringify(trieJSON));
 }
 
 const getSearchSuggestions = () => {
@@ -499,11 +501,11 @@ const buildTrieJSON = (node, trieJSON) => {
   }
   trieJSON['character'] = node.character;
   trieJSON['freq'] = node.freq;
-  if (!trieJSON['left']){
+  if (!trieJSON['left']) {
     trieJSON['left'] = {};
   }
   trieJSON['left'] = buildTrieJSON(node.left, trieJSON['left']);
-  if (!trieJSON['middle']){
+  if (!trieJSON['middle']) {
     trieJSON['middle'] = {};
   }
   trieJSON['middle'] = buildTrieJSON(node.middle, trieJSON['middle']);
@@ -516,30 +518,27 @@ const buildTrieJSON = (node, trieJSON) => {
 
 const trieToJSON = () => {
   let trieJSON = buildTrieJSON(suggestionTrie.root, {});
-  if (trieJSON == null) {
-    return {};
-  }
-  // console.log("JSON: " + JSON.stringify(trieJSON));
-  return (trieJSON);
+  return trieJSON;
 }
 
-const buildTrie = (trieJSON) => {
+const buildTrie = (node, trieJSON) => {
   if (trieJSON == null) {
     return null;
   }
-  let node = new Node();
+  if (node == null) {
+    node = new Node();
+  }
   node.character = trieJSON['character'];
-  node.freq= trieJSON['freq'];
-  node.left = buildTrie(trieJSON['left']);
-  node.right = buildTrie(trieJSON['right']);
-  node.middle = buildTrie(trieJSON['middle']);
+  node.freq = trieJSON['freq'];
+  node.left = buildTrie(node.left, trieJSON['left']);
+  node.right = buildTrie(node.right, trieJSON['right']);
+  node.middle = buildTrie(node.middle, trieJSON['middle']);
   return node;
 }
 
 const trieFromJSON = (trieJSON) => {
   let newTrie = new Trie();
-  let rootNode = buildTrie(trieJSON);
-  newTrie.root = rootNode;
+  newTrie.root = buildTrie(newTrie.root, trieJSON);
   return newTrie;
 }
 
@@ -553,10 +552,12 @@ const initializeApp = () => {
 
   if (!window.localStorage.getItem('suggestionTrie')) {
     window.localStorage.setItem("suggestionTrie", JSON.stringify(trieToJSON(suggestionTrie)));
+  } else {
+    let trieJSON = JSON.parse(window.localStorage.getItem("suggestionTrie"));
+    console.log(JSON.stringify(trieJSON));
+    suggestionTrie = trieFromJSON(trieJSON);
+    console.log(suggestionTrie.root)
   }
-  let trieJSON = window.localStorage.getItem("suggestionTrie");
-  console.log(JSON.stringify(trieJSON));
-  suggestionTrie = trieFromJSON(trieJSON);
 
   // Attach event listeners for file input
   document.getElementById("log-file-input").value = '';
@@ -585,7 +586,7 @@ const initializeApp = () => {
 
     // Add one blank filter by default
     addFilterGroup();
-    
+
     // Bind saveFilterGroup without index for adding
     document.getElementById("save-filter-group-btn").onclick = () => saveFilterGroup();
     $('#filterGroupModal').modal('show'); // Show the modal
