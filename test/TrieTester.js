@@ -1,4 +1,3 @@
-import { terminate } from "firebase/data-connect";
 import { Trie } from "../src/Trie.js";
 import { Node } from "../src/Trie.js";
 
