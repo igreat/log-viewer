@@ -28,11 +28,9 @@ const COLORS = [
   "#FFB6C1", // Soft Pink
   "#CCFFCC", // Light Green
   "#ADD8E6", // Sky Blue
-  "#E6E6FA", // Lavender
   "#FFC0CB", // Pink
   "#FFDAB9", // Peach Puff
-  "#FFFACD", // Lemon Chiffon
-  "#E0FFFF", // Light Cyan
+  "#FDE74C", // Maize
 ];
 
 const DEFAULT_HIGHLIGHT_COLOR = "#ffbf00";
