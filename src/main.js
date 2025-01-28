@@ -253,7 +253,9 @@ function addFilterGroup() {
       </div>
       <input type="text" class="form-control filter-description mr-2" placeholder="Filter description">
       <button type="button" class="btn btn-danger remove-filter-btn d-flex justify-content-center align-items-center">
-        <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
+        <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white">
+          <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+        </svg>
       </button>
     </div>
   `;
@@ -276,26 +278,26 @@ const editFilterGroup = (index) => {
   filterList.innerHTML = ""; // Clear existing filters
   group.filters.forEach((filter) => {
     const filterHTML = `
-    <div class="input-group mb-2 d-flex align-items-center">
-      <input type="text" class="form-control filter-text" placeholder="Filter text" value="${filter.text}">
-      <div class="input-group-prepend mr-2">
-        <div class="input-group-text">
-          <input type="checkbox" class="filter-regex mr-1" title="Regex" ${filter.regex ? "checked" : ""}> <span>Regex</span>
+      <div class="input-group mb-2 d-flex align-items-center">
+        <input type="text" class="form-control filter-text" placeholder="Filter text" value="${filter.text}">
+        <div class="input-group-prepend mr-2">
+          <div class="input-group-text">
+            <input type="checkbox" class="filter-regex mr-1" title="Regex" ${filter.regex ? "checked" : ""}> <span>Regex</span>
+          </div>
+          <div class="input-group-text">
+            <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case" ${filter.caseSensitive ? "checked" : ""}> <span>Match Case</span>
+          </div>
+          <div class="input-group-text rounded-right" style="background-color: transparent;">
+            <input type="color" class="filter-color" value="${filter.color ? filter.color : DEFAULT_HIGHLIGHT_COLOR}" title="Pick a color">
+          </div>
         </div>
-        <div class="input-group-text">
-          <input type="checkbox" class="filter-case-sensitive mr-1" title="Match Case" ${filter.caseSensitive ? "checked" : ""}> <span>Match Case</span>
-        </div>
-        <div class="input-group-text rounded-right" style="background-color: transparent;">
-          <input type="color" class="filter-color" value="${filter.color ? filter.color : DEFAULT_HIGHLIGHT_COLOR}" title="Pick a color">
-        </div>
+        <input type="text" class="form-control filter-description mr-2" placeholder="Filter description" value="${filter.description || ''}">
+        <button type="button" class="btn btn-danger remove-filter-btn d-flex justify-content-center align-items-center">
+          <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white">
+            <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+          </svg>
+        </button>
       </div>
-      <input type="text" class="form-control filter-description mr-2" placeholder="Filter description" value="${filter.description || ''}">
-      <button type="button" class="btn btn-danger remove-filter-btn d-flex justify-content-center align-items-center">
-        <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white">
-          <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
-        </svg>
-      </button>
-    </div>
     `;
     filterList.insertAdjacentHTML("beforeend", filterHTML);
   });
@@ -303,20 +305,26 @@ const editFilterGroup = (index) => {
   // Set up modal footer buttons
   const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
   modalFooter.innerHTML = `
-    <div class="d-flex justify-content-end w-100 gap-2">
-      <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-      <button type="button" class="btn btn-danger" id="delete-filter-group-btn">Delete</button>
+    <div class="d-flex justify-content-between w-100 align-items-center">
+      <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+      <div class="d-flex gap-2">
+        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+        <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
+      </div>
     </div>
   `;
 
-  // Bind the delete button to handle the group deletion
+  // Attach event listener for adding new filters dynamically
+  document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
+
+  // Attach event listener for saving the filter group
+  document.getElementById("save-filter-group-btn").onclick = () => saveFilterGroup(index);
+
+  // Attach event listener for deleting the filter group
   document.getElementById("delete-filter-group-btn").addEventListener("click", () => {
     deleteFilterGroup(index);
     $('#filterGroupModal').modal('hide'); // Close the modal after deletion
   });
-
-  // Bind the save button for this specific group
-  document.getElementById("save-filter-group-btn").onclick = () => saveFilterGroup(index);
 
   // Show the modal
   $('#filterGroupModal').modal('show');
@@ -573,23 +581,27 @@ const initializeApp = () => {
   document.getElementById("add-filter-group-btn").addEventListener("click", () => {
     // Set the modal title to "Add Custom Filter Group"
     document.querySelector("#filterGroupModal .modal-title").textContent = "Add Custom Filter Group";
-
+  
     // Clear modal inputs for creating a new filter group
     document.getElementById("filter-group-title").value = '';
     document.getElementById("filter-group-description").value = '';
     document.getElementById("filter-list").innerHTML = '';
-
+  
     // Add one blank filter by default
     addFilterGroup();
-
-    // Set up modal footer buttons without the Cancel button
+  
+    // Set up modal footer buttons
     const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
     modalFooter.innerHTML = `
-    <div class="d-flex justify-content-end w-100 gap-2">
-      <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-    </div>
-  `;
-    
+      <div class="d-flex justify-content-between w-100 align-items-center">
+        <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+      </div>
+    `;
+  
+    // Attach event listener for dynamically adding filters in the modal
+    document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
+  
     // Bind saveFilterGroup without index for adding
     document.getElementById("save-filter-group-btn").onclick = () => saveFilterGroup();
     $('#filterGroupModal').modal('show'); // Show the modal
