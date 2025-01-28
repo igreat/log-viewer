@@ -390,6 +390,12 @@ const saveFilterGroup = (index = null) => {
   currentFilters = selectedIndices.flatMap((index) => filterGroups[index].filters);
   const filterToApply = generalFilter && generalFilter.text ? [generalFilter, ...currentFilters] : currentFilters;
   applyFilters(filterToApply);
+  
+  // Automatically close the dropdown menu after saving
+  const dropdownMenu = document.querySelector(".dropdown-menu");
+  dropdownMenu.classList.remove("show");
+  const dropdownButton = document.getElementById("premade-filters-dropdown");
+  dropdownButton.setAttribute("aria-expanded", "false");
 
   // Close the modal
   $('#filterGroupModal').modal('hide');
