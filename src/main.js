@@ -92,6 +92,13 @@ const renderTable = (logs, id) => {
   table.innerHTML = tableHTML;
 };
 
+// Helper function to add ids to logs
+const getLogsWithIds = (logs) => {
+  return logs.map((log, index) => {
+    return { id: index + 1, ...log };
+  });
+};
+
 const loadLogs = () => {
   fetch('../logs.json')
     .then(response => response.json())
@@ -100,7 +107,7 @@ const loadLogs = () => {
         document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Invalid log format.</p>`;
         return;
       }
-      allLogs = data;
+      allLogs = getLogsWithIds(data);
       renderTable(allLogs, "all-logs");
       renderTable(allLogs, "filtered-logs");
     })
@@ -126,7 +133,7 @@ const handleFileUpload = (event) => {
       }
 
       // Update allLogs and render the table
-      allLogs = data;
+      allLogs = getLogsWithIds(data);
       renderTable(allLogs, "all-logs");
       renderTable(allLogs, "filtered-logs");
     } catch (error) {
