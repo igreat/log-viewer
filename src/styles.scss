@@ -145,3 +145,12 @@ button .svg-icon {
   display: block;
 }
 
+/* Make smooth transition for unhighlighting the row */
+#all-logs tr {
+  transition: background-color 0.5s ease-out;
+}
+
+/* Highlight the matching row in all-logs table */
+.highlight {
+  background-color: #ffffc5 !important;
+}

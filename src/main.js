@@ -83,7 +83,9 @@ const renderTable = (logs, id) => {
       </thead>
       <tbody>
         ${logs.map(log => `
-          <tr>${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}</tr>
+          <tr id="log-${log.id}">
+            ${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}
+          </tr>
         `).join('')}
       </tbody>
     </table>
@@ -638,6 +640,28 @@ const initializeApp = () => {
       e.stopPropagation(); // Prevent the event from propagating to other handlers
     }
   });
+
+  // Attach event listener for subset table row clicks
+  const filteredTable = document.getElementById("filtered-logs");
+  if (filteredTable) {
+    filteredTable.addEventListener("click", (e) => {
+      // Use closest() to ensure we get the row (<tr>) even if a child element was clicked.
+      const clickedRow = e.target.closest("tr");
+      if (clickedRow && clickedRow.id) {
+        const rowId = clickedRow.id;
+        // Locate the corresponding row in the full table using its unique id.
+        const fullRow = document.querySelector(`#all-logs tr#${rowId}`);
+        if (fullRow) {
+          fullRow.scrollIntoView({ behavior: "smooth", block: "center" });
+          // Optionally highlight the full table row temporarily.
+          fullRow.classList.add("highlight");
+          setTimeout(() => {
+            fullRow.classList.remove("highlight");
+          }, 2000);
+        }
+      }
+    });
+  }
 
   // Initialize dropdown behavior for toggling
   setupDropdown();
