@@ -577,9 +577,10 @@ const initializeApp = () => {
   document.getElementById("log-file-input").addEventListener("change", handleFileUpload);
 
   // Attach event listeners for text filters
-  document.getElementById("log-search").addEventListener("input", updateTextFilter);
+  // document.getElementById("log-search").addEventListener("input", updateTextFilter); disabled because too slow
   document.getElementById("log-search").addEventListener("keydown", (e) => {
     if (e.key == "Enter") {
+      updateTextFilter();
       updateSearchSugggestionTrie();
     }
   })
