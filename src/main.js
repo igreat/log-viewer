@@ -67,29 +67,38 @@ function highlightText(text, filters) {
   return highlighted;
 }
 
-const renderTable = (logs) => {
-  const logViewer = document.getElementById("log-viewer");
+const renderTable = (logs, id) => {
+  const table = document.getElementById(id || "filtered-logs");
   if (logs.length === 0) {
-    logViewer.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
+    table.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
     return;
   }
 
   const headers = Object.keys(logs[0]);
   const filters = generalFilter && generalFilter.text ? [generalFilter, ...currentFilters] : currentFilters;
   const tableHTML = `
-    <table class="table table-striped table-bordered">
+    <table class="table table-striped table-bordered text-nowrap small">
       <thead class="table-dark">
         <tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr>
       </thead>
       <tbody>
         ${logs.map(log => `
-          <tr>${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}</tr>
+          <tr id="log-${log.id}">
+            ${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}
+          </tr>
         `).join('')}
       </tbody>
     </table>
   `;
 
-  logViewer.innerHTML = tableHTML;
+  table.innerHTML = tableHTML;
+};
+
+// Helper function to add ids to logs
+const getLogsWithIds = (logs) => {
+  return logs.map((log, index) => {
+    return { id: index + 1, ...log };
+  });
 };
 
 const loadLogs = () => {
@@ -97,15 +106,16 @@ const loadLogs = () => {
     .then(response => response.json())
     .then(data => {
       if (!Array.isArray(data)) {
-        document.getElementById("log-viewer").innerHTML = `<p class="text-danger">Invalid log format.</p>`;
+        document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Invalid log format.</p>`;
         return;
       }
-      allLogs = data;
-      renderTable(allLogs);
+      allLogs = getLogsWithIds(data);
+      renderTable(allLogs, "all-logs");
+      renderTable(allLogs, "filtered-logs");
     })
     .catch(err => {
       console.error("Failed to load logs:", err);
-      document.getElementById("log-viewer").innerHTML = `<p class="text-danger">Failed to load logs.</p>`;
+      document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Failed to load logs.</p>`;
     });
 };
 
@@ -125,8 +135,9 @@ const handleFileUpload = (event) => {
       }
 
       // Update allLogs and render the table
-      allLogs = data;
-      renderTable(allLogs);
+      allLogs = getLogsWithIds(data);
+      renderTable(allLogs, "all-logs");
+      renderTable(allLogs, "filtered-logs");
     } catch (error) {
       alert("Error parsing the JSON file. Please upload a valid JSON file.");
     }
@@ -136,7 +147,8 @@ const handleFileUpload = (event) => {
 
 const applyFilters = (filters) => {
   if (filters.length === 0) {
-    renderTable(allLogs);
+    renderTable(allLogs, "all-logs");
+    renderTable(allLogs, "filtered-logs");
     return;
   }
 
@@ -159,7 +171,8 @@ const applyFilters = (filters) => {
       filteredLogs.push(log);
     };
   }
-  renderTable(filteredLogs);
+  renderTable(allLogs, "all-logs");
+  renderTable(filteredLogs, "filtered-logs");
 };
 
 const updateSearchSuggestions = () => {
@@ -390,7 +403,7 @@ const saveFilterGroup = (index = null) => {
   currentFilters = selectedIndices.flatMap((index) => filterGroups[index].filters);
   const filterToApply = generalFilter && generalFilter.text ? [generalFilter, ...currentFilters] : currentFilters;
   applyFilters(filterToApply);
-  
+
   // Automatically close the dropdown menu after saving
   const dropdownMenu = document.querySelector(".dropdown-menu");
   dropdownMenu.classList.remove("show");
@@ -573,9 +586,10 @@ const initializeApp = () => {
   document.getElementById("log-file-input").addEventListener("change", handleFileUpload);
 
   // Attach event listeners for text filters
-  document.getElementById("log-search").addEventListener("input", updateTextFilter);
+  // document.getElementById("log-search").addEventListener("input", updateTextFilter); disabled because too slow
   document.getElementById("log-search").addEventListener("keydown", (e) => {
     if (e.key == "Enter") {
+      updateTextFilter();
       updateSearchSugggestionTrie();
     }
   })
@@ -587,15 +601,15 @@ const initializeApp = () => {
   document.getElementById("add-filter-group-btn").addEventListener("click", () => {
     // Set the modal title to "Add Custom Filter Group"
     document.querySelector("#filterGroupModal .modal-title").textContent = "Add Custom Filter Group";
-  
+
     // Clear modal inputs for creating a new filter group
     document.getElementById("filter-group-title").value = '';
     document.getElementById("filter-group-description").value = '';
     document.getElementById("filter-list").innerHTML = '';
-  
+
     // Add one blank filter by default
     addFilterGroup();
-  
+
     // Set up modal footer buttons
     const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
     modalFooter.innerHTML = `
@@ -604,10 +618,10 @@ const initializeApp = () => {
         <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
       </div>
     `;
-  
+
     // Attach event listener for dynamically adding filters in the modal
     document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
-  
+
     // Bind saveFilterGroup without index for adding
     document.getElementById("save-filter-group-btn").onclick = () => saveFilterGroup();
     $('#filterGroupModal').modal('show'); // Show the modal
@@ -626,6 +640,28 @@ const initializeApp = () => {
       e.stopPropagation(); // Prevent the event from propagating to other handlers
     }
   });
+
+  // Attach event listener for subset table row clicks
+  const filteredTable = document.getElementById("filtered-logs");
+  if (filteredTable) {
+    filteredTable.addEventListener("click", (e) => {
+      // Use closest() to ensure we get the row (<tr>) even if a child element was clicked.
+      const clickedRow = e.target.closest("tr");
+      if (clickedRow && clickedRow.id) {
+        const rowId = clickedRow.id;
+        // Locate the corresponding row in the full table using its unique id.
+        const fullRow = document.querySelector(`#all-logs tr#${rowId}`);
+        if (fullRow) {
+          fullRow.scrollIntoView({ behavior: "smooth", block: "center" });
+          // Optionally highlight the full table row temporarily.
+          fullRow.classList.add("highlight");
+          setTimeout(() => {
+            fullRow.classList.remove("highlight");
+          }, 2000);
+        }
+      }
+    });
+  }
 
   // Initialize dropdown behavior for toggling
   setupDropdown();
