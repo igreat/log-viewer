@@ -101,6 +101,17 @@ const getLogsWithIds = (logs) => {
   });
 };
 
+function countLogs(theLogs) {
+  const logCount = theLogs.length;
+  document.getElementById('log-count').textContent = logCount;
+  document.getElementById('filtered-log-count').textContent = logCount;
+}
+
+function countFilteredLogs(theFilteredLogs) {
+  const filteredLogs = theFilteredLogs.length;
+  document.getElementById('filtered-log-count').textContent = filteredLogs;
+}
+
 const loadLogs = () => {
   fetch('../logs.json')
     .then(response => response.json())
@@ -112,6 +123,8 @@ const loadLogs = () => {
       allLogs = getLogsWithIds(data);
       renderTable(allLogs, "all-logs");
       renderTable(allLogs, "filtered-logs");
+      document.getElementById('log-count').textContent = allLogs.length;
+      document.getElementById('filtered-log-count').textContent = allLogs.length;
     })
     .catch(err => {
       console.error("Failed to load logs:", err);
@@ -133,6 +146,7 @@ const handleFileUpload = (event) => {
         alert("Invalid file format: JSON must be an array of logs.");
         return;
       }
+      countLogs(data);
 
       // Update allLogs and render the table
       allLogs = getLogsWithIds(data);
@@ -149,6 +163,7 @@ const applyFilters = (filters) => {
   if (filters.length === 0) {
     renderTable(allLogs, "all-logs");
     renderTable(allLogs, "filtered-logs");
+    document.getElementById('filtered-log-count').textContent = allLogs.length;
     return;
   }
 
@@ -171,6 +186,7 @@ const applyFilters = (filters) => {
       filteredLogs.push(log);
     };
   }
+  countFilteredLogs(filteredLogs);
   renderTable(allLogs, "all-logs");
   renderTable(filteredLogs, "filtered-logs");
 };
@@ -662,7 +678,6 @@ const initializeApp = () => {
       }
     });
   }
-
   // Initialize dropdown behavior for toggling
   setupDropdown();
 

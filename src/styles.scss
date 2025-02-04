@@ -154,3 +154,26 @@ button .svg-icon {
 .highlight {
   background-color: #ffffc5 !important;
 }
+
+/* Footer Section Styles */
+footer {
+  background-color: #f8f9fa;  
+  padding: 10px 0;  
+  text-align: center; 
+  font-size: 14px; 
+  color: #333;  
+  border-top: 1px solid #ddd; 
+  margin-top: 50px; 
+  
+  p {
+    margin: 0;  
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  footer {
+    padding: 15px 0;
+    font-size: 12px;
+  }
+}
+
