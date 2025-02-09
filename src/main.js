@@ -2,6 +2,7 @@ import './styles.scss';
 import { Trie } from './Trie';
 import { Node } from './Trie';
 
+const ROWS_PER_PAGE = 100;
 const TOP_K = 5;
 const DEFAULT_FILTER_GROUPS = [
   {
@@ -103,7 +104,7 @@ const renderTable = (logs, id) => {
   table.innerHTML = tableHTML;
 
   // TABLE PAGINATION
-  const rowsPerPage = 1000; // TODO: make this user configurable
+  const rowsPerPage = ROWS_PER_PAGE; // TODO: make this user configurable
   const $rows = $(`#${id}-table tbody tr`);
   const totalRows = $rows.length;
 
@@ -159,12 +160,19 @@ const renderTable = (logs, id) => {
       });
     }
 
+    // If this is the full table, expose the updater globally.
+    if (id === "all-logs") {
+      window.allLogsPageUpdater = updatePageDisplay;
+    }
+
     // initialize the first page
     updatePageDisplay(0);
   } else {
-    // if there's only one page, clear any existing pagination
-    $(pagination).html("");
+    $(pagination).html('');
     $rows.show();
+    if (id === "all-logs") {
+      window.allLogsPageUpdater = null;
+    }
   }
 };
 
@@ -252,7 +260,6 @@ const applyFilters = (filters) => {
 const updateSearchSuggestions = () => {
   let searchSuggestions = getSearchSuggestions();
   searchSuggestions = searchSuggestions.map(p => p.word);
-  console.log("SEARCH SUGGESTIONS: " + searchSuggestions);
   populateSearchSuggestions(searchSuggestions);
 }
 
@@ -578,9 +585,7 @@ const populateSearchSuggestions = (results) => {
 
 const updateSearchSugggestionTrie = () => {
   const text = document.getElementById("log-search").value.trim();
-  console.log("UPDATE SUGGESTION TRIE: " + text)
   suggestionTrie.insertWord(text);
-  console.log("TRIE: " + suggestionTrie.root);
   let trieJSON = trieToJSON();
   window.localStorage.setItem('suggestionTrie', JSON.stringify(trieJSON));
 }
@@ -650,9 +655,7 @@ const initializeApp = () => {
     window.localStorage.setItem("suggestionTrie", JSON.stringify(trieToJSON(suggestionTrie)));
   } else {
     let trieJSON = JSON.parse(window.localStorage.getItem("suggestionTrie"));
-    console.log(JSON.stringify(trieJSON));
     suggestionTrie = trieFromJSON(trieJSON);
-    console.log(suggestionTrie.root)
   }
 
   // Attach event listeners for file input
@@ -716,23 +719,32 @@ const initializeApp = () => {
   });
 
   // Attach event listener for subset table row clicks
-  const filteredTable = document.getElementById("filtered-logs");
+  const filteredTable = document.getElementById("filtered-logs-table");
   if (filteredTable) {
     filteredTable.addEventListener("click", (e) => {
       // Use closest() to ensure we get the row (<tr>) even if a child element was clicked.
       const clickedRow = e.target.closest("tr");
       if (clickedRow && clickedRow.id) {
         const rowId = clickedRow.id;
-        // Locate the corresponding row in the full table using its unique id.
-        const fullRow = document.querySelector(`#all-logs tr#${rowId}`);
-        if (fullRow) {
-          fullRow.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Optionally highlight the full table row temporarily.
-          fullRow.classList.add("highlight");
-          setTimeout(() => {
-            fullRow.classList.remove("highlight");
-          }, 2000);
+        const rowNum = parseInt(rowId.replace("log-", ""), 10)
+        const rowsPerPage = ROWS_PER_PAGE;
+        const targetPage = Math.floor((rowNum - 1) / rowsPerPage);
+
+        // If the full table's pagination updater is available, call it
+        if (window.allLogsPageUpdater) {
+          window.allLogsPageUpdater(targetPage);
         }
+
+        // Wait briefly for the table to update, then scroll to the target row
+        setTimeout(() => {
+          const fullRow = document.querySelector(`#all-logs-table tr#${rowId}`);
+          if (fullRow) {
+            fullRow.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Optionally add a temporary highlight
+            fullRow.classList.add("highlight");
+            setTimeout(() => fullRow.classList.remove("highlight"), 2000);
+          }
+        }, 150); // delay (in milliseconds) may be adjusted as needed
       }
     });
   }
