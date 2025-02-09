@@ -68,16 +68,25 @@ function highlightText(text, filters) {
 }
 
 const renderTable = (logs, id) => {
-  const table = document.getElementById(id || "filtered-logs");
+  id = id || "filtered-logs";
+  const table = document.getElementById(id + "-table");
+  const pagination = document.getElementById(id + "-pagination");
+
   if (logs.length === 0) {
     table.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
+    pagination.innerHTML = "";
     return;
   }
 
+  // MAIN TABLE
   const headers = Object.keys(logs[0]);
-  const filters = generalFilter && generalFilter.text ? [generalFilter, ...currentFilters] : currentFilters;
+  const filters = generalFilter && generalFilter.text
+    ? [generalFilter, ...currentFilters]
+    : currentFilters;
+
+  const paginationId = "pagination-" + id;
   const tableHTML = `
-    <table class="table table-striped table-bordered text-nowrap small">
+    <table class="table table-striped table-bordered text-nowrap small" id="${id}-table">
       <thead class="table-dark">
         <tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr>
       </thead>
@@ -89,9 +98,74 @@ const renderTable = (logs, id) => {
         `).join('')}
       </tbody>
     </table>
+    <div id="${paginationId}" class="pagination-container mt-2"></div>
   `;
-
   table.innerHTML = tableHTML;
+
+  // TABLE PAGINATION
+  const rowsPerPage = 10;
+  const $rows = $(`#${id}-table tbody tr`);
+  const totalRows = $rows.length;
+
+  // only paginate if there are more than one page
+  if (totalRows > rowsPerPage) {
+    const numPages = Math.ceil(totalRows / rowsPerPage);
+    let currentPage = 0;
+
+    function updatePageDisplay(page) {
+      currentPage = page;
+
+      // show only rows for current page
+      $rows.hide().slice(page * rowsPerPage, (page + 1) * rowsPerPage).show();
+
+      // build the navigation bar html
+      const navhtml = `
+        <div class="pagination-controls text-center">
+          <button class="btn btn-secondary prev-page" ${page === 0 ? "disabled" : ""}>Previous</button>
+          <input type="number" class="page-input" value="${page + 1}" min="1" max="${numPages}" 
+                 style="width: 60px; text-align: center; margin: 0 10px;">
+          <span>of ${numPages}</span>
+          <button class="btn btn-secondary next-page" ${page === numPages - 1 ? "disabled" : ""}>Next</button>
+        </div>
+      `
+      // render the navigation bar
+      $(pagination).html(navhtml);
+
+      // Attach click handler for Previous button.
+      $(pagination).find(".prev-page").off("click").on("click", function (e) {
+        e.preventDefault();
+        if (currentPage > 0) {
+          updatePageDisplay(currentPage - 1);
+        }
+      });
+
+      // Attach click handler for Next button.
+      $(pagination).find(".next-page").off("click").on("click", function (e) {
+        e.preventDefault();
+        if (currentPage < numPages - 1) {
+          updatePageDisplay(currentPage + 1);
+        }
+      });
+
+      // Attach change handler for the page number input.
+      $(pagination).find(".page-input").off("change").on("change", function (e) {
+        let newPage = parseInt($(this).val(), 10);
+        if (isNaN(newPage) || newPage < 1) {
+          newPage = 1;
+        } else if (newPage > numPages) {
+          newPage = numPages;
+        }
+        updatePageDisplay(newPage - 1);
+      });
+    }
+
+    // initialize the first page
+    updatePageDisplay(0);
+  } else {
+    // if there's only one page, clear any existing pagination
+    $(pagination).html("");
+    $rows.show();
+  }
 };
 
 // Helper function to add ids to logs
@@ -106,7 +180,7 @@ const loadLogs = () => {
     .then(response => response.json())
     .then(data => {
       if (!Array.isArray(data)) {
-        document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Invalid log format.</p>`;
+        document.getElementById("filtered-logs").innerHTML = `< p class="text-danger" > Invalid log format.</p > `;
         return;
       }
       allLogs = getLogsWithIds(data);
@@ -115,7 +189,7 @@ const loadLogs = () => {
     })
     .catch(err => {
       console.error("Failed to load logs:", err);
-      document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Failed to load logs.</p>`;
+      document.getElementById("filtered-logs").innerHTML = `< p class="text-danger" > Failed to load logs.</p > `;
     });
 };
 
@@ -216,7 +290,7 @@ const populateFilterGroups = () => {
           </button>
         </div>
       </div>
-    `;
+  `;
     dropdownMenu.insertAdjacentHTML('beforeend', groupHTML);
   });
 
@@ -318,14 +392,14 @@ const editFilterGroup = (index) => {
   // Set up modal footer buttons
   const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
   modalFooter.innerHTML = `
-    <div class="d-flex justify-content-between w-100 align-items-center">
-      <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-      <div class="d-flex gap-2">
-        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-        <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
-      </div>
-    </div>
-  `;
+          <div class="d-flex justify-content-between w-100 align-items-center">
+            <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+            <div class="d-flex gap-2">
+              <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+              <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
+            </div>
+          </div>
+          `;
 
   // Attach event listener for adding new filters dynamically
   document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
@@ -613,11 +687,11 @@ const initializeApp = () => {
     // Set up modal footer buttons
     const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
     modalFooter.innerHTML = `
-      <div class="d-flex justify-content-between w-100 align-items-center">
-        <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-      </div>
-    `;
+          <div class="d-flex justify-content-between w-100 align-items-center">
+            <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+            <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+          </div>
+          `;
 
     // Attach event listener for dynamically adding filters in the modal
     document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
