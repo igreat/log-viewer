@@ -2,7 +2,7 @@ import './styles.scss';
 import { Trie } from './Trie';
 import { Node } from './Trie';
 
-const ROWS_PER_PAGE = 100;
+const ROWS_PER_PAGE = 100; // TODO: make this user configurable
 const TOP_K = 5;
 const DEFAULT_FILTER_GROUPS = [
   {
@@ -104,7 +104,7 @@ const renderTable = (logs, id) => {
   table.innerHTML = tableHTML;
 
   // TABLE PAGINATION
-  const rowsPerPage = ROWS_PER_PAGE; // TODO: make this user configurable
+  const rowsPerPage = ROWS_PER_PAGE; 
   const $rows = $(`#${id}-table tbody tr`);
   const totalRows = $rows.length;
 
