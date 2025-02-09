@@ -103,7 +103,7 @@ const renderTable = (logs, id) => {
   table.innerHTML = tableHTML;
 
   // TABLE PAGINATION
-  const rowsPerPage = 10;
+  const rowsPerPage = 1000; // TODO: make this user configurable
   const $rows = $(`#${id}-table tbody tr`);
   const totalRows = $rows.length;
 
