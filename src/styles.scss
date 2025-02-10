@@ -24,6 +24,10 @@ $breakpoint-lg: 992px;
   }
 }
 
+#timeFilterModal .modal-dialog {
+  max-width: 95%;
+}
+
 #filter-title-description {
   display: flex;
   flex-direction: column;

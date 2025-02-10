@@ -146,13 +146,18 @@ const handleFileUpload = (event) => {
 };
 
 const applyFilters = (filters) => {
+  let filteredLogs = []
   if (filters.length === 0) {
+    allLogs.forEach((log) => {
+      if (applyDateFilter(log)) {
+        filteredLogs.push(log);
+      }
+    })
     renderTable(allLogs, "all-logs");
-    renderTable(allLogs, "filtered-logs");
+    renderTable(filteredLogs, "filtered-logs");
     return;
   }
 
-  let filteredLogs = []
   for (let i = 0; i < allLogs.length; i++) {
     const log = allLogs[i];
     if (filters.some(filter => {
@@ -168,7 +173,9 @@ const applyFilters = (filters) => {
         });
       }
     })) {
-      filteredLogs.push(log);
+      if (applyDateFilter(log)) {
+        filteredLogs.push(log);
+      }
     };
   }
   renderTable(allLogs, "all-logs");
@@ -342,6 +349,43 @@ const editFilterGroup = (index) => {
   // Show the modal
   $('#filterGroupModal').modal('show');
 };
+
+const saveDateFilterGroup = () => {
+
+}
+
+const applyDateFilter = (log) => {
+  const startMonth = parseInt(document.getElementById("start-month-filter")?.value, 10) || 1;
+  const startDay = parseInt(document.getElementById("start-day-filter")?.value, 10) || 0;
+  const startHour = parseInt(document.getElementById("start-hour-filter")?.value, 10) || 0;
+  const startMinute = parseInt(document.getElementById("start-minute-filter")?.value, 10) || 0;
+  const startSecond = parseInt(document.getElementById("start-second-filter")?.value, 10) || 0;
+
+  const endMonth = parseInt(document.getElementById("end-month-filter")?.value, 10) || 12;
+  const endDay = parseInt(document.getElementById("end-day-filter")?.value, 10) || 31;
+  const endHour = parseInt(document.getElementById("end-hour-filter")?.value, 10) || 23;
+  const endMinute = parseInt(document.getElementById("end-minute-filter")?.value, 10) || 59;
+  const endSecond = parseInt(document.getElementById("end-second-filter")?.value, 10) || 59;
+
+
+  const timestamp = log['timestamp'];
+  let date = new Date(timestamp);
+
+  let month = date.getUTCMonth() + 1; // Months are zero-based (0 = January)
+  let day = date.getUTCDate();
+  let hour = date.getUTCHours();
+  let minute = date.getUTCMinutes();
+  let second = date.getUTCSeconds();
+
+  if ((startMonth <= month && month <= endMonth) &&
+      (startDay <= day && day <= endDay) &&
+      (startHour <= hour && hour <= endHour) &&
+      (startMinute <= minute && minute <= endMinute) &&
+      (startSecond <= second && second <= endSecond)) {
+        return true; 
+      }
+  return false;
+}
 
 const saveFilterGroup = (index = null) => {
   const title = document.getElementById("filter-group-title").value.trim();
@@ -626,6 +670,43 @@ const initializeApp = () => {
     document.getElementById("save-filter-group-btn").onclick = () => saveFilterGroup();
     $('#filterGroupModal').modal('show'); // Show the modal
   });
+
+  document.getElementById("add-time-filter-btn").addEventListener("click", () => {
+
+    document.querySelector("#timeFilterModal .modal-title").textContent = "Add Time Filter";
+
+    document.getElementById("filter-group-title").value = '';
+    document.getElementById("filter-group-description").value = '';
+    document.getElementById("filter-list").innerHTML = '';
+
+    const modalFooter = document.querySelectorAll("#filterGroupModal .modal-footer");
+    modalFooter.innerHTML = `
+      <div class="d-flex justify-content-between w-100 align-items-center">
+        <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+      </div>
+    `;
+    
+    document.getElementById("apply-date-filter-btn").addEventListener("click", () => {
+      applyFilters(currentFilters);
+    });
+
+    document.getElementById("clear-date-filter-btn").addEventListener("click", () => {
+      document.getElementById("start-month-filter").value = "01";
+      document.getElementById("start-day-filter").value = "";
+      document.getElementById("start-hour-filter").value = "";
+      document.getElementById("start-minute-filter").value = "";
+      document.getElementById("start-second-filter").value = "";
+
+      document.getElementById("end-month-filter").value = "12";
+      document.getElementById("end-day-filter").value = "";
+      document.getElementById("end-hour-filter").value = "";
+      document.getElementById("end-minute-filter").value = "";
+      document.getElementById("end-second-filter").value = "";
+    })
+    
+    $('#timeFilterModal').modal('show'); // Show the modal
+  })
 
   // Attach event listener for dynamically adding filters in the modal
   document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
