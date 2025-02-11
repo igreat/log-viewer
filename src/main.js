@@ -68,9 +68,9 @@ function highlightText(text, filters) {
 }
 
 const renderTable = (logs, id) => {
-  const table = document.getElementById(id || "filtered-logs");
+  const tableContainer = document.getElementById(id === "all-logs" ? "all-logs-table" : "filtered-logs-table");
   if (logs.length === 0) {
-    table.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
+    tableContainer.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
     return;
   }
 
@@ -91,7 +91,7 @@ const renderTable = (logs, id) => {
     </table>
   `;
 
-  table.innerHTML = tableHTML;
+  tableContainer.innerHTML = tableHTML;
 };
 
 // Helper function to add ids to logs

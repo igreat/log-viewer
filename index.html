@@ -207,13 +207,14 @@
 
          
         <!-- Log Viewer -->
-        <div id="all-logs" class="border p-3 rounded"
-          style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
-          <p class="text-muted">Click "Load Logs" to view log data.</p>
+        <div id="all-logs" class="border p-3 rounded" style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
+          <p>Log Count: <span id="log-count">0</span></p>
+          <div id="all-logs-table"></div>
         </div>
-        <div id="filtered-logs" class="border p-3 rounded mt-3"
-          style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
-          <p class="text-muted">Click "Load Logs" to view filtered log data.</p>
+
+        <div id="filtered-logs" class="border p-3 rounded mt-3" style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
+          <p>Filtered Log Count: <span id="filtered-log-count">0</span></p>
+          <div id="filtered-logs-table"></div>
         </div>
       </div>
     </div>
@@ -223,8 +224,6 @@
   <footer class="footer mt-5 py-3 bg-light">
     <div class="container text-center">
       <p class="mb-0">Log Viewer &copy; 2025</p>
-      <p>Log Count: <span id="log-count">0</span></p>
-      <p>Filtered Log Count: <span id="filtered-log-count">0</span></p>
     </div>
   </footer>
 
