@@ -188,7 +188,7 @@ const loadLogs = () => {
     .then(response => response.json())
     .then(data => {
       if (!Array.isArray(data)) {
-        document.getElementById("filtered-logs").innerHTML = `< p class="text-danger" > Invalid log format.</p > `;
+        document.getElementById("filtered-logs").innerHTML = `<p class="text-danger"> Invalid log format.</p>`;
         return;
       }
       allLogs = getLogsWithIds(data);
@@ -197,7 +197,7 @@ const loadLogs = () => {
     })
     .catch(err => {
       console.error("Failed to load logs:", err);
-      document.getElementById("filtered-logs").innerHTML = `< p class="text-danger" > Failed to load logs.</p > `;
+      document.getElementById("filtered-logs").innerHTML = `<p class="text-danger"> Failed to load logs.</p>`;
     });
 };
 
