@@ -104,7 +104,7 @@ const renderTable = (logs, id) => {
   table.innerHTML = tableHTML;
 
   // TABLE PAGINATION
-  const rowsPerPage = ROWS_PER_PAGE; 
+  const rowsPerPage = ROWS_PER_PAGE;
   const $rows = $(`#${id}-table tbody tr`);
   const totalRows = $rows.length;
 
@@ -717,6 +717,57 @@ const initializeApp = () => {
       e.stopPropagation(); // Prevent the event from propagating to other handlers
     }
   });
+
+  // Attach event listener for toggling the chatbot panel
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggleBtn = document.getElementById("chatbot-toggle-btn");
+    const chatbotContainer = document.getElementById("chatbot-container");
+    const mainContent = document.getElementById("main-content");
+
+    toggleBtn.addEventListener("click", function () {
+      if (chatbotContainer.classList.contains("d-none")) {
+        // Show chatbot panel and adjust layout
+        chatbotContainer.classList.remove("d-none");
+        chatbotContainer.classList.add("col-md-4");
+        mainContent.classList.remove("col-md-12");
+        mainContent.classList.add("col-md-8");
+      } else {
+        // Hide chatbot panel and expand main content
+        chatbotContainer.classList.remove("col-md-4");
+        chatbotContainer.classList.add("d-none");
+        mainContent.classList.remove("col-md-8");
+        mainContent.classList.add("col-md-12");
+      }
+    });
+  });
+
+  // Attach event listener for sending chatbot messages
+  document.addEventListener("DOMContentLoaded", function(){
+    const sendBtn = document.getElementById("chatbot-send-btn");
+    const inputField = document.getElementById("chatbot-input");
+    const messagesContainer = document.getElementById("chatbot-messages");
+  
+    sendBtn.addEventListener("click", function(){
+      const userInput = inputField.value.trim();
+      if(userInput) {
+        // Append user message
+        const userMessage = document.createElement("div");
+        userMessage.innerHTML = `<strong>You:</strong> ${userInput}`;
+        messagesContainer.appendChild(userMessage);
+  
+        // Clear the input field
+        inputField.value = "";
+  
+        // Simulate a bot response after a short delay
+        setTimeout(() => {
+          const botMessage = document.createElement("div");
+          botMessage.innerHTML = `<strong>Bot:</strong> This is a placeholder response.`;
+          messagesContainer.appendChild(botMessage);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }, 500);
+      }
+    });
+  });  
 
   // Attach event listener for subset table row clicks
   const filteredTable = document.getElementById("filtered-logs-table");

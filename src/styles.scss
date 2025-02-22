@@ -204,3 +204,13 @@ button .svg-icon {
 label.form-check-label {
   margin-right: 0 !important; /* Remove the right margin */
 }
+
+#main-content {
+  transition: width 0.3s ease-in-out;
+}
+
+#chatbot-container {
+  background: #fff;
+  border-left: 1px solid #ddd;
+  transition: all 0.3s ease-in-out;
+}

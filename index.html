@@ -10,129 +10,159 @@
 </head>
 
 <body>
-  <div id="app" class="container mt-3">
-    <!-- Log Viewer Section -->
-    <div class="row justify-content-center">
-      <div class="col-md-10">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="mb-0">Log Viewer</h2>
-          <!-- File Upload -->
-          <div class="form-group">
-            <label for="log-file-input" class="form-label">Upload Log File</label>
-            <input type="file" id="log-file-input" class="form-control" accept=".json">
-          </div>
-        </div>
+  <div class="container mt-3">
+    <div class="row">
+      <!-- Toggle Button (always visible) -->
+      <button id="chatbot-toggle-btn" class="btn btn-primary position-fixed"
+        style="top: 50%; right: 0; z-index: 1100;">Chat</button>
 
-        <!-- Filters bar -->
-        <div class="row g-3 align-items-center mb-4">
-          <div class="col-md-8">
-            <div class="input-group" style="gap: 10px;">
-              <input type="text" id="log-search" class="form-control" placeholder="Search logs...">
-              <button type="submit" class="btn btn-primary enter-button" id="enter-btn">
-                <i class="bi bi-arrow-return-right"></i>
-              </button>
-              <ul class="dropdown-suggestions" id="search-suggestions"></ul>
-            </div>
-          </div>
-          <div class="col-md-1">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="use-regex">
-              <label class="form-check-label" for="use-regex">Use Regex</label>
-            </div>
-          </div>
-          <div class="col-md-1">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="case-sensitive">
-              <label class="form-check-label" for="case-sensitive">Match Case</label>
-            </div>
-          </div>
-        </div>
+      <!-- Main Content Column -->
+      <div id="main-content" class="col-md-12">
+        <div id="app" class="container mt-3">
+          <!-- Log Viewer Section -->
+          <div class="row justify-content-center">
+            <div class="col-md-10">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Log Viewer</h2>
+                <!-- File Upload -->
+                <div class="form-group">
+                  <label for="log-file-input" class="form-label">Upload Log File</label>
+                  <input type="file" id="log-file-input" class="form-control" accept=".json">
+                </div>
+              </div>
 
-        <!-- Premade Filters Dropdown and Add Button -->
-        <div class="dropdown d-flex align-items-center mb-4">
-          <button id="premade-filters-dropdown" class="btn btn-secondary dropdown-toggle w-100" type="button"
-            aria-haspopup="true" aria-expanded="false" data-bs-auto-close="outside">
-            Select Filter Groups
-          </button>
-          <div class="dropdown-menu p-3" aria-labelledby="premade-filters-dropdown"
-            style="max-height: 300px; overflow-y: auto;">
-            <!-- Filter groups will be populated here -->
-          </div>
-          <button id="add-filter-group-btn"
-            class="btn btn-success ml-2 d-flex justify-content-center align-items-center"
-            title="Add Custom Filter Group">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white">
-              <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
-            </svg>
-          </button>
-        </div>
+              <!-- Filters bar -->
+              <div class="row g-3 align-items-center mb-4">
+                <div class="col-md-8">
+                  <div class="input-group" style="gap: 10px;">
+                    <input type="text" id="log-search" class="form-control" placeholder="Search logs...">
+                    <button type="submit" class="btn btn-primary enter-button" id="enter-btn">
+                      <i class="bi bi-arrow-return-right"></i>
+                    </button>
+                    <ul class="dropdown-suggestions" id="search-suggestions"></ul>
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="use-regex">
+                    <label class="form-check-label" for="use-regex">Use Regex</label>
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="case-sensitive">
+                    <label class="form-check-label" for="case-sensitive">Match Case</label>
+                  </div>
+                </div>
+              </div>
 
-        <!-- Modal for Adding Custom Filter Group -->
-        <div id="filterGroupModal" class="modal" tabindex="-1" role="dialog">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Dynamic Title: Add or Edit Custom Filter Group</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
+              <!-- Premade Filters Dropdown and Add Button -->
+              <div class="dropdown d-flex align-items-center mb-4">
+                <button id="premade-filters-dropdown" class="btn btn-secondary dropdown-toggle w-100" type="button"
+                  aria-haspopup="true" aria-expanded="false" data-bs-auto-close="outside">
+                  Select Filter Groups
+                </button>
+                <div class="dropdown-menu p-3" aria-labelledby="premade-filters-dropdown"
+                  style="max-height: 300px; overflow-y: auto;">
+                  <!-- Filter groups will be populated here -->
+                </div>
+                <button id="add-filter-group-btn"
+                  class="btn btn-success ml-2 d-flex justify-content-center align-items-center"
+                  title="Add Custom Filter Group">
+                  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                    fill="white">
+                    <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+                  </svg>
                 </button>
               </div>
-              <div class="modal-body">
-                <form id="filter-group-form">
-                  <div id="filter-title-description" class="d-flex mb-3">
-                    <!-- Title Input -->
-                    <div id="filter-title">
-                      <label for="filter-group-title" class="form-label">Title</label>
-                      <input type="text" id="filter-group-title" class="form-control"
-                        placeholder="Enter a title for the filter group" required>
-                    </div>
 
-                    <!-- Description Input -->
-                    <div id="filter-description">
-                      <label for="filter-group-description" class="form-label">Description</label>
-                      <input type="text" id="filter-group-description" class="form-control"
-                        placeholder="Enter description" required>
+              <!-- Modal for Adding Custom Filter Group -->
+              <div id="filterGroupModal" class="modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Dynamic Title: Add or Edit Custom Filter Group</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <form id="filter-group-form">
+                        <div id="filter-title-description" class="d-flex mb-3">
+                          <!-- Title Input -->
+                          <div id="filter-title">
+                            <label for="filter-group-title" class="form-label">Title</label>
+                            <input type="text" id="filter-group-title" class="form-control"
+                              placeholder="Enter a title for the filter group" required>
+                          </div>
+
+                          <!-- Description Input -->
+                          <div id="filter-description">
+                            <label for="filter-group-description" class="form-label">Description</label>
+                            <input type="text" id="filter-group-description" class="form-control"
+                              placeholder="Enter description" required>
+                          </div>
+                        </div>
+
+                        <!-- Filters List -->
+                        <div id="filter-list" class="mb-3">
+                          <!-- Dynamically added filters go here -->
+                        </div>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+                      <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+                      <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
                     </div>
                   </div>
-
-                  <!-- Filters List -->
-                  <div id="filter-list" class="mb-3">
-                    <!-- Dynamically added filters go here -->
-                  </div>
-                </form>
+                </div>
               </div>
-              <div class="modal-footer">
-                <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-                <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-                <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
+
+              <!-- Log Viewer -->
+              <div id="all-logs-table" class="border p-3 rounded"
+                style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
+                <p class="text-muted">Click "Load Logs" to view log data.</p>
+              </div>
+              <div id="all-logs-pagination" class="d-flex justify-content-center mt-3">
+                <!-- Pagination buttons will be populated here -->
+              </div>
+
+              <div id="filtered-logs-table" class="border p-3 rounded mt-3"
+                style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
+                <p class="text-muted">Click "Load Logs" to view filtered log data.</p>
+              </div>
+              <div id="filtered-logs-pagination" class="d-flex justify-content-center mt-3">
+                <!-- Pagination buttons will be populated here -->
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Log Viewer -->
-        <div id="all-logs-table" class="border p-3 rounded"
-          style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
-          <p class="text-muted">Click "Load Logs" to view log data.</p>
+        <!-- Chatbot Column (initially hidden) -->
+        <div id="chatbot-container" class="col-md-4 d-none">
+          <div id="chatbot-header" class="bg-primary text-white p-2 d-flex justify-content-between align-items-center">
+            <span>Chatbot</span>
+          </div>
+          <div id="chatbot-body" class="p-2" style="height: calc(100vh - 150px); overflow-y: auto;">
+            <div id="chatbot-messages">
+              <p class="text-muted">Hi there! Ask me anything.</p>
+            </div>
+            <div id="chatbot-input-container" class="input-group mt-2">
+              <input type="text" id="chatbot-input" class="form-control" placeholder="Ask a question...">
+              <div class="input-group-append">
+                <button id="chatbot-send-btn" class="btn btn-primary">Send</button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div id="all-logs-pagination" class="d-flex justify-content-center mt-3">
-          <!-- Pagination buttons will be populated here -->
-        </div>
-
-        <div id="filtered-logs-table" class="border p-3 rounded mt-3"
-          style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
-          <p class="text-muted">Click "Load Logs" to view filtered log data.</p>
-        </div>
-        <div id="filtered-logs-pagination" class="d-flex justify-content-center mt-3">
-          <!-- Pagination buttons will be populated here -->
       </div>
     </div>
-  </div>
 
-  <!-- Scripts -->
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script type="module" src="./src/main.js"></script>
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="./src/main.js"></script>
 </body>
 
 </html>
