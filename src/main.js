@@ -742,22 +742,24 @@ const initializeApp = () => {
   });
 
   // Attach event listener for sending chatbot messages
-  document.addEventListener("DOMContentLoaded", function(){
-    const sendBtn = document.getElementById("chatbot-send-btn");
+  document.addEventListener("DOMContentLoaded", function () {
+    const chatbotForm = document.getElementById("chatbot-form");
     const inputField = document.getElementById("chatbot-input");
     const messagesContainer = document.getElementById("chatbot-messages");
-  
-    sendBtn.addEventListener("click", function(){
+
+    chatbotForm.addEventListener("submit", function (event) {
+      event.preventDefault(); // Prevent the default form submission behavior
+
       const userInput = inputField.value.trim();
-      if(userInput) {
+      if (userInput) {
         // Append user message
         const userMessage = document.createElement("div");
         userMessage.innerHTML = `<strong>You:</strong> ${userInput}`;
         messagesContainer.appendChild(userMessage);
-  
+
         // Clear the input field
         inputField.value = "";
-  
+
         // Simulate a bot response after a short delay
         setTimeout(() => {
           const botMessage = document.createElement("div");
@@ -767,7 +769,7 @@ const initializeApp = () => {
         }, 500);
       }
     });
-  });  
+  });
 
   // Attach event listener for subset table row clicks
   const filteredTable = document.getElementById("filtered-logs-table");

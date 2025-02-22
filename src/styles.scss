@@ -158,51 +158,51 @@ button .svg-icon {
 // Remove the margins and paddings from the container and row
 .container {
   margin: 0 auto; /* Center the container */
-  padding: 0; /* Remove padding */
+  padding: 0;
   max-width: 95%; /* Use the full width of the viewport */
 }
 
 .row {
-  margin-left: 0; /* Remove left margin */
-  margin-right: 0; /* Remove right margin */
-  padding: 0; /* Remove any padding */
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0;
 }
 
 // Adjust the column width to make the table expand fully
 .col-md-10 {
-  max-width: 100%; /* Allow it to take the full width */
-  flex: 1 0 auto; /* Let it grow and shrink as needed */
-  padding: 0; /* Remove padding inside the column */
+  max-width: 100%;
+  flex: 1 0 auto;
+  padding: 0;
 }
 
 // Ensure the table container spans the entire width
 #all-logs, #filtered-logs {
-  width: 100%; /* Use full width */
-  padding: 0; /* Remove internal padding */
-  margin: 0; /* Remove external margins */
-  box-sizing: border-box; /* Include padding and border in width calculation */
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 // Remove the left padding or margin for the search bar container
 .col-md-8 {
-  padding-left: 0; /* Remove any padding on the left */
-  margin-left: 0; /* Remove any margin on the left */
+  padding-left: 0;
+  margin-left: 0;
 }
 
 // Ensure the input group aligns to the left
 .input-group {
-  margin-left: 0; /* Remove extra margin */
-  padding-left: 0; /* Ensure no padding on the left */
+  margin-left: 0;
+  padding-left: 0;
 }
 
 .form-group {
-  margin: 0 !important; /* Remove any margins */
-  padding: 0 !important; /* Remove any padding (optional) */
+  margin: 0 !important; 
+  padding: 0 !important;
 }
 
 // Remove extra margin from the "Use Regex" label
 label.form-check-label {
-  margin-right: 0 !important; /* Remove the right margin */
+  margin-right: 0 !important;
 }
 
 #main-content {

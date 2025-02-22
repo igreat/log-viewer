@@ -138,23 +138,24 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Chatbot Column (initially hidden) -->
-        <div id="chatbot-container" class="col-md-4 d-none">
-          <div id="chatbot-header" class="bg-primary text-white p-2 d-flex justify-content-between align-items-center">
-            <span>Chatbot</span>
+      <!-- Chatbot Column (initially hidden) -->
+      <div id="chatbot-container" class="col-md-4 d-none">
+        <div id="chatbot-header" class="bg-primary text-white p-2 d-flex justify-content-between align-items-center">
+          <span>Chatbot</span>
+        </div>
+        <div id="chatbot-body" class="p-2" style="height: calc(100vh - 150px); overflow-y: auto;">
+          <div id="chatbot-messages">
+            <p class="text-muted">Hi there! Ask me anything.</p>
           </div>
-          <div id="chatbot-body" class="p-2" style="height: calc(100vh - 150px); overflow-y: auto;">
-            <div id="chatbot-messages">
-              <p class="text-muted">Hi there! Ask me anything.</p>
+          <form id="chatbot-form" class="input-group mt-2">
+            <label class="sr-only" for="chatbot-input">Message</label>
+            <input type="text" id="chatbot-input" class="form-control" placeholder="Ask a question...">
+            <div class="input-group-append">
+              <button type="submit" id="chatbot-send-btn" class="btn btn-primary">Send</button>
             </div>
-            <div id="chatbot-input-container" class="input-group mt-2">
-              <input type="text" id="chatbot-input" class="form-control" placeholder="Ask a question...">
-              <div class="input-group-append">
-                <button id="chatbot-send-btn" class="btn btn-primary">Send</button>
-              </div>
-            </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
