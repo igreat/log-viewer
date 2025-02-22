@@ -718,8 +718,8 @@ const initializeApp = () => {
     }
   });
 
-  // Attach event listener for toggling the chatbot panel
   document.addEventListener("DOMContentLoaded", function () {
+    // Attach event listener for toggling the chatbot panel
     const toggleBtn = document.getElementById("chatbot-toggle-btn");
     const chatbotContainer = document.getElementById("chatbot-container");
     const mainContent = document.getElementById("main-content");
@@ -739,35 +739,52 @@ const initializeApp = () => {
         mainContent.classList.add("col-md-12");
       }
     });
-  });
 
-  // Attach event listener for sending chatbot messages
-  document.addEventListener("DOMContentLoaded", function () {
+    // Attach event listener for sending chatbot messages
     const chatbotForm = document.getElementById("chatbot-form");
     const inputField = document.getElementById("chatbot-input");
     const messagesContainer = document.getElementById("chatbot-messages");
 
-    chatbotForm.addEventListener("submit", function (event) {
-      event.preventDefault(); // Prevent the default form submission behavior
+    chatbotForm.addEventListener("submit", async function (event) {
+      event.preventDefault(); // Prevent the page from reloading
 
       const userInput = inputField.value.trim();
-      if (userInput) {
-        // Append user message
-        const userMessage = document.createElement("div");
-        userMessage.innerHTML = `<strong>You:</strong> ${userInput}`;
-        messagesContainer.appendChild(userMessage);
+      if (!userInput) return;
 
-        // Clear the input field
-        inputField.value = "";
+      // Append the user's message to the chat area
+      const userMessage = document.createElement("div");
+      userMessage.innerHTML = `<strong>You:</strong> ${userInput}`;
+      messagesContainer.appendChild(userMessage);
+      inputField.value = "";
 
-        // Simulate a bot response after a short delay
-        setTimeout(() => {
-          const botMessage = document.createElement("div");
-          botMessage.innerHTML = `<strong>Bot:</strong> This is a placeholder response.`;
-          messagesContainer.appendChild(botMessage);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }, 500);
+      // Append a temporary "loading" message
+      const loadingMessage = document.createElement("div");
+      loadingMessage.innerHTML = `<strong>Bot:</strong> ...`;
+      messagesContainer.appendChild(loadingMessage);
+
+      try {
+        // Send the message to your Python backend
+        const response = await fetch('http://localhost:8000/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message: userInput })
+        });
+
+        const data = await response.json();
+        if (data.reply) {
+          loadingMessage.innerHTML = `<strong>Bot:</strong> ${data.reply}`;
+        } else {
+          loadingMessage.innerHTML = `<strong>Bot:</strong> Sorry, I couldn't process that.`;
+        }
+      } catch (error) {
+        console.error('Error fetching chatbot response:', error);
+        loadingMessage.innerHTML = `<strong>Bot:</strong> An error occurred.`;
       }
+
+      // Scroll to the bottom of the messages container
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     });
   });
 
