@@ -1,6 +1,5 @@
 import './styles.scss';
-import { Trie } from './Trie';
-import { Node } from './Trie';
+import { Trie, Node } from './Trie';
 
 const ROWS_PER_PAGE = 100; // TODO: make this user configurable
 const TOP_K = 5;
@@ -357,6 +356,27 @@ function addFilterGroup() {
   filterList.insertAdjacentHTML('beforeend', filterHTML);
 }
 
+const addFilterGroupsFromCommand = (newFilterGroups) => {
+  filterGroups = [...filterGroups, ...newFilterGroups];
+
+  // update local storage
+  window.localStorage.setItem('filterGroups', JSON.stringify(filterGroups));
+
+  // refresh the dropdown
+  populateFilterGroups();
+
+  // automatically check the new filter group
+  const index = filterGroups.length - 1;
+  document.getElementById(`filter-group-${index}`).checked = true;
+
+  // update the current filters and apply them to the table
+  currentFilters = filterGroups.flatMap((group, i) => {
+    return document.getElementById(`filter-group-${i}`).checked ? group.filters : [];
+  });
+  applyFilters(currentFilters);
+  updateTextFilter();
+}
+
 const editFilterGroup = (index) => {
   const group = filterGroups[index];
 
@@ -399,14 +419,13 @@ const editFilterGroup = (index) => {
   // Set up modal footer buttons
   const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
   modalFooter.innerHTML = `
-          <div class="d-flex justify-content-between w-100 align-items-center">
-            <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-            <div class="d-flex gap-2">
-              <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-              <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
-            </div>
-          </div>
-          `;
+    <div class="d-flex justify-content-between w-100 align-items-center">
+      <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+      <div class="d-flex gap-2">
+        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+        <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
+      </div>
+    </div>`;
 
   // Attach event listener for adding new filters dynamically
   document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
@@ -773,10 +792,24 @@ const initializeApp = () => {
         });
 
         const data = await response.json();
+
+        console.log(data);
         if (data.reply) {
           loadingMessage.innerHTML = `<strong>Bot:</strong> ${data.reply}`;
         } else {
           loadingMessage.innerHTML = `<strong>Bot:</strong> Sorry, I couldn't process that.`;
+        }
+
+        if (data.actions) {
+          data.actions.forEach(action => {
+            if (action.type === "add_filter") {
+              addFilterGroupsFromCommand(action.body.filter_groups);
+              // confirmation message
+              const botMessage = document.createElement("div");
+              botMessage.innerHTML = `<strong>Bot:</strong> Added filter groups ${action.body.filter_groups.map(group => group.title).join(", ")} ✅`;
+              messagesContainer.appendChild(botMessage);
+            }
+          });
         }
       } catch (error) {
         console.error('Error fetching chatbot response:', error);

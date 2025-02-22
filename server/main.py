@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
+from typing import Optional, Any
 
 # Load the .env file
 load_dotenv()
@@ -27,8 +28,13 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 class ChatRequest(BaseModel):
     message: str
 
+class Action(BaseModel):
+    type: str            # e.g. "add_filter"
+    body: dict[str, Any] # e.g. { "filter_text": "ERROR" }
+
 class ChatResponse(BaseModel):
-    reply: str
+    reply: Optional[str] = None
+    actions: Optional[list[Action]] = None
 
 # Create a route to handle chat messages
 @app.post("/chat", response_model=ChatResponse)
@@ -39,16 +45,54 @@ async def chat_endpoint(request: ChatRequest):
     try:
         # Call OpenAI's ChatCompletion API (using gpt-3.5-turbo model)
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "system", "content": """
+                    You are a helpful assistant integrated with a log viewer tool for Cisco engineers. Your role is to help the user analyze and filter large log files quickly. When the user instructs you to modify filters or perform related actions, you must respond in a strict JSON format. Your JSON response must include:
+
+                        A reply field containing a clear, natural language explanation of what you are doing.
+                        Optionally, an action field if an operation is required (for example, "add_filter").
+                        Optionally, an action_body object with the necessary parameters (for example, { "filter_text": "ERROR" }).
+
+                    For example, if the user asks you to filter for debug logs so that they can see where most debug logs are coming from, you should respond with:
+
+                    {
+                        "reply": "I have added a filter to show only debug logs.",
+                        "actions": [
+                            {
+                            "type": "add_filter",
+                            "body": {
+                                "filter_groups": [
+                                {
+                                    "title": "Debug Logs",
+                                    "description": "Show only debug logs",
+                                    "filters": [
+                                    {
+                                        "text": "DEBUG",
+                                        "regex": false,
+                                        "caseSensitive": false,
+                                        "color": "#FF0000",
+                                        "description": "Show only debug logs"
+                                    }
+                                    ]
+                                }
+                                ]
+                            }
+                            }
+                        ]
+                    }
+                 
+                    The actions and filter_groups can be a lot more complex than this, but this is a simple example. 
+
+                    Always return valid JSON and include only these fields—do not output any additional text. Don't wrap the text in ```json ```
+                """
+                },
                 {"role": "user", "content": request.message},
             ],
-            max_tokens=150
         )
         reply = response.choices[0].message.content.strip()
-        print(f"Reply: {reply}")
-        return ChatResponse(reply=reply)
+        print(reply) 
+        return ChatResponse.model_validate_json(reply)
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Error processing your request")
