@@ -2,6 +2,7 @@ import './styles.scss';
 import { Trie } from './Trie';
 import { Node } from './Trie';
 
+const ROWS_PER_PAGE = 100; // TODO: make this user configurable
 const TOP_K = 5;
 const DEFAULT_FILTER_GROUPS = [
   {
@@ -68,16 +69,25 @@ function highlightText(text, filters) {
 }
 
 const renderTable = (logs, id) => {
-  const table = document.getElementById(id || "filtered-logs");
+  id = id || "filtered-logs";
+  const table = document.getElementById(id + "-table");
+  const pagination = document.getElementById(id + "-pagination");
+
   if (logs.length === 0) {
     table.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
+    pagination.innerHTML = "";
     return;
   }
 
+  // MAIN TABLE
   const headers = Object.keys(logs[0]);
-  const filters = generalFilter && generalFilter.text ? [generalFilter, ...currentFilters] : currentFilters;
+  const filters = generalFilter && generalFilter.text
+    ? [generalFilter, ...currentFilters]
+    : currentFilters;
+
+  const paginationId = "pagination-" + id;
   const tableHTML = `
-    <table class="table table-striped table-bordered text-nowrap small">
+    <table class="table table-striped table-bordered text-nowrap small" id="${id}-table">
       <thead class="table-dark">
         <tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr>
       </thead>
@@ -89,9 +99,81 @@ const renderTable = (logs, id) => {
         `).join('')}
       </tbody>
     </table>
+    <div id="${paginationId}" class="pagination-container mt-2"></div>
   `;
-
   table.innerHTML = tableHTML;
+
+  // TABLE PAGINATION
+  const rowsPerPage = ROWS_PER_PAGE; 
+  const $rows = $(`#${id}-table tbody tr`);
+  const totalRows = $rows.length;
+
+  // only paginate if there are more than one page
+  if (totalRows > rowsPerPage) {
+    const numPages = Math.ceil(totalRows / rowsPerPage);
+    let currentPage = 0;
+
+    function updatePageDisplay(page) {
+      currentPage = page;
+
+      // show only rows for current page
+      $rows.hide().slice(page * rowsPerPage, (page + 1) * rowsPerPage).show();
+
+      // build the navigation bar html
+      const navhtml = `
+        <div class="pagination-controls text-center">
+          <button class="btn btn-secondary prev-page" ${page === 0 ? "disabled" : ""}>Previous</button>
+          <input type="number" class="page-input" value="${page + 1}" min="1" max="${numPages}" 
+                 style="width: 60px; text-align: center; margin: 0 10px;">
+          <span>of ${numPages}</span>
+          <button class="btn btn-secondary next-page" ${page === numPages - 1 ? "disabled" : ""}>Next</button>
+        </div>
+      `
+      // render the navigation bar
+      $(pagination).html(navhtml);
+
+      // Attach click handler for Previous button.
+      $(pagination).find(".prev-page").off("click").on("click", function (e) {
+        e.preventDefault();
+        if (currentPage > 0) {
+          updatePageDisplay(currentPage - 1);
+        }
+      });
+
+      // Attach click handler for Next button.
+      $(pagination).find(".next-page").off("click").on("click", function (e) {
+        e.preventDefault();
+        if (currentPage < numPages - 1) {
+          updatePageDisplay(currentPage + 1);
+        }
+      });
+
+      // Attach change handler for the page number input.
+      $(pagination).find(".page-input").off("change").on("change", function (e) {
+        let newPage = parseInt($(this).val(), 10);
+        if (isNaN(newPage) || newPage < 1) {
+          newPage = 1;
+        } else if (newPage > numPages) {
+          newPage = numPages;
+        }
+        updatePageDisplay(newPage - 1);
+      });
+    }
+
+    // If this is the full table, expose the updater globally.
+    if (id === "all-logs") {
+      window.allLogsPageUpdater = updatePageDisplay;
+    }
+
+    // initialize the first page
+    updatePageDisplay(0);
+  } else {
+    $(pagination).html('');
+    $rows.show();
+    if (id === "all-logs") {
+      window.allLogsPageUpdater = null;
+    }
+  }
 };
 
 // Helper function to add ids to logs
@@ -178,7 +260,6 @@ const applyFilters = (filters) => {
 const updateSearchSuggestions = () => {
   let searchSuggestions = getSearchSuggestions();
   searchSuggestions = searchSuggestions.map(p => p.word);
-  console.log("SEARCH SUGGESTIONS: " + searchSuggestions);
   populateSearchSuggestions(searchSuggestions);
 }
 
@@ -216,7 +297,7 @@ const populateFilterGroups = () => {
           </button>
         </div>
       </div>
-    `;
+  `;
     dropdownMenu.insertAdjacentHTML('beforeend', groupHTML);
   });
 
@@ -318,14 +399,14 @@ const editFilterGroup = (index) => {
   // Set up modal footer buttons
   const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
   modalFooter.innerHTML = `
-    <div class="d-flex justify-content-between w-100 align-items-center">
-      <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-      <div class="d-flex gap-2">
-        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-        <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
-      </div>
-    </div>
-  `;
+          <div class="d-flex justify-content-between w-100 align-items-center">
+            <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+            <div class="d-flex gap-2">
+              <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+              <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
+            </div>
+          </div>
+          `;
 
   // Attach event listener for adding new filters dynamically
   document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
@@ -504,9 +585,7 @@ const populateSearchSuggestions = (results) => {
 
 const updateSearchSugggestionTrie = () => {
   const text = document.getElementById("log-search").value.trim();
-  console.log("UPDATE SUGGESTION TRIE: " + text)
   suggestionTrie.insertWord(text);
-  console.log("TRIE: " + suggestionTrie.root);
   let trieJSON = trieToJSON();
   window.localStorage.setItem('suggestionTrie', JSON.stringify(trieJSON));
 }
@@ -576,9 +655,7 @@ const initializeApp = () => {
     window.localStorage.setItem("suggestionTrie", JSON.stringify(trieToJSON(suggestionTrie)));
   } else {
     let trieJSON = JSON.parse(window.localStorage.getItem("suggestionTrie"));
-    console.log(JSON.stringify(trieJSON));
     suggestionTrie = trieFromJSON(trieJSON);
-    console.log(suggestionTrie.root)
   }
 
   // Attach event listeners for file input
@@ -613,11 +690,11 @@ const initializeApp = () => {
     // Set up modal footer buttons
     const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
     modalFooter.innerHTML = `
-      <div class="d-flex justify-content-between w-100 align-items-center">
-        <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-      </div>
-    `;
+          <div class="d-flex justify-content-between w-100 align-items-center">
+            <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+            <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+          </div>
+          `;
 
     // Attach event listener for dynamically adding filters in the modal
     document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
@@ -642,23 +719,32 @@ const initializeApp = () => {
   });
 
   // Attach event listener for subset table row clicks
-  const filteredTable = document.getElementById("filtered-logs");
+  const filteredTable = document.getElementById("filtered-logs-table");
   if (filteredTable) {
     filteredTable.addEventListener("click", (e) => {
       // Use closest() to ensure we get the row (<tr>) even if a child element was clicked.
       const clickedRow = e.target.closest("tr");
       if (clickedRow && clickedRow.id) {
         const rowId = clickedRow.id;
-        // Locate the corresponding row in the full table using its unique id.
-        const fullRow = document.querySelector(`#all-logs tr#${rowId}`);
-        if (fullRow) {
-          fullRow.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Optionally highlight the full table row temporarily.
-          fullRow.classList.add("highlight");
-          setTimeout(() => {
-            fullRow.classList.remove("highlight");
-          }, 2000);
+        const rowNum = parseInt(rowId.replace("log-", ""), 10)
+        const rowsPerPage = ROWS_PER_PAGE;
+        const targetPage = Math.floor((rowNum - 1) / rowsPerPage);
+
+        // If the full table's pagination updater is available, call it
+        if (window.allLogsPageUpdater) {
+          window.allLogsPageUpdater(targetPage);
         }
+
+        // Wait briefly for the table to update, then scroll to the target row
+        setTimeout(() => {
+          const fullRow = document.querySelector(`#all-logs-table tr#${rowId}`);
+          if (fullRow) {
+            fullRow.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Optionally add a temporary highlight
+            fullRow.classList.add("highlight");
+            setTimeout(() => fullRow.classList.remove("highlight"), 2000);
+          }
+        }, 150); // delay (in milliseconds) may be adjusted as needed
       }
     });
   }
