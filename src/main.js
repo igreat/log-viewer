@@ -354,7 +354,57 @@ const saveDateFilterGroup = () => {
 
 }
 
+const isValidDate = (dateString) => {
+  if (dateString[dateString.length - 1] != 'Z') {
+    return false;
+  }
+  dateString = dateString.substring(0, dateString.length - 1);
+  const DateTimeSplit = dateString.split("T");
+  const Date = DateTimeSplit[0].split("-");
+  const Time = DateTimeSplit[1].split(":");
+
+  if (Date.length != 3 || Time.length != 3) {
+    return false;
+  }
+  if (!(("0000" <= Date[0] && Date[0] <= "9999") && 
+        ("00" <= Date[1] && Date[1] <= "11") && 
+        ("00" <= Date[2] && Date[2] <= "31"))) {
+    return false;
+  }
+  if (!(("00" <= Time[0] && Time[0] <= "59") && 
+        ("00" <= Time[1] && Time[1] <= "59"))) {
+          return false;
+  }
+  const SecondsSplit = Time[2].split(".");
+  if (!(("00" <= SecondsSplit[0] && SecondsSplit[0] <= "59") && 
+        ("000" <= SecondsSplit[1] && SecondsSplit[1] <= "999"))) {
+    return false;
+  }
+  return true;
+}
+
 const applyDateFilter = (log) => {
+  if (!document.getElementById("apply-date-chkbox").checked) {
+    return true;
+  }
+  const fromTimeStamp = document.getElementById("from-timestamp").value;
+  const toTimeStamp = document.getElementById("to-timestamp").value;
+  if (!isValidDate(fromTimeStamp) || !isValidDate(toTimeStamp)) {
+    console.log("INVALID TIMESTAMPS")
+    return false;
+  }
+  console.log(fromTimeStamp);
+  if (fromTimeStamp == "" || toTimeStamp == "") {
+    return true;
+  }
+  const logTimeStamp = log["timestamp"];
+  if (fromTimeStamp <= logTimeStamp && logTimeStamp <= toTimeStamp) {
+    return true;
+  }
+  return false;
+}
+
+const applyDateFilter2 = (log) => {
   const startMonth = parseInt(document.getElementById("start-month-filter")?.value, 10) || 1;
   const startDay = parseInt(document.getElementById("start-day-filter")?.value, 10) || 0;
   const startHour = parseInt(document.getElementById("start-hour-filter")?.value, 10) || 0;
@@ -625,6 +675,26 @@ const initializeApp = () => {
     console.log(suggestionTrie.root)
   }
 
+  if(!window.localStorage.getItem("fromDate")) {
+    window.localStorage.setItem("fromDate", "");
+  } else {
+    document.getElementById("from-timestamp").value = window.localStorage.getItem("fromDate");
+  }
+
+  if (!window.localStorage.getItem("toDate")) {
+    window.localStorage.setItem("toDate", "");
+  } else {
+    document.getElementById("to-timestamp").value = window.localStorage.getItem("toDate");
+  }
+  
+  if(!window.localStorage.getItem("useDate")) {
+    window.localStorage.setItem("useDate", "true");
+  } else if (window.localStorage.getItem("useDate") == "false"){
+    document.getElementById("apply-date-chkbox").checked = false;
+  } else {
+    document.getElementById("apply-date-chkbox").checked = true;
+  }
+
   // Attach event listeners for file input
   document.getElementById("log-file-input").value = '';
   document.getElementById("log-file-input").addEventListener("change", handleFileUpload);
@@ -671,43 +741,25 @@ const initializeApp = () => {
     $('#filterGroupModal').modal('show'); // Show the modal
   });
 
-  document.getElementById("add-time-filter-btn").addEventListener("click", () => {
-
-    document.querySelector("#timeFilterModal .modal-title").textContent = "Add Time Filter";
-
-    document.getElementById("filter-group-title").value = '';
-    document.getElementById("filter-group-description").value = '';
-    document.getElementById("filter-list").innerHTML = '';
-
-    const modalFooter = document.querySelectorAll("#filterGroupModal .modal-footer");
-    modalFooter.innerHTML = `
-      <div class="d-flex justify-content-between w-100 align-items-center">
-        <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-      </div>
-    `;
-    
-    document.getElementById("apply-date-filter-btn").addEventListener("click", () => {
-      applyFilters(currentFilters);
-    });
-
-    document.getElementById("clear-date-filter-btn").addEventListener("click", () => {
-      document.getElementById("start-month-filter").value = "01";
-      document.getElementById("start-day-filter").value = "";
-      document.getElementById("start-hour-filter").value = "";
-      document.getElementById("start-minute-filter").value = "";
-      document.getElementById("start-second-filter").value = "";
-
-      document.getElementById("end-month-filter").value = "12";
-      document.getElementById("end-day-filter").value = "";
-      document.getElementById("end-hour-filter").value = "";
-      document.getElementById("end-minute-filter").value = "";
-      document.getElementById("end-second-filter").value = "";
-    })
-    
-    $('#timeFilterModal').modal('show'); // Show the modal
+  document.getElementById("apply-date-btn").addEventListener("click", () => {
+    applyFilters(currentFilters);
+    console.log(document.getElementById("from-timestamp").value)
+    window.localStorage.setItem("fromDate", document.getElementById("from-timestamp").value);
+    window.localStorage.setItem("toDate", document.getElementById("to-timestamp").value);
+    if (document.getElementById("apply-date-chkbox").checked) {
+      window.localStorage.setItem("useDate", "true");
+    } else {
+      window.localStorage.setItem("useDate", "false");
+    }
   })
 
+  document.getElementById("clear-date-btn").addEventListener("click", () => {
+    document.getElementById("from-timestamp").value = "";
+    document.getElementById("to-timestamp").value = "";
+    window.localStorage.setItem("fromDate", "");
+    window.localStorage.setItem("toDate", "");
+  })
+  
   // Attach event listener for dynamically adding filters in the modal
   document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
 

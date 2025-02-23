@@ -65,14 +65,6 @@
               <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
             </svg>
           </button>
-          <button id="add-time-filter-btn"
-            class="btn btn-success ml-2 d-flex justify-content-center align-items-center"
-            style="background-color: #007bff; border-color: #007bff; color: white;"
-            title="Add Time Filter">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white">
-              <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
-            </svg>
-          </button>
         </div>
 
         <!-- Modal for Adding Custom Filter Group -->
@@ -119,92 +111,19 @@
         </div>
         
         <!-- Modal for Adding Custom Time Filter -->
-        <div id="timeFilterModal" class="modal" tabindex="-1" role="dialog">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Add Time Filter</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <form>
-                  <!-- All Inputs in a Single Line -->
-                  <div class="form-group d-inline-flex align-items-center flex">
-                    <label for="start-month-filter" class="mr-2" class="form-label">Start Month</label>
-                    <select name="start-month-filter" id="start-month-filter" class="form-control w-auto mr-2">
-                      <option value="01">Jan</option>
-                      <option value="02">Feb</option>
-                      <option value="03">Mar</option>
-                      <option value="04">Apr</option>
-                      <option value="05">May</option>
-                      <option value="06">Jun</option>
-                      <option value="07">Jul</option>
-                      <option value="08">Aug</option>
-                      <option value="09">Sep</option>
-                      <option value="10">Oct</option>
-                      <option value="11">Nov</option>
-                      <option value="12">Dec</option>
-                    </select>
-        
-                    <label for="start-day-filter" class="mr-2">Start Day</label>
-                    <input type="text" id="start-day-filter" placeholder="Day" class="form-control w-auto mr-2" required>
-        
-                    <label for="start-hour-filter" class="mr-2">Start Hour</label>
-                    <input type="text" id="start-hour-filter" placeholder="Hour" class="form-control w-auto mr-2" required>
-        
-                    <label for="start-minute-filter" class="mr-2">Start Minute</label>
-                    <input type="text" id="start-minute-filter" placeholder="Minute" class="form-control w-auto mr-2" required>
-        
-                    <label for="start-second-filter" class="mr-2">Start Second</label>
-                    <input type="text" id="start-second-filter" placeholder="Second" class="form-control w-auto" required>
-                  </div>
-                </form>
 
-                <form>
-                  <!-- All Inputs in a Single Line -->
-                  <div class="form-group d-inline-flex align-items-center flex">
-                    <label for="end-month-filter" class="mr-2" class="form-label">End Month</label>
-                    <select name="end-month-filter" id="end-month-filter" class="form-control w-auto mr-2">
-                      <option value="01">Jan</option>
-                      <option value="02">Feb</option>
-                      <option value="03">Mar</option>
-                      <option value="04">Apr</option>
-                      <option value="05">May</option>
-                      <option value="06">Jun</option>
-                      <option value="07">Jul</option>
-                      <option value="08">Aug</option>
-                      <option value="09">Sep</option>
-                      <option value="10">Oct</option>
-                      <option value="11">Nov</option>
-                      <option value="12" selected>Dec</option>
-                    </select>
-        
-                    <label for="end-day-filter" class="mr-2">End Day</label>
-                    <input type="text" id="end-day-filter" placeholder="Day" class="form-control w-auto mr-2" required>
-        
-                    <label for="end-hour-filter" class="mr-2">End Hour</label>
-                    <input type="text" id="end-hour-filter" placeholder="Hour" class="form-control w-auto mr-2" required>
-        
-                    <label for="end-minute-filter" class="mr-2">End Minute</label>
-                    <input type="text" id="end-minute-filter" placeholder="Minute" class="form-control w-auto mr-2" required>
-        
-                    <label for="end-second-filter" class="mr-2">End Second</label>
-                    <input type="text" id="end-second-filter" placeholder="Second" class="form-control w-auto" required>
-                  </div>
-                </form>
-              </div>
-        
-              <div class="modal-footer">
-                <button type="button" id="apply-date-filter-btn" class="btn btn-primary">Apply</button>
-                <!-- <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button> -->
-                <button type="button" id="clear-date-filter-btn" class="btn btn-danger">Clear</button>
-              </div>
-            </div>
+        <div id="timeFilter" class="d-flex align-items-center gap-2 mb-3">
+          <div id="fromTime">
+            <input type="text" id="from-timestamp" placeholder="From" style="width: 210px; height: 35px;">
           </div>
-        </div>
-
+          <div id="toTime">
+            <input type="text" id="to-timestamp" placeholder="To" style="width: 210px; height: 35px;">
+          </div>
+          <button id="apply-date-btn" class="btn btn-primary btn-sm">Apply</button>
+          <button id="clear-date-btn" class="btn btn-danger btn-sm">Clear</button>
+          <input type="checkbox" name="apply-date-chkbox" id="apply-date-chkbox" checked>
+          <label for="apply-date-chkbox">Use Date</label>
+        </div> 
          
         <!-- Log Viewer -->
         <div id="all-logs" class="border p-3 rounded"

@@ -158,3 +158,10 @@ button .svg-icon {
 .highlight {
   background-color: #ffffc5 !important;
 }
+
+#timeFilter {
+  display: flex;
+  align-items: center; /* vertically centers the items */
+  gap: 10px; /* optional spacing between elements */
+  margin-bottom: 20px;
+}
