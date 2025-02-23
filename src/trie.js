@@ -1,3 +1,6 @@
+import { PriorityQueue } from "./priorityQueue.js";
+
+
 export class Node {
   left;
   right;
@@ -86,14 +89,16 @@ export class Trie {
       this._collect(currNode.middle, prefix, matches);
     }
 
-    // sort the matches by frequency
-    matches.sort((a, b) => {
-      return b.freq - a.freq;
-    });
+    const pq = new PriorityQueue(numberOfMatches);
 
-    // return the top numberOfMatches
-    matches = matches.slice(0, numberOfMatches);
-    return matches;
+    matches.forEach((pair) => {
+      console.log(pair.word + " " + pair.freq);
+      pq.insert(pair);
+    })
+
+    const result = pq.getTopResults();
+    console.log(result);
+    return result;
   }
 
   _collect(currNode, word, matches) {

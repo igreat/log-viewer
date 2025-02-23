@@ -185,7 +185,6 @@ const applyFilters = (filters) => {
 const updateSearchSuggestions = () => {
   let searchSuggestions = getSearchSuggestions();
   searchSuggestions = searchSuggestions.map(p => p.word);
-  console.log("SEARCH SUGGESTIONS: " + searchSuggestions);
   populateSearchSuggestions(searchSuggestions);
 }
 
