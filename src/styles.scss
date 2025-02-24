@@ -24,6 +24,10 @@ $breakpoint-lg: 992px;
   }
 }
 
+#timeFilterModal .modal-dialog {
+  max-width: 95%;
+}
+
 #filter-title-description {
   display: flex;
   flex-direction: column;
@@ -153,6 +157,13 @@ button .svg-icon {
 /* Highlight the matching row in all-logs table */
 .highlight {
   background-color: #ffffc5 !important;
+}
+
+#timeFilter {
+  display: flex;
+  align-items: center; /* vertically centers the items */
+  gap: 10px; /* optional spacing between elements */
+  margin-bottom: 20px;
 }
 
 // Remove the margins and paddings from the container and row

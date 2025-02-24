@@ -109,7 +109,22 @@
             </div>
           </div>
         </div>
+        
+        <!-- Modal for Adding Custom Time Filter -->
 
+        <div id="timeFilter" class="d-flex align-items-center gap-2 mb-3">
+          <div id="fromTime">
+            <input type="text" id="from-timestamp" placeholder="From" style="width: 210px; height: 35px;">
+          </div>
+          <div id="toTime">
+            <input type="text" id="to-timestamp" placeholder="To" style="width: 210px; height: 35px;">
+          </div>
+          <button id="apply-date-btn" class="btn btn-primary btn-sm">Apply</button>
+          <button id="clear-date-btn" class="btn btn-danger btn-sm">Clear</button>
+          <input type="checkbox" name="apply-date-chkbox" id="apply-date-chkbox" checked>
+          <label for="apply-date-chkbox">Use Date</label>
+        </div> 
+         
         <!-- Log Viewer -->
         <div id="all-logs-table" class="border p-3 rounded"
           style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
