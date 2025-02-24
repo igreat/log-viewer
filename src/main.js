@@ -2,6 +2,7 @@ import './styles.scss';
 import { Trie } from './Trie';
 import { Node } from './Trie';
 
+const ROWS_PER_PAGE = 100; // TODO: make this user configurable
 const TOP_K = 5;
 const DEFAULT_FILTER_GROUPS = [
   {
@@ -74,10 +75,15 @@ const renderTable = (logs, id) => {
     return;
   }
 
+  // MAIN TABLE
   const headers = Object.keys(logs[0]);
-  const filters = generalFilter && generalFilter.text ? [generalFilter, ...currentFilters] : currentFilters;
+  const filters = generalFilter && generalFilter.text
+    ? [generalFilter, ...currentFilters]
+    : currentFilters;
+
+  const paginationId = "pagination-" + id;
   const tableHTML = `
-    <table class="table table-striped table-bordered text-nowrap small">
+    <table class="table table-striped table-bordered text-nowrap small" id="${id}-table">
       <thead class="table-dark">
         <tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr>
       </thead>
@@ -89,8 +95,8 @@ const renderTable = (logs, id) => {
         `).join('')}
       </tbody>
     </table>
+    <div id="${paginationId}" class="pagination-container mt-2"></div>
   `;
-
   tableContainer.innerHTML = tableHTML;
 };
 
@@ -201,7 +207,6 @@ const applyFilters = (filters) => {
 const updateSearchSuggestions = () => {
   let searchSuggestions = getSearchSuggestions();
   searchSuggestions = searchSuggestions.map(p => p.word);
-  console.log("SEARCH SUGGESTIONS: " + searchSuggestions);
   populateSearchSuggestions(searchSuggestions);
 }
 
@@ -218,6 +223,7 @@ const populateFilterGroups = () => {
   const dropdownMenu = document.querySelector(".dropdown-menu");
   dropdownMenu.innerHTML = ''; // Clear existing items
   filterGroups.forEach((group, index) => {
+    if (!group) return;
     const groupHTML = `
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="form-check flex-grow-1 d-flex">
@@ -239,7 +245,7 @@ const populateFilterGroups = () => {
           </button>
         </div>
       </div>
-    `;
+  `;
     dropdownMenu.insertAdjacentHTML('beforeend', groupHTML);
   });
 
@@ -341,14 +347,14 @@ const editFilterGroup = (index) => {
   // Set up modal footer buttons
   const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
   modalFooter.innerHTML = `
-    <div class="d-flex justify-content-between w-100 align-items-center">
-      <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-      <div class="d-flex gap-2">
-        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-        <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
-      </div>
-    </div>
-  `;
+          <div class="d-flex justify-content-between w-100 align-items-center">
+            <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+            <div class="d-flex gap-2">
+              <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+              <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
+            </div>
+          </div>
+          `;
 
   // Attach event listener for adding new filters dynamically
   document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
@@ -366,11 +372,57 @@ const editFilterGroup = (index) => {
   $('#filterGroupModal').modal('show');
 };
 
-const saveDateFilterGroup = () => {
+const isValidDate = (dateString) => {
+  if (dateString[dateString.length - 1] != 'Z') {
+    return false;
+  }
+  dateString = dateString.substring(0, dateString.length - 1);
+  const DateTimeSplit = dateString.split("T");
+  const Date = DateTimeSplit[0].split("-");
+  const Time = DateTimeSplit[1].split(":");
 
+  if (Date.length != 3 || Time.length != 3) {
+    return false;
+  }
+  if (!(("0000" <= Date[0] && Date[0] <= "9999") &&
+    ("00" <= Date[1] && Date[1] <= "11") &&
+    ("00" <= Date[2] && Date[2] <= "31"))) {
+    return false;
+  }
+  if (!(("00" <= Time[0] && Time[0] <= "59") &&
+    ("00" <= Time[1] && Time[1] <= "59"))) {
+    return false;
+  }
+  const SecondsSplit = Time[2].split(".");
+  if (!(("00" <= SecondsSplit[0] && SecondsSplit[0] <= "59") &&
+    ("000" <= SecondsSplit[1] && SecondsSplit[1] <= "999"))) {
+    return false;
+  }
+  return true;
 }
 
-const applyDateFilter = (log) => {
+const isWithinDate = (log) => {
+  if (!document.getElementById("apply-date-chkbox").checked) {
+    return true;
+  }
+  const fromTimeStamp = document.getElementById("from-timestamp").value;
+  const toTimeStamp = document.getElementById("to-timestamp").value;
+  if (!isValidDate(fromTimeStamp) || !isValidDate(toTimeStamp)) {
+    console.log("INVALID TIMESTAMPS")
+    return false;
+  }
+  console.log(fromTimeStamp);
+  if (fromTimeStamp == "" || toTimeStamp == "") {
+    return true;
+  }
+  const logTimeStamp = log["timestamp"];
+  if (fromTimeStamp <= logTimeStamp && logTimeStamp <= toTimeStamp) {
+    return true;
+  }
+  return false;
+}
+
+const isWithinDate2 = (log) => {
   const startMonth = parseInt(document.getElementById("start-month-filter")?.value, 10) || 1;
   const startDay = parseInt(document.getElementById("start-day-filter")?.value, 10) || 0;
   const startHour = parseInt(document.getElementById("start-hour-filter")?.value, 10) || 0;
@@ -394,12 +446,12 @@ const applyDateFilter = (log) => {
   let second = date.getUTCSeconds();
 
   if ((startMonth <= month && month <= endMonth) &&
-      (startDay <= day && day <= endDay) &&
-      (startHour <= hour && hour <= endHour) &&
-      (startMinute <= minute && minute <= endMinute) &&
-      (startSecond <= second && second <= endSecond)) {
-        return true; 
-      }
+    (startDay <= day && day <= endDay) &&
+    (startHour <= hour && hour <= endHour) &&
+    (startMinute <= minute && minute <= endMinute) &&
+    (startSecond <= second && second <= endSecond)) {
+    return true;
+  }
   return false;
 }
 
@@ -564,9 +616,7 @@ const populateSearchSuggestions = (results) => {
 
 const updateSearchSugggestionTrie = () => {
   const text = document.getElementById("log-search").value.trim();
-  console.log("UPDATE SUGGESTION TRIE: " + text)
   suggestionTrie.insertWord(text);
-  console.log("TRIE: " + suggestionTrie.root);
   let trieJSON = trieToJSON();
   window.localStorage.setItem('suggestionTrie', JSON.stringify(trieJSON));
 }
@@ -636,9 +686,27 @@ const initializeApp = () => {
     window.localStorage.setItem("suggestionTrie", JSON.stringify(trieToJSON(suggestionTrie)));
   } else {
     let trieJSON = JSON.parse(window.localStorage.getItem("suggestionTrie"));
-    console.log(JSON.stringify(trieJSON));
     suggestionTrie = trieFromJSON(trieJSON);
-    console.log(suggestionTrie.root)
+  }
+
+  if (!window.localStorage.getItem("fromDate")) {
+    window.localStorage.setItem("fromDate", "");
+  } else {
+    document.getElementById("from-timestamp").value = window.localStorage.getItem("fromDate");
+  }
+
+  if (!window.localStorage.getItem("toDate")) {
+    window.localStorage.setItem("toDate", "");
+  } else {
+    document.getElementById("to-timestamp").value = window.localStorage.getItem("toDate");
+  }
+
+  if (!window.localStorage.getItem("useDate")) {
+    window.localStorage.setItem("useDate", "true");
+  } else if (window.localStorage.getItem("useDate") == "false") {
+    document.getElementById("apply-date-chkbox").checked = false;
+  } else {
+    document.getElementById("apply-date-chkbox").checked = true;
   }
 
   // Attach event listeners for file input
@@ -673,11 +741,11 @@ const initializeApp = () => {
     // Set up modal footer buttons
     const modalFooter = document.querySelector("#filterGroupModal .modal-footer");
     modalFooter.innerHTML = `
-      <div class="d-flex justify-content-between w-100 align-items-center">
-        <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-      </div>
-    `;
+          <div class="d-flex justify-content-between w-100 align-items-center">
+            <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+            <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+          </div>
+          `;
 
     // Attach event listener for dynamically adding filters in the modal
     document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
@@ -687,41 +755,23 @@ const initializeApp = () => {
     $('#filterGroupModal').modal('show'); // Show the modal
   });
 
-  document.getElementById("add-time-filter-btn").addEventListener("click", () => {
+  document.getElementById("apply-date-btn").addEventListener("click", () => {
+    applyFilters(currentFilters);
+    console.log(document.getElementById("from-timestamp").value)
+    window.localStorage.setItem("fromDate", document.getElementById("from-timestamp").value);
+    window.localStorage.setItem("toDate", document.getElementById("to-timestamp").value);
+    if (document.getElementById("apply-date-chkbox").checked) {
+      window.localStorage.setItem("useDate", "true");
+    } else {
+      window.localStorage.setItem("useDate", "false");
+    }
+  })
 
-    document.querySelector("#timeFilterModal .modal-title").textContent = "Add Time Filter";
-
-    document.getElementById("filter-group-title").value = '';
-    document.getElementById("filter-group-description").value = '';
-    document.getElementById("filter-list").innerHTML = '';
-
-    const modalFooter = document.querySelectorAll("#filterGroupModal .modal-footer");
-    modalFooter.innerHTML = `
-      <div class="d-flex justify-content-between w-100 align-items-center">
-        <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-        <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-      </div>
-    `;
-    
-    document.getElementById("apply-date-filter-btn").addEventListener("click", () => {
-      applyFilters(currentFilters);
-    });
-
-    document.getElementById("clear-date-filter-btn").addEventListener("click", () => {
-      document.getElementById("start-month-filter").value = "01";
-      document.getElementById("start-day-filter").value = "";
-      document.getElementById("start-hour-filter").value = "";
-      document.getElementById("start-minute-filter").value = "";
-      document.getElementById("start-second-filter").value = "";
-
-      document.getElementById("end-month-filter").value = "12";
-      document.getElementById("end-day-filter").value = "";
-      document.getElementById("end-hour-filter").value = "";
-      document.getElementById("end-minute-filter").value = "";
-      document.getElementById("end-second-filter").value = "";
-    })
-    
-    $('#timeFilterModal').modal('show'); // Show the modal
+  document.getElementById("clear-date-btn").addEventListener("click", () => {
+    document.getElementById("from-timestamp").value = "";
+    document.getElementById("to-timestamp").value = "";
+    window.localStorage.setItem("fromDate", "");
+    window.localStorage.setItem("toDate", "");
   })
 
   // Attach event listener for dynamically adding filters in the modal
@@ -739,23 +789,32 @@ const initializeApp = () => {
   });
 
   // Attach event listener for subset table row clicks
-  const filteredTable = document.getElementById("filtered-logs");
+  const filteredTable = document.getElementById("filtered-logs-table");
   if (filteredTable) {
     filteredTable.addEventListener("click", (e) => {
       // Use closest() to ensure we get the row (<tr>) even if a child element was clicked.
       const clickedRow = e.target.closest("tr");
       if (clickedRow && clickedRow.id) {
         const rowId = clickedRow.id;
-        // Locate the corresponding row in the full table using its unique id.
-        const fullRow = document.querySelector(`#all-logs tr#${rowId}`);
-        if (fullRow) {
-          fullRow.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Optionally highlight the full table row temporarily.
-          fullRow.classList.add("highlight");
-          setTimeout(() => {
-            fullRow.classList.remove("highlight");
-          }, 2000);
+        const rowNum = parseInt(rowId.replace("log-", ""), 10)
+        const rowsPerPage = ROWS_PER_PAGE;
+        const targetPage = Math.floor((rowNum - 1) / rowsPerPage);
+
+        // If the full table's pagination updater is available, call it
+        if (window.allLogsPageUpdater) {
+          window.allLogsPageUpdater(targetPage);
         }
+
+        // Wait briefly for the table to update, then scroll to the target row
+        setTimeout(() => {
+          const fullRow = document.querySelector(`#all-logs-table tr#${rowId}`);
+          if (fullRow) {
+            fullRow.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Optionally add a temporary highlight
+            fullRow.classList.add("highlight");
+            setTimeout(() => fullRow.classList.remove("highlight"), 2000);
+          }
+        }, 150); // delay (in milliseconds) may be adjusted as needed
       }
     });
   }
