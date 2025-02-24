@@ -10,12 +10,12 @@
 </head>
 
 <body>
-  <div id="app" class="container mt-5">
+  <div id="app" class="container mt-3">
     <!-- Log Viewer Section -->
     <div class="row justify-content-center">
       <div class="col-md-10">
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="mb-4">Log Viewer</h2>
+          <h2 class="mb-0">Log Viewer</h2>
           <!-- File Upload -->
           <div class="form-group">
             <label for="log-file-input" class="form-label">Upload Log File</label>
@@ -34,13 +34,13 @@
               <ul class="dropdown-suggestions" id="search-suggestions"></ul>
             </div>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-1">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="use-regex">
               <label class="form-check-label" for="use-regex">Use Regex</label>
             </div>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-1">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="case-sensitive">
               <label class="form-check-label" for="case-sensitive">Match Case</label>
@@ -126,14 +126,20 @@
         </div> 
          
         <!-- Log Viewer -->
-        <div id="all-logs" class="border p-3 rounded"
+        <div id="all-logs-table" class="border p-3 rounded"
           style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
           <p class="text-muted">Click "Load Logs" to view log data.</p>
         </div>
-        <div id="filtered-logs" class="border p-3 rounded mt-3"
+        <div id="all-logs-pagination" class="d-flex justify-content-center mt-3">
+          <!-- Pagination buttons will be populated here -->
+        </div>
+
+        <div id="filtered-logs-table" class="border p-3 rounded mt-3"
           style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
           <p class="text-muted">Click "Load Logs" to view filtered log data.</p>
         </div>
+        <div id="filtered-logs-pagination" class="d-flex justify-content-center mt-3">
+          <!-- Pagination buttons will be populated here -->
       </div>
     </div>
   </div>
