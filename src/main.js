@@ -146,38 +146,24 @@ const handleFileUpload = (event) => {
 };
 
 const applyFilters = (filters) => {
-  let filteredLogs = []
-  if (filters.length === 0) {
-    allLogs.forEach((log) => {
-      if (applyDateFilter(log)) {
-        filteredLogs.push(log);
-      }
-    })
-    renderTable(allLogs, "all-logs");
-    renderTable(filteredLogs, "filtered-logs");
-    return;
-  }
+  const filteredLogs = allLogs.filter((log) => {
+    if (!isWithinDate(log)) return false;
+    if (filters.length === 0) return true;
 
-  for (let i = 0; i < allLogs.length; i++) {
-    const log = allLogs[i];
-    if (filters.some(filter => {
-      const { regex, caseSensitive, text } = filter;
-      if (regex) {
-        const pattern = new RegExp(text, caseSensitive ? '' : 'i');
-        return Object.values(log).some(value => pattern.test(String(value)));
-      } else {
-        const searchText = caseSensitive ? text : text.toLowerCase();
-        return Object.values(log).some(value => {
-          const fieldValue = String(value);
-          return caseSensitive ? fieldValue.includes(searchText) : fieldValue.toLowerCase().includes(searchText);
-        });
-      }
-    })) {
-      if (applyDateFilter(log)) {
-        filteredLogs.push(log);
-      }
-    };
-  }
+    return filters.some(({ regex, caseSensitive, text }) => {
+      return Object.values(log).some((value) => {
+        const strValue = String(value);
+        if (regex) {
+          const pattern = new RegExp(text, caseSensitive ? '' : 'i');
+          return pattern.test(strValue);
+        }
+        return caseSensitive
+          ? strValue.includes(text)
+          : strValue.toLowerCase().includes(text.toLowerCase());
+      });
+    });
+  });
+
   renderTable(allLogs, "all-logs");
   renderTable(filteredLogs, "filtered-logs");
 };
@@ -202,6 +188,7 @@ const populateFilterGroups = () => {
   const dropdownMenu = document.querySelector(".dropdown-menu");
   dropdownMenu.innerHTML = ''; // Clear existing items
   filterGroups.forEach((group, index) => {
+    if (!group) return;
     const groupHTML = `
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="form-check flex-grow-1 d-flex">
@@ -350,10 +337,6 @@ const editFilterGroup = (index) => {
   $('#filterGroupModal').modal('show');
 };
 
-const saveDateFilterGroup = () => {
-
-}
-
 const isValidDate = (dateString) => {
   if (dateString[dateString.length - 1] != 'Z') {
     return false;
@@ -366,24 +349,24 @@ const isValidDate = (dateString) => {
   if (Date.length != 3 || Time.length != 3) {
     return false;
   }
-  if (!(("0000" <= Date[0] && Date[0] <= "9999") && 
-        ("00" <= Date[1] && Date[1] <= "11") && 
-        ("00" <= Date[2] && Date[2] <= "31"))) {
+  if (!(("0000" <= Date[0] && Date[0] <= "9999") &&
+    ("00" <= Date[1] && Date[1] <= "11") &&
+    ("00" <= Date[2] && Date[2] <= "31"))) {
     return false;
   }
-  if (!(("00" <= Time[0] && Time[0] <= "59") && 
-        ("00" <= Time[1] && Time[1] <= "59"))) {
-          return false;
+  if (!(("00" <= Time[0] && Time[0] <= "59") &&
+    ("00" <= Time[1] && Time[1] <= "59"))) {
+    return false;
   }
   const SecondsSplit = Time[2].split(".");
-  if (!(("00" <= SecondsSplit[0] && SecondsSplit[0] <= "59") && 
-        ("000" <= SecondsSplit[1] && SecondsSplit[1] <= "999"))) {
+  if (!(("00" <= SecondsSplit[0] && SecondsSplit[0] <= "59") &&
+    ("000" <= SecondsSplit[1] && SecondsSplit[1] <= "999"))) {
     return false;
   }
   return true;
 }
 
-const applyDateFilter = (log) => {
+const isWithinDate = (log) => {
   if (!document.getElementById("apply-date-chkbox").checked) {
     return true;
   }
@@ -404,7 +387,7 @@ const applyDateFilter = (log) => {
   return false;
 }
 
-const applyDateFilter2 = (log) => {
+const isWithinDate2 = (log) => {
   const startMonth = parseInt(document.getElementById("start-month-filter")?.value, 10) || 1;
   const startDay = parseInt(document.getElementById("start-day-filter")?.value, 10) || 0;
   const startHour = parseInt(document.getElementById("start-hour-filter")?.value, 10) || 0;
@@ -428,12 +411,12 @@ const applyDateFilter2 = (log) => {
   let second = date.getUTCSeconds();
 
   if ((startMonth <= month && month <= endMonth) &&
-      (startDay <= day && day <= endDay) &&
-      (startHour <= hour && hour <= endHour) &&
-      (startMinute <= minute && minute <= endMinute) &&
-      (startSecond <= second && second <= endSecond)) {
-        return true; 
-      }
+    (startDay <= day && day <= endDay) &&
+    (startHour <= hour && hour <= endHour) &&
+    (startMinute <= minute && minute <= endMinute) &&
+    (startSecond <= second && second <= endSecond)) {
+    return true;
+  }
   return false;
 }
 
@@ -675,7 +658,7 @@ const initializeApp = () => {
     console.log(suggestionTrie.root)
   }
 
-  if(!window.localStorage.getItem("fromDate")) {
+  if (!window.localStorage.getItem("fromDate")) {
     window.localStorage.setItem("fromDate", "");
   } else {
     document.getElementById("from-timestamp").value = window.localStorage.getItem("fromDate");
@@ -686,10 +669,10 @@ const initializeApp = () => {
   } else {
     document.getElementById("to-timestamp").value = window.localStorage.getItem("toDate");
   }
-  
-  if(!window.localStorage.getItem("useDate")) {
+
+  if (!window.localStorage.getItem("useDate")) {
     window.localStorage.setItem("useDate", "true");
-  } else if (window.localStorage.getItem("useDate") == "false"){
+  } else if (window.localStorage.getItem("useDate") == "false") {
     document.getElementById("apply-date-chkbox").checked = false;
   } else {
     document.getElementById("apply-date-chkbox").checked = true;
@@ -759,7 +742,7 @@ const initializeApp = () => {
     window.localStorage.setItem("fromDate", "");
     window.localStorage.setItem("toDate", "");
   })
-  
+
   // Attach event listener for dynamically adding filters in the modal
   document.getElementById("add-filter-btn").addEventListener("click", addFilterGroup);
 
