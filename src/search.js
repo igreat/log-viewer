@@ -140,13 +140,12 @@ export const isWithinDate = (log) => {
     }
     const fromTimeStamp = document.getElementById("from-timestamp").value;
     const toTimeStamp = document.getElementById("to-timestamp").value;
+    if (fromTimeStamp == "" || toTimeStamp == "") {
+        return true;
+    }
     if (!isValidDate(fromTimeStamp) || !isValidDate(toTimeStamp)) {
         console.log("INVALID TIMESTAMPS")
         return false;
-    }
-    console.log(fromTimeStamp);
-    if (fromTimeStamp == "" || toTimeStamp == "") {
-        return true;
     }
     const logTimeStamp = log["timestamp"];
     if (fromTimeStamp <= logTimeStamp && logTimeStamp <= toTimeStamp) {
