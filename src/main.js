@@ -97,7 +97,6 @@ const renderTable = (logs, id) => {
     </table>
     <div id="${paginationId}" class="pagination-container mt-2"></div>
   `;
-
   tableContainer.innerHTML = tableHTML;
 };
 
