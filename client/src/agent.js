@@ -2,6 +2,20 @@ import { extendFilterGroups } from "./filterGroup";
 
 const AGENT_ENDPOINT = 'http://localhost:8000/chat';
 
+const DEFAULT_ISSUES = {
+    "Missing Media Track Error": {
+        "description": "A media track could not be retrieved by the Media Track Manager, resulting in a 'No Track!' error. This may indicate a failure in creating or negotiating the required media track for a video call.",
+        "context": "This error is logged when the system attempts to retrieve a video track (vid=1) during a media session and finds that no track exists. This might be due to signaling failures, media engine initialization issues, or network problems that prevented proper track creation.",
+        "keywords": {
+            "media": ["CMediaTrackMgr::GetTrack", "No Track!"],
+            "video": ["vid=1"],
+            "session": ["MediaSession"],
+        },
+        "conditions": "This error typically occurs during call setup or renegotiation and may be accompanied by other signaling errors or warnings in the logs.",
+        "resolution": "Investigate preceding log entries for errors in media negotiation or track creation. Ensure that the media engine is properly initialized and that network conditions support the required media streams. Verify configuration settings for media track management.",
+    }
+};
+
 let knownIssues = {};
 
 export const initChatbot = () => {
@@ -102,7 +116,11 @@ export const initChatbot = () => {
     });
 
     // Global variable for storing known issues; load from localStorage if available.
-    knownIssues = JSON.parse(localStorage.getItem("knownIssues")) || {}
+    knownIssues = JSON.parse(localStorage.getItem("knownIssues"));
+    if (!knownIssues) {
+        knownIssues = DEFAULT_ISSUES;
+        localStorage.setItem('knownIssues', JSON.stringify(knownIssues));
+    }
 
     // When the "Add Category" button is clicked, show the issue modal.
     const addCategoryBtn = document.getElementById("add-category-btn");
