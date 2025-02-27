@@ -124,6 +124,57 @@
                 </div>
               </div>
 
+              <!-- Modal for adding categories (chatbot) -->
+              <!-- Modal for Adding an Issue Category -->
+              <div id="issueModal" class="modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-lg" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Add Issue Category</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <form id="issue-form">
+                        <div class="form-group">
+                          <label for="issue-category">Category Name</label>
+                          <input type="text" class="form-control" id="issue-category"
+                            placeholder="e.g. Missing Media Track Error" required>
+                        </div>
+                        <div class="form-group">
+                          <label for="issue-description">Description</label>
+                          <textarea class="form-control" id="issue-description" rows="2"
+                            placeholder="Short description of the issue" required></textarea>
+                        </div>
+                        <div class="form-group">
+                          <label for="issue-context">Context</label>
+                          <textarea class="form-control" id="issue-context" rows="3"
+                            placeholder="Additional context/background" required></textarea>
+                        </div>
+                        <div class="form-group">
+                          <label for="issue-keywords">Keywords (JSON format)</label>
+                          <textarea class="form-control" id="issue-keywords" rows="3"
+                            placeholder='e.g. {"media": ["CMediaTrackMgr::GetTrack", "No Track!"], "video": ["vid=1"]}'
+                            required></textarea>
+                        </div>
+                        <div class="form-group">
+                          <label for="issue-conditions">Conditions (optional)</label>
+                          <input type="text" class="form-control" id="issue-conditions"
+                            placeholder="Any specific conditions">
+                        </div>
+                        <div class="form-group">
+                          <label for="issue-resolution">Resolution (optional)</label>
+                          <input type="text" class="form-control" id="issue-resolution"
+                            placeholder="Recommended resolution steps">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Issue</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Log Viewer -->
               <div id="all-logs-table" class="border p-3 rounded"
                 style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
@@ -167,7 +218,7 @@
               <!-- Options inside input box -->
               <div class="bottom-options">
                 <div class="chatbot-options">
-                  <button type="button" class="chatbot-option">
+                  <button id="add-category-btn" type="button" class="chatbot-option">
                     <span class="material-symbols-outlined">
                       add_circle
                     </span>

@@ -24,6 +24,16 @@ export const initChatbot = () => {
         }
     });
 
+    // Global variable for storing known issues; load from localStorage if available.
+    const knownIssues = JSON.parse(localStorage.getItem("knownIssues")) || {}
+
+    // When the "Add Category" button is clicked, show the issue modal.
+    const addCategoryBtn = document.getElementById("add-category-btn");
+    addCategoryBtn.addEventListener("click", function () {
+        // Show the modal (using Bootstrap's modal method)
+        $('#issueModal').modal('show');
+    });
+
     // Attach event listener for sending chatbot messages
     const chatbotForm = document.getElementById("chatbot-form");
     const inputField = document.getElementById("chatbot-input");
