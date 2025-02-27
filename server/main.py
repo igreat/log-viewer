@@ -31,6 +31,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Define the request and response models
 class ChatRequest(BaseModel):
     message: str
+    known_issues: Optional[dict[str, Any]] = None
 
 
 class Action(BaseModel):
@@ -120,21 +121,6 @@ def extract_top_rows(logs, keywords, top_n=5):
     return extracted
 
 
-known_issues = {
-    "Missing Media Track Error": {
-        "description": "A media track could not be retrieved by the Media Track Manager, resulting in a 'No Track!' error. This may indicate a failure in creating or negotiating the required media track for a video call.",
-        "context": "This error is logged when the system attempts to retrieve a video track (vid=1) during a media session and finds that no track exists. This might be due to signaling failures, media engine initialization issues, or network problems that prevented proper track creation.",
-        "keywords": {
-            "media": ["CMediaTrackMgr::GetTrack", "No Track!"],
-            "video": ["vid=1"],
-            "session": ["MediaSession"],
-        },
-        "conditions": "This error typically occurs during call setup or renegotiation and may be accompanied by other signaling errors or warnings in the logs.",
-        "resolution": "Investigate preceding log entries for errors in media negotiation or track creation. Ensure that the media engine is properly initialized and that network conditions support the required media streams. Verify configuration settings for media track management.",
-    }
-}
-
-
 # TODO: part of the chat request should probably be the logs
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
@@ -149,6 +135,8 @@ async def chat_endpoint(request: ChatRequest):
         # Convert stats to a JSON-formatted string (ensure datetimes are converted to strings)
         stats_str = json.dumps(stats, default=str, indent=2)
 
+        known_issues = request.known_issues if request.known_issues else {}
+        print("known_issues", known_issues)
         issue_context = {}
         for issue, details in known_issues.items():
             extracted_logs = extract_top_rows(logs, details["keywords"])
