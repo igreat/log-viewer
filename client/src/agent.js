@@ -2,6 +2,8 @@ import { extendFilterGroups } from "./filterGroup";
 
 const AGENT_ENDPOINT = 'http://localhost:8000/chat';
 
+let knownIssues = {};
+
 export const initChatbot = () => {
     // Attach event listener for toggling the chatbot panel
     const toggleBtn = document.getElementById("chatbot-toggle-btn");
@@ -22,16 +24,6 @@ export const initChatbot = () => {
             mainContent.classList.remove("col-md-8");
             mainContent.classList.add("col-md-12");
         }
-    });
-
-    // Global variable for storing known issues; load from localStorage if available.
-    const knownIssues = JSON.parse(localStorage.getItem("knownIssues")) || {}
-
-    // When the "Add Category" button is clicked, show the issue modal.
-    const addCategoryBtn = document.getElementById("add-category-btn");
-    addCategoryBtn.addEventListener("click", function () {
-        // Show the modal (using Bootstrap's modal method)
-        $('#issueModal').modal('show');
     });
 
     // Attach event listener for sending chatbot messages
@@ -108,4 +100,67 @@ export const initChatbot = () => {
         // Scroll to the bottom of the messages container
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     });
+
+    // Global variable for storing known issues; load from localStorage if available.
+    knownIssues = JSON.parse(localStorage.getItem("knownIssues")) || {}
+
+    // When the "Add Category" button is clicked, show the issue modal.
+    const addCategoryBtn = document.getElementById("add-category-btn");
+    addCategoryBtn.addEventListener("click", function () {
+        // Show the modal (using Bootstrap's modal method)
+        $('#issueModal').modal('show');
+    });
+
+    // Handle the issue form submission
+    const saveIssueButton = document.getElementById("save-issue-btn");
+    saveIssueButton.addEventListener("click", handleSubmitIssue);
 };
+
+const handleSubmitIssue = (event) => {
+    // Prevent the form from submitting
+    event.preventDefault();
+
+    // Get the form element
+    const form = document.getElementById("issue-form");
+
+    // Get the form values
+    const category = document.getElementById("issue-category").value.trim();
+    const description = document.getElementById("issue-description-input").value.trim();
+    const context = document.getElementById("issue-context").value.trim();
+    const keywordsStr = document.getElementById("issue-keywords").value.trim();
+    const conditions = document.getElementById("issue-conditions").value.trim();
+    const resolution = document.getElementById("issue-resolution").value.trim();
+
+    // Parse keywords JSON.
+    let keywords;
+    try {
+        keywords = JSON.parse(keywordsStr);
+    } catch (error) {
+        alert("Invalid JSON for keywords. Please check your format.");
+        return;
+    }
+
+    // Create the issue object.
+    const issueObj = {
+        description,
+        context,
+        keywords,
+        conditions: conditions || null,
+        resolution: resolution || null
+    };
+
+    // Store in the global knownIssues variable.
+    knownIssues[category] = issueObj;
+
+    // Save to localStorage.
+    localStorage.setItem('knownIssues', JSON.stringify(knownIssues));
+
+    // Close the modal.
+    $('#issueModal').modal('hide');
+
+    // Reset the form.
+    form.reset();
+
+    // For debugging purposes, log the updated known issues.
+    console.log("Known Issues:", knownIssues);
+}

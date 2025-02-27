@@ -124,52 +124,63 @@
                 </div>
               </div>
 
-              <!-- Modal for adding categories (chatbot) -->
-              <!-- Modal for Adding an Issue Category -->
+              <!-- Modal for Adding Issue Category -->
               <div id="issueModal" class="modal" tabindex="-1" role="dialog">
-                <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-dialog" role="document">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <h5 class="modal-title">Add Issue Category</h5>
+                      <h5 class="modal-title">Add or Edit Issue Category</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                       </button>
                     </div>
                     <div class="modal-body">
                       <form id="issue-form">
-                        <div class="form-group">
-                          <label for="issue-category">Category Name</label>
-                          <input type="text" class="form-control" id="issue-category"
-                            placeholder="e.g. Missing Media Track Error" required>
+                        <!-- Row for Category Name and Description -->
+                        <div id="issue-title-description" class="mb-3">
+                          <!-- Category Name Input -->
+                          <div id="issue-title" class="mb-3">
+                            <label for="issue-category" class="form-label">Category Name</label>
+                            <input type="text" id="issue-category" class="form-control"
+                              placeholder="e.g. Missing Media Track Error" required>
+                          </div>
+                          <!-- Description Input -->
+                          <div id="issue-description" class="mb-3">
+                            <label for="issue-description-input" class="form-label">Description</label>
+                            <input type="text" id="issue-description-input" class="form-control"
+                              placeholder="Brief description of the issue" required>
+                          </div>
                         </div>
-                        <div class="form-group">
-                          <label for="issue-description">Description</label>
-                          <textarea class="form-control" id="issue-description" rows="2"
-                            placeholder="Short description of the issue" required></textarea>
+                        <!-- Context Input -->
+                        <div class="mb-3">
+                          <label for="issue-context" class="form-label">Context</label>
+                          <textarea id="issue-context" class="form-control" rows="3"
+                            placeholder="Additional context or background" required></textarea>
                         </div>
-                        <div class="form-group">
-                          <label for="issue-context">Context</label>
-                          <textarea class="form-control" id="issue-context" rows="3"
-                            placeholder="Additional context/background" required></textarea>
-                        </div>
-                        <div class="form-group">
-                          <label for="issue-keywords">Keywords (JSON format)</label>
-                          <textarea class="form-control" id="issue-keywords" rows="3"
-                            placeholder='e.g. {"media": ["CMediaTrackMgr::GetTrack", "No Track!"], "video": ["vid=1"]}'
+                        <!-- Keywords Input (in JSON format) -->
+                        <div class="mb-3">
+                          <label for="issue-keywords" class="form-label">Keywords (JSON format)</label>
+                          <textarea id="issue-keywords" class="form-control" rows="3"
+                            placeholder='e.g. {"media": ["CMediaTrackMgr::GetTrack", "No Track!"], "video": ["vid=1"], "session": ["MediaSession"]}'
                             required></textarea>
                         </div>
-                        <div class="form-group">
-                          <label for="issue-conditions">Conditions (optional)</label>
-                          <input type="text" class="form-control" id="issue-conditions"
-                            placeholder="Any specific conditions">
+                        <!-- Conditions (optional) -->
+                        <div class="mb-3">
+                          <label for="issue-conditions" class="form-label">Conditions (optional)</label>
+                          <input type="text" id="issue-conditions" class="form-control"
+                            placeholder="e.g. Occurs during call setup">
                         </div>
-                        <div class="form-group">
-                          <label for="issue-resolution">Resolution (optional)</label>
-                          <input type="text" class="form-control" id="issue-resolution"
+                        <!-- Resolution (optional) -->
+                        <div class="mb-3">
+                          <label for="issue-resolution" class="form-label">Resolution (optional)</label>
+                          <input type="text" id="issue-resolution" class="form-control"
                             placeholder="Recommended resolution steps">
                         </div>
-                        <button type="submit" class="btn btn-primary">Save Issue</button>
                       </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" id="save-issue-btn" class="btn btn-success">Save</button>
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     </div>
                   </div>
                 </div>
