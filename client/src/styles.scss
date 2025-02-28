@@ -330,3 +330,46 @@ label.form-check-label {
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }
 
+/* Style for category cards to appear modern and clean */
+.category-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.category-info h5 {
+  font-weight: 600;
+}
+
+.category-info p {
+  margin-bottom: 0;
+}
+
+.btn-circle {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ccc; /* light gray border */
+  background-color: #f8f9fa; /* light gray background */
+  color: #555; /* medium gray text */
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.btn-circle:hover {
+  background-color: #e0e0e0; /* slightly darker on hover */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-circle .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 20px;
+}

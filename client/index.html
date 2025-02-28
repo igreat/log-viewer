@@ -185,13 +185,15 @@
                   </div>
                 </div>
               </div>
-
+              
               <!-- Modal for Searching/Editing Categories -->
               <div id="categoriesModal" class="modal" tabindex="-1" role="dialog">
                 <div class="modal-dialog modal-lg" role="document">
                   <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Categories</h5>
+                    <div class="modal-header d-flex align-items-center">
+                      <h5 class="modal-title flex-grow-1">Categories</h5>
+                      <!-- Workspace dropdown -->
+                      <select id="workspace-select" class="form-control w-auto mr-3"></select>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                       </button>
@@ -199,27 +201,9 @@
                     <div class="modal-body">
                       <!-- Category cards container -->
                       <div id="categoriesContainer" class="container">
-                        <!-- Example Category Card -->
-                        <div class="card category-card mb-3" style="cursor: pointer;">
-                          <div class="card-body d-flex justify-content-between align-items-center">
-                            <div class="category-info">
-                              <h5 class="card-title mb-1">Missing Media Track Error</h5>
-                              <p class="card-text small text-muted">Occurs when a video track is not found during a
-                                media session. May indicate negotiation or initialization issues.</p>
-                            </div>
-                            <div class="category-actions d-flex align-items-center">
-                              <!-- Enable/disable toggle -->
-                              <div class="custom-control custom-switch mr-3">
-                                <input type="checkbox" class="custom-control-input" id="category-switch-1" checked>
-                                <label class="custom-control-label" for="category-switch-1"></label>
-                              </div>
-                              <!-- Edit button -->
-                              <button type="button"
-                                class="btn btn-sm btn-outline-primary edit-category-btn">Edit</button>
-                            </div>
-                          </div>
+                        <div class="row" id="categoriesRow">
+                          <!-- Cards inserted here -->
                         </div>
-                        <!-- Duplicate similar card structures for additional categories -->
                       </div>
                     </div>
                     <div class="modal-footer">

@@ -16,7 +16,13 @@ const DEFAULT_ISSUES = {
     }
 };
 
-let knownIssues = {};
+const DEFAULT_WORKSPACES = {
+    "Default Workspace": DEFAULT_ISSUES
+};
+
+let workspaces = {};
+let currentWorkspace = "Default Workspace";
+// let knownIssues = {};
 
 export const initChatbot = () => {
     // Attach event listener for toggling the chatbot panel
@@ -69,7 +75,7 @@ export const initChatbot = () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ message: userInput, known_issues: knownIssues })
+                body: JSON.stringify({ message: userInput, known_issues: workspaces[currentWorkspace] })
             });
 
             const data = await response.json();
@@ -115,17 +121,19 @@ export const initChatbot = () => {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     });
 
-    // Global variable for storing known issues; load from localStorage if available.
-    knownIssues = JSON.parse(localStorage.getItem("knownIssues"));
-    if (!knownIssues) {
-        knownIssues = DEFAULT_ISSUES;
-        localStorage.setItem('knownIssues', JSON.stringify(knownIssues));
+    // Load workspaces from localStorage or initialize
+    workspaces = JSON.parse(localStorage.getItem("workspaces"));
+    if (!workspaces) {
+        workspaces = DEFAULT_WORKSPACES;
+        localStorage.setItem("workspaces", JSON.stringify(workspaces));
     }
 
     // When the "Add Category" button is clicked, show the issue modal.
     const addCategoryBtn = document.getElementById("add-category-btn");
     addCategoryBtn.addEventListener("click", function () {
-        // Show the modal (using Bootstrap's modal method)
+        const form = document.getElementById("issue-form");
+        form.reset();
+        window.currentEditingCategory = null;
         $('#issueModal').modal('show');
     });
 
@@ -139,54 +147,157 @@ export const initChatbot = () => {
     // Handle the issue form submission
     const saveIssueButton = document.getElementById("save-issue-btn");
     saveIssueButton.addEventListener("click", handleSubmitIssue);
+
+    populateWorkspaceDropdown();
+    attachWorkspaceSelectListener();
 };
 
-// Loads all known issues from localStorage (or the global variable) into the categories modal as cards.
-const loadCategoriesModal = () => {
-    const categoriesContainer = document.getElementById("categoriesContainer");
-    categoriesContainer.innerHTML = ""; // Clear existing content.
+// Populate the workspace dropdown with existing workspaces plus an "Add New Workspace" option.
+const populateWorkspaceDropdown = () => {
+    const workspaceSelect = document.getElementById("workspace-select");
+    workspaceSelect.innerHTML = ""; // Clear existing options.
 
-    for (const category in knownIssues) {
-        if (knownIssues.hasOwnProperty(category)) {
-            const issue = knownIssues[category];
-            const cardHtml = `
-                <div class="card category-card mb-3" style="cursor: pointer;">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                    <div class="category-info">
+    // Add an option for each workspace.
+    for (const ws in workspaces) {
+        if (workspaces.hasOwnProperty(ws)) {
+            const option = document.createElement("option");
+            option.value = ws;
+            option.textContent = ws;
+            if (ws === currentWorkspace) option.selected = true;
+            workspaceSelect.appendChild(option);
+        }
+    }
+
+    // Add the "Add New Workspace" option at the bottom.
+    const addOption = document.createElement("option");
+    addOption.value = "ADD_NEW_WORKSPACE";
+    addOption.textContent = "Add New Workspace...";
+    workspaceSelect.appendChild(addOption);
+};
+
+// Attach an event listener to handle workspace selection changes.
+const attachWorkspaceSelectListener = () => {
+    const workspaceSelect = document.getElementById("workspace-select");
+    workspaceSelect.addEventListener("change", (e) => {
+        if (e.target.value === "ADD_NEW_WORKSPACE") {
+            // Prompt the user for a new workspace name.
+            const newWorkspace = prompt("Enter new workspace name:");
+            if (newWorkspace) {
+                // If the new workspace doesn't already exist, add it.
+                if (!workspaces[newWorkspace]) {
+                    workspaces[newWorkspace] = {};
+                    localStorage.setItem("workspaces", JSON.stringify(workspaces));
+                }
+                currentWorkspace = newWorkspace;
+                // Update the dropdown to reflect the new workspace.
+                populateWorkspaceDropdown();
+                // Optionally, update any UI that depends on the current workspace.
+                loadCategoriesModal();
+            } else {
+                // If no name was provided, revert to the current workspace.
+                workspaceSelect.value = currentWorkspace;
+            }
+        } else {
+            // Otherwise, update the current workspace and reload the categories.
+            currentWorkspace = e.target.value;
+            loadCategoriesModal();
+        }
+    });
+};
+
+
+const loadCategoriesModal = () => {
+    // Populate workspace dropdown at the top.
+    populateWorkspaceDropdown();
+
+    const categoriesRow = document.getElementById("categoriesRow");
+    categoriesRow.innerHTML = ""; // Clear existing content.
+
+    // Use issues from the currently selected workspace.
+    const issues = workspaces[currentWorkspace] || {};
+
+    for (const category in issues) {
+        if (issues.hasOwnProperty(category)) {
+            const issue = issues[category];
+            const colHtml = `
+                <div class="col-sm-6 col-md-4 mb-3">
+                <div class="card category-card h-100" style="cursor: pointer;">
+                    <div class="card-body d-flex flex-column">
+                    <div class="category-info mb-3">
                         <h5 class="card-title mb-1">${category}</h5>
                         <p class="card-text small text-muted">${issue.description}</p>
                     </div>
-                    <div class="category-actions d-flex align-items-center">
-                        <div class="custom-control custom-switch mr-3">
-                        <input type="checkbox" class="custom-control-input" id="category-switch-${category}" checked>
-                        <label class="custom-control-label" for="category-switch-${category}"></label>
+                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="category-switch-${category}" checked>
+                        <label class="form-check-label" for="category-switch-${category}"></label>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-primary edit-category-btn">Edit</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary edit-category-btn btn-circle">
+                        <span class="material-symbols-outlined">edit</span>
+                        </button>
                     </div>
                     </div>
                 </div>
+                </div>
             `;
-            categoriesContainer.insertAdjacentHTML('beforeend', cardHtml);
+            categoriesRow.insertAdjacentHTML('beforeend', colHtml);
         }
     }
+
+    let editFromCategories = false;
+
+    // attach edit button event:
+    document.querySelectorAll(".edit-category-btn").forEach(btn => {
+        btn.addEventListener("click", function (event) {
+            event.stopPropagation(); // Prevent card click event
+            const card = btn.closest(".category-card");
+            const categoryName = card.querySelector(".card-title").textContent.trim();
+            // Set flag so that when the edit modal is closed, the categories modal reopens.
+            editFromCategories = true;
+            $('#categoriesModal').modal('hide');
+            openEditIssueModal(categoryName);
+        });
+    });
+
+    // When the issue modal is hidden (closed via save or cancel), check the flag.
+    $('#issueModal').on('hidden.bs.modal', function () {
+        if (editFromCategories) {
+            // Refresh the Categories modal content
+            loadCategoriesModal();
+            $('#categoriesModal').modal('show');
+            editFromCategories = false; // Reset the flag.
+        }
+    });
+};
+
+const openEditIssueModal = (category) => {
+    const issue = workspaces[currentWorkspace][category];
+    document.getElementById("issue-category").value = category;
+    document.getElementById("issue-description-input").value = issue.description || "";
+    document.getElementById("issue-context").value = issue.context || "";
+    document.getElementById("issue-keywords").value = JSON.stringify(issue.keywords, null, 2);
+    document.getElementById("issue-conditions").value = issue.conditions || "";
+    document.getElementById("issue-resolution").value = issue.resolution || "";
+
+    // Set a global flag for editing.
+    window.currentEditingCategory = category;
+
+    // Hide the categories modal and show the edit modal.
+    $('#categoriesModal').modal('hide');
+    $('#issueModal').modal('show');
 };
 
 const handleSubmitIssue = (event) => {
-    // Prevent the form from submitting
     event.preventDefault();
 
-    // Get the form element
     const form = document.getElementById("issue-form");
-
-    // Get the form values
-    const category = document.getElementById("issue-category").value.trim();
+    const newCategory = document.getElementById("issue-category").value.trim();
     const description = document.getElementById("issue-description-input").value.trim();
     const context = document.getElementById("issue-context").value.trim();
     const keywordsStr = document.getElementById("issue-keywords").value.trim();
     const conditions = document.getElementById("issue-conditions").value.trim();
     const resolution = document.getElementById("issue-resolution").value.trim();
 
-    // Parse keywords JSON.
     let keywords;
     try {
         keywords = JSON.parse(keywordsStr);
@@ -195,7 +306,6 @@ const handleSubmitIssue = (event) => {
         return;
     }
 
-    // Create the issue object.
     const issueObj = {
         description,
         context,
@@ -204,18 +314,23 @@ const handleSubmitIssue = (event) => {
         resolution: resolution || null
     };
 
-    // Store in the global knownIssues variable.
-    knownIssues[category] = issueObj;
+    // If editing an existing category, remove old entry if the title has changed.
+    if (window.currentEditingCategory) {
+        if (window.currentEditingCategory !== newCategory) {
+            delete workspaces[currentWorkspace][window.currentEditingCategory];
+        }
+        workspaces[currentWorkspace][newCategory] = issueObj;
+        window.currentEditingCategory = null;
+    } else {
+        // Add a new issue in the current workspace.
+        workspaces[currentWorkspace][newCategory] = issueObj;
+    }
 
-    // Save to localStorage.
-    localStorage.setItem('knownIssues', JSON.stringify(knownIssues));
-
-    // Close the modal.
+    localStorage.setItem('workspaces', JSON.stringify(workspaces));
     $('#issueModal').modal('hide');
-
-    // Reset the form.
     form.reset();
 
-    // For debugging purposes, log the updated known issues.
-    console.log("Known Issues:", knownIssues);
-}
+    // Refresh the categories modal UI.
+    loadCategoriesModal();
+    console.log("Updated Workspaces:", workspaces);
+};
