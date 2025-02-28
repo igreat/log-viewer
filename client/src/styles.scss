@@ -373,3 +373,35 @@ label.form-check-label {
   font-size: 20px;
   line-height: 20px;
 }
+
+/* Wrapper to position the arrow over the select */
+.dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+/* Minimalistic dropdown with an underline */
+.minimal-dropdown {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid currentColor; /* Underline */
+  font-size: 1rem;
+  color: inherit; /* Inherit color (white for header, dark for modal) */
+  padding: 0.25rem 2rem 0.25rem 0.5rem; /* extra right padding for the arrow */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+
+/* The downward arrow positioned at the right end */
+.dropdown-arrow {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 0.75rem;
+  color: inherit;
+}

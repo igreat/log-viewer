@@ -149,6 +149,7 @@ export const initChatbot = () => {
     saveIssueButton.addEventListener("click", handleSubmitIssue);
 
     populateWorkspaceDropdown();
+    populateChatbotWorkspaceDropdown();
     attachWorkspaceSelectListener();
 };
 
@@ -175,6 +176,51 @@ const populateWorkspaceDropdown = () => {
     workspaceSelect.appendChild(addOption);
 };
 
+// Populate the workspace dropdown in the chatbot header.
+const populateChatbotWorkspaceDropdown = () => {
+    const workspaceSelect = document.getElementById("chatbot-workspace-select");
+    workspaceSelect.innerHTML = ""; // Clear existing options.
+
+    // Add an option for each workspace.
+    for (const ws in workspaces) {
+        if (workspaces.hasOwnProperty(ws)) {
+            const option = document.createElement("option");
+            option.value = ws;
+            option.textContent = ws;
+            if (ws === currentWorkspace) option.selected = true;
+            workspaceSelect.appendChild(option);
+        }
+    }
+
+    // Add the "Add New Workspace" option.
+    const addOption = document.createElement("option");
+    addOption.value = "ADD_NEW_WORKSPACE";
+    addOption.textContent = "Add New Workspace...";
+    workspaceSelect.appendChild(addOption);
+
+    // Attach change event.
+    workspaceSelect.addEventListener("change", (e) => {
+        if (e.target.value === "ADD_NEW_WORKSPACE") {
+            const newWorkspace = prompt("Enter new workspace name:");
+            if (newWorkspace) {
+                if (!workspaces[newWorkspace]) {
+                    workspaces[newWorkspace] = {};
+                    localStorage.setItem("workspaces", JSON.stringify(workspaces));
+                }
+                currentWorkspace = newWorkspace;
+                populateChatbotWorkspaceDropdown(); // Refresh dropdown.
+                // Optionally, you can update any UI elements dependent on the current workspace.
+            } else {
+                // Revert to the current workspace.
+                workspaceSelect.value = currentWorkspace;
+            }
+        } else {
+            currentWorkspace = e.target.value;
+            // Optionally update UI based on new currentWorkspace.
+        }
+    });
+};
+
 // Attach an event listener to handle workspace selection changes.
 const attachWorkspaceSelectListener = () => {
     const workspaceSelect = document.getElementById("workspace-select");
@@ -191,6 +237,7 @@ const attachWorkspaceSelectListener = () => {
                 currentWorkspace = newWorkspace;
                 // Update the dropdown to reflect the new workspace.
                 populateWorkspaceDropdown();
+                populateChatbotWorkspaceDropdown();
                 // Optionally, update any UI that depends on the current workspace.
                 loadCategoriesModal();
             } else {
