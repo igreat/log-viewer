@@ -129,9 +129,46 @@ export const initChatbot = () => {
         $('#issueModal').modal('show');
     });
 
+    // When the "Search Categories" button is clicked, load known issues into the categories modal and show it.
+    const searchCategoriesBtn = document.getElementById("search-categories-btn");
+    searchCategoriesBtn.addEventListener("click", function () {
+        loadCategoriesModal();
+        $('#categoriesModal').modal('show');
+    });
+
     // Handle the issue form submission
     const saveIssueButton = document.getElementById("save-issue-btn");
     saveIssueButton.addEventListener("click", handleSubmitIssue);
+};
+
+// Loads all known issues from localStorage (or the global variable) into the categories modal as cards.
+const loadCategoriesModal = () => {
+    const categoriesContainer = document.getElementById("categoriesContainer");
+    categoriesContainer.innerHTML = ""; // Clear existing content.
+
+    for (const category in knownIssues) {
+        if (knownIssues.hasOwnProperty(category)) {
+            const issue = knownIssues[category];
+            const cardHtml = `
+                <div class="card category-card mb-3" style="cursor: pointer;">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                    <div class="category-info">
+                        <h5 class="card-title mb-1">${category}</h5>
+                        <p class="card-text small text-muted">${issue.description}</p>
+                    </div>
+                    <div class="category-actions d-flex align-items-center">
+                        <div class="custom-control custom-switch mr-3">
+                        <input type="checkbox" class="custom-control-input" id="category-switch-${category}" checked>
+                        <label class="custom-control-label" for="category-switch-${category}"></label>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary edit-category-btn">Edit</button>
+                    </div>
+                    </div>
+                </div>
+            `;
+            categoriesContainer.insertAdjacentHTML('beforeend', cardHtml);
+        }
+    }
 };
 
 const handleSubmitIssue = (event) => {
