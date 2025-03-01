@@ -52,72 +52,72 @@ export const initChatbot = () => {
     const messagesContainer = document.getElementById("chatbot-messages");
 
     chatbotForm.addEventListener("submit", async function (event) {
-        event.preventDefault(); // Prevent the page from reloading
+        event.preventDefault(); // Prevent page reload
 
         const userInput = inputField.value.trim();
         if (!userInput) return;
 
-        // Append the user's message to the chat area
+        // Create and append a user message bubble.
         const userMessage = document.createElement("div");
-        userMessage.innerHTML = `<strong>You:</strong> ${userInput}`;
+        userMessage.className = "chat-message user";
+        userMessage.textContent = userInput;
         messagesContainer.appendChild(userMessage);
         inputField.value = "";
 
-        // Append a temporary "loading" message
+        // Create a loading bot message bubble.
         const loadingMessage = document.createElement("div");
-        loadingMessage.innerHTML = `<strong>Bot:</strong> ...`;
+        loadingMessage.className = "chat-message bot";
+        loadingMessage.textContent = "...";
         messagesContainer.appendChild(loadingMessage);
 
         try {
-            // Send the message to your Python backend
+            // Send the message to your Python backend including known issues.
             const response = await fetch(AGENT_ENDPOINT, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: userInput, known_issues: workspaces[currentWorkspace] })
             });
 
             const data = await response.json();
             console.log(data);
 
-            // Display the bot's reply if available
+            // Replace the loading bubble with the bot's reply.
             if (data.reply) {
-                loadingMessage.innerHTML = `<strong>Bot:</strong> ${data.reply}`;
+                loadingMessage.textContent = data.reply;
             } else {
-                loadingMessage.innerHTML = `<strong>Bot:</strong> Sorry, I couldn't process that.`;
+                loadingMessage.textContent = "Sorry, I couldn't process that.";
             }
 
-            // Process each action from the response
+            // Process each action from the response.
             if (data.actions) {
                 data.actions.forEach(action => {
                     if (action.type === "add_filter") {
                         extendFilterGroups(action.body.filter_groups);
-                        // Confirmation message for adding filter groups
                         const botMessage = document.createElement("div");
-                        botMessage.innerHTML = `<strong>Bot:</strong> Added filter groups ${action.body.filter_groups.map(group => group.title).join(", ")} ✅`;
+                        botMessage.className = "chat-message bot";
+                        botMessage.textContent = `Added filter groups ${action.body.filter_groups.map(group => group.title).join(", ")}.`;
                         messagesContainer.appendChild(botMessage);
                     } else if (action.type === "generate_summary") {
-                        // Handle generate_summary action
-                        const overview = action.body.overview;
-                        const summaryMessage = document.createElement("div");
-                        summaryMessage.innerHTML = `<strong>Bot Summary:</strong> ${overview}`;
-                        messagesContainer.appendChild(summaryMessage);
+                        const botMessage = document.createElement("div");
+                        botMessage.className = "chat-message bot";
+                        botMessage.textContent = action.body.overview;
+                        messagesContainer.appendChild(botMessage);
                     } else if (action.type === "flag_issue") {
                         const { issue_category, summary_of_issue, resolution } = action.body;
-                        const issueMessage = document.createElement("div");
-                        issueMessage.innerHTML = `<strong>Bot:</strong> Detected issue: ${issue_category}:<br>${summary_of_issue}<br><br>Resolution: ${resolution}`;
-                        messagesContainer.appendChild(issueMessage);
+                        const botMessage = document.createElement("div");
+                        botMessage.className = "chat-message bot";
+                        botMessage.innerHTML = `Detected issue: ${issue_category}:<br>${summary_of_issue}<br><br>Resolution: ${resolution}`;
+                        messagesContainer.appendChild(botMessage);
                     }
-                    // Can add more actions here...
+                    // Additional actions can be handled here.
                 });
             }
         } catch (error) {
             console.error('Error fetching chatbot response:', error);
-            loadingMessage.innerHTML = `<strong>Bot:</strong> An error occurred.`;
+            loadingMessage.textContent = "An error occurred.";
         }
 
-        // Scroll to the bottom of the messages container
+        // Scroll to the bottom of the messages container.
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     });
 

@@ -214,15 +214,24 @@ label.form-check-label {
   transition: width 0.3s ease-in-out;
 }
 
-.chatbot-wrapper {
-  max-width: 600px;
-  margin: auto;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  height: 90vh;
-  justify-content: space-between;
-  font-size: 6px;
+#chatbot-container {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 0;
+}
+
+/* Chatbot header styling */
+#chatbot-header {
+  background: #4a4a4a; /* Neutral dark gray */
+  color: #ffffff;
+  padding: 10px 20px;
+  font-family: "Roboto", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  border-bottom: 1px solid #ddd;
 }
 
 .chatbot-title {
@@ -404,4 +413,39 @@ label.form-check-label {
   pointer-events: none;
   font-size: 0.75rem;
   color: inherit;
+}
+
+/* Chat message bubble styling */
+.chat-message {
+  max-width: 75%;
+  padding: 10px 15px;
+  border-radius: 18px;
+  margin: 8px 0;
+  clear: both;
+  font-family: "Roboto", sans-serif;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+/* User messages: greenish bubble on the right */
+.chat-message.user {
+  background-color: #dcf8c6;
+  float: right;
+  text-align: right;
+  border-bottom-right-radius: 0;
+}
+
+/* Bot messages: light gray bubble on the left */
+.chat-message.bot {
+  background-color: #f1f0f0;
+  float: left;
+  text-align: left;
+  border-bottom-left-radius: 0;
+}
+
+/* Ensure the messages container clears floats */
+#chatbot-messages::after {
+  content: "";
+  display: table;
+  clear: both;
 }
