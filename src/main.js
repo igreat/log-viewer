@@ -69,8 +69,13 @@ function highlightText(text, filters) {
 }
 
 const renderTable = (logs, id) => {
+  id = id || "filtered-logs";
+  const table = document.getElementById(id + "-table");
+  const pagination = document.getElementById(id + "-pagination");
   const tableContainer = document.getElementById(id === "all-logs" ? "all-logs-table" : "filtered-logs-table");
   if (logs.length === 0) {
+    table.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
+    pagination.innerHTML = "";
     tableContainer.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
     return;
   }
@@ -97,6 +102,79 @@ const renderTable = (logs, id) => {
     </table>
     <div id="${paginationId}" class="pagination-container mt-2"></div>
   `;
+   table.innerHTML = tableHTML;
+
+  // TABLE PAGINATION
+  const rowsPerPage = ROWS_PER_PAGE; 
+  const $rows = $(`#${id}-table tbody tr`);
+  const totalRows = $rows.length;
+
+  // only paginate if there are more than one page
+  if (totalRows > rowsPerPage) {
+    const numPages = Math.ceil(totalRows / rowsPerPage);
+    let currentPage = 0;
+
+    function updatePageDisplay(page) {
+      currentPage = page;
+
+      // show only rows for current page
+      $rows.hide().slice(page * rowsPerPage, (page + 1) * rowsPerPage).show();
+
+      // build the navigation bar html
+      const navhtml = `
+        <div class="pagination-controls text-center">
+          <button class="btn btn-secondary prev-page" ${page === 0 ? "disabled" : ""}>Previous</button>
+          <input type="number" class="page-input" value="${page + 1}" min="1" max="${numPages}" 
+                 style="width: 60px; text-align: center; margin: 0 10px;">
+          <span>of ${numPages}</span>
+          <button class="btn btn-secondary next-page" ${page === numPages - 1 ? "disabled" : ""}>Next</button>
+        </div>
+      `
+      // render the navigation bar
+      $(pagination).html(navhtml);
+
+      // Attach click handler for Previous button.
+      $(pagination).find(".prev-page").off("click").on("click", function (e) {
+        e.preventDefault();
+        if (currentPage > 0) {
+          updatePageDisplay(currentPage - 1);
+        }
+      });
+
+      // Attach click handler for Next button.
+      $(pagination).find(".next-page").off("click").on("click", function (e) {
+        e.preventDefault();
+        if (currentPage < numPages - 1) {
+          updatePageDisplay(currentPage + 1);
+        }
+      });
+
+      // Attach change handler for the page number input.
+      $(pagination).find(".page-input").off("change").on("change", function (e) {
+        let newPage = parseInt($(this).val(), 10);
+        if (isNaN(newPage) || newPage < 1) {
+          newPage = 1;
+        } else if (newPage > numPages) {
+          newPage = numPages;
+        }
+        updatePageDisplay(newPage - 1);
+      });
+    }
+
+    // If this is the full table, expose the updater globally.
+    if (id === "all-logs") {
+      window.allLogsPageUpdater = updatePageDisplay;
+    }
+
+    // initialize the first page
+    updatePageDisplay(0);
+  } else {
+    $(pagination).html('');
+    $rows.show();
+    if (id === "all-logs") {
+      window.allLogsPageUpdater = null;
+    }
+  }
   tableContainer.innerHTML = tableHTML;
 };
 
@@ -166,6 +244,23 @@ const handleFileUpload = (event) => {
 };
 
 const applyFilters = (filters) => {
+  const filteredLogs = allLogs.filter((log) => {
+    if (!isWithinDate(log)) return false;
+    if (filters.length === 0) return true;
+
+    return filters.some(({ regex, caseSensitive, text }) => {
+      return Object.values(log).some((value) => {
+        const strValue = String(value);
+        if (regex) {
+          const pattern = new RegExp(text, caseSensitive ? '' : 'i');
+          return pattern.test(strValue);
+        }
+        return caseSensitive
+          ? strValue.includes(text)
+          : strValue.toLowerCase().includes(text.toLowerCase());
+      });
+    });
+  });
   let filteredLogs = []
   if (filters.length === 0) {
     allLogs.forEach((log) => {
