@@ -1,7 +1,8 @@
 import { applyFilters } from "./logService.js";
 import { currentFilters } from "./filterGroup.js";
 import { TOP_K } from "./utils.js";
-import { Trie, Node } from "./Trie";
+import Trie from "./Trie.js";
+import { Node } from "./Trie.js";
 
 let suggestionTrie = new Trie();
 

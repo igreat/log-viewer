@@ -1,6 +1,6 @@
 import { Pair } from "./Trie.js";
 
-export class PriorityQueue {
+export default class PriorityQueue {
     heap;
     maxSize;
     n;
