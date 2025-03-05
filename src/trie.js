@@ -1,4 +1,6 @@
-import { PriorityQueue } from "./PriorityQueue.js";
+import  PriorityQueue from "./PriorityQueue.js";
+
+
 export class Node {
   left;
   right;
@@ -22,7 +24,7 @@ export class Pair {
   }
 }
 
-export class Trie {
+export default class Trie {
   root;
   matches;
 
