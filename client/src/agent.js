@@ -1,6 +1,6 @@
 import { extendFilterGroups } from "./filterGroup";
 
-const AGENT_ENDPOINT = 'http://localhost:8000/chat';
+const AGENT_ENDPOINT = 'http://localhost:8000/chat_stream';
 
 const DEFAULT_ISSUES = {
     "Missing Media Track Error": {
@@ -52,43 +52,42 @@ export const initChatbot = () => {
     const messagesContainer = document.getElementById("chatbot-messages");
 
     chatbotForm.addEventListener("submit", async function (event) {
-        event.preventDefault(); // Prevent page reload
+        event.preventDefault();
 
         const userInput = inputField.value.trim();
         if (!userInput) return;
 
-        // Create and append a user message bubble.
+        // Append user message bubble.
         const userMessage = document.createElement("div");
         userMessage.className = "chat-message user";
         userMessage.textContent = userInput;
         messagesContainer.appendChild(userMessage);
         inputField.value = "";
 
-        // Create a loading bot message bubble.
+        // Append a placeholder bot message.
         const loadingMessage = document.createElement("div");
         loadingMessage.className = "chat-message bot";
         loadingMessage.textContent = "...";
         messagesContainer.appendChild(loadingMessage);
 
         try {
-            // Send the message to your Python backend including known issues.
+            // Call the new /chat_stream endpoint with the user message and known issues.
             const response = await fetch(AGENT_ENDPOINT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userInput, known_issues: workspaces[currentWorkspace] })
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: userInput,
+                    known_issues: workspaces[currentWorkspace]
+                })
             });
 
             const data = await response.json();
             console.log(data);
 
-            // Replace the loading bubble with the bot's reply.
-            if (data.reply) {
-                loadingMessage.textContent = data.reply;
-            } else {
-                loadingMessage.textContent = "Sorry, I couldn't process that.";
-            }
+            // Replace the loading bubble with the final reply.
+            loadingMessage.textContent = "Finished processing.";
 
-            // Process each action from the response.
+            // Process each action (which all follow the uniform shape).
             if (data.actions) {
                 data.actions.forEach(action => {
                     if (action.type === "add_filter") {
@@ -100,26 +99,28 @@ export const initChatbot = () => {
                     } else if (action.type === "generate_summary") {
                         const botMessage = document.createElement("div");
                         botMessage.className = "chat-message bot";
-                        botMessage.textContent = action.body.overview;
+                        botMessage.textContent = action.body.summary;
                         messagesContainer.appendChild(botMessage);
                     } else if (action.type === "flag_issue") {
-                        const { issue_category, summary_of_issue, resolution } = action.body;
+                        const { issue, summary } = action.body;
                         const botMessage = document.createElement("div");
                         botMessage.className = "chat-message bot";
-                        botMessage.innerHTML = `Detected issue: ${issue_category}:<br>${summary_of_issue}<br><br>Resolution: ${resolution}`;
+                        botMessage.innerHTML = `Detected issue: ${issue}:<br>${summary}`;
                         messagesContainer.appendChild(botMessage);
+                    } else if (action.type === "summary_decision") {
+                        // Optionally process decisions if needed.
+                        console.log("Summary decision:", action.body);
                     }
-                    // Additional actions can be handled here.
                 });
             }
         } catch (error) {
-            console.error('Error fetching chatbot response:', error);
+            console.error("Error fetching chatbot response:", error);
             loadingMessage.textContent = "An error occurred.";
         }
 
-        // Scroll to the bottom of the messages container.
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     });
+
 
     // Load workspaces from localStorage or initialize
     workspaces = JSON.parse(localStorage.getItem("workspaces"));
