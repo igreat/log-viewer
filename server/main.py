@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from typing import List 
+from elasticsearch.helpers import bulk
 
 # Initialize the FastAPI app
 app = FastAPI()
@@ -53,11 +54,6 @@ def get_from_elasticsearch(id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-from elasticsearch import Elasticsearch
-
-
-from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
 def pushToElasticSearch(logs, idx):
