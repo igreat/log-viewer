@@ -1,11 +1,10 @@
 import abc
 import asyncio
-from typing import Optional
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-import torch
+from typing import Optional, Iterator
 import time
 import json
 from utils import load_logs, get_log_level_counts, compute_stats
+from llama_cpp import Llama
 
 
 class ModelClient(abc.ABC):
@@ -41,43 +40,24 @@ class OpenAIModelClient(ModelClient):
         return len(
             response.split()
         )  # NOTE: I'm not testing for openai, so this is fine
-
-
-class HuggingFaceModelClient(ModelClient):
-    def __init__(self, model_id: str):
-        quant_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_compute_dtype=torch.bfloat16,
+class OfflineModelClient(ModelClient):
+    def __init__(self, model_path: str):
+        self.model = Llama(
+            model_path=model_path,
+            n_gpu_layers=-1, # Uncomment to use GPU acceleration
+            # seed=1337, # Uncomment to set a specific seed
+            n_ctx=2048, # Uncomment to increase the context window
         )
-
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_id,
-            device_map="auto",
-            quantization_config=quant_config,
-        )
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
 
     async def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
-        # cuda if available, then mps, then cpu
-        device = torch.device(
-            "cuda"
-            if torch.cuda.is_available()
-            else "mps"
-            if torch.backends.mps.is_available()
-            else "cpu"
-        )
-        print(f"Using device: {device}")
-
-        # Load the tokenizer based on the model's configuration name
-        model_inputs = self.tokenizer([prompt], return_tensors="pt").to(device)
-        generated_ids = self.model.generate(**model_inputs, max_new_tokens=200)
-        return self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-
+        output = self.model(prompt, max_tokens=200)
+        print(output)
+        if isinstance(output, Iterator):
+            return next(output)["choices"][0]["text"]
+        return output["choices"][0]["text"]
+    
     def get_token_count(self, response: str) -> int:
-        tokens = self.tokenizer.tokenize(response)
-        return len(tokens)
+        return len(response.split()) # FIXME: fine for now
 
 
 async def test_model(client: ModelClient, user_prompt: str):
@@ -141,8 +121,8 @@ async def test_model(client: ModelClient, user_prompt: str):
 # run a test to see if the huggerface model client works
 async def main():
     # choose a small model such as
-    model_id = "ibm-granite/granite-3.2-8b-instruct"
-    client = HuggingFaceModelClient(model_id)
+    model_path = "./models/granite/granite-3.2-8b-instruct-Q3_K_L.gguf"
+    client = OfflineModelClient(model_path)
     user_prompt = "Can you help me quickly make sense of the logs?"
     await test_model(client, user_prompt)
 
