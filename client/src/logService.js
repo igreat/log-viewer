@@ -7,6 +7,55 @@ export let allLogs = [];
 
 export const getLogsWithIds = (logs) => logs.map((log, index) => ({ id: index + 1, ...log }));
 
+export let logID = 0;
+
+export const setupLogFileDropdown = () => {
+  const logfileOptions = document.getElementById("dropdown-log-file-options");
+  const logfileMenu = document.getElementById("dropdown-logfiles");
+  logfileOptions.addEventListener("click", (e) => {
+    const isExpanded = logfileOptions.getAttribute("aria-expanded") === "true";
+    // Toggle the dropdown menu
+    if (isExpanded) {
+      logfileMenu.style.display = "none";
+    } else {
+      logfileMenu.style.display = "block";
+    }
+
+    // Update ARIA attributes for accessibility
+    logfileOptions.setAttribute("aria-expanded", !isExpanded);
+
+    // Prevent dropdown from closing immediately when clicked
+    e.stopPropagation();
+  });
+
+  logfileMenu.addEventListener("click", (e)=>{
+    e.stopPropagation();
+  })
+
+  document.addEventListener("click", (event) => {
+    if (
+        !logfileOptions.contains(event.target) &&
+        !logfileMenu.contains(event.target)
+    ) {
+        logfileMenu.style.display = "none";
+        logfileOptions.setAttribute("aria-expanded", "false");
+    }
+  });
+};
+
+export const populateLogFileDropdown = () => {
+  const dropdownMenu = document.getElementById("dropdown-logfiles");
+  dropdownMenu.innerHTML = '';
+  console.log(logID);
+  for (let i = 0; i < logID; i++) {
+    let option = document.createElement("a");
+    option.classList.add("dropdown-item");
+    option.innerHTML = "LOG: " + (i).toString();
+    option.id = i.toString();
+    dropdownMenu.appendChild(option);
+  }
+}
+
 export const renderTable = (logs, id = "filtered-logs", filters = []) => {
   const tableContainer = document.getElementById(id + "-table");
   const paginationContainer = document.getElementById(id + "-pagination");
@@ -139,60 +188,95 @@ export const handleFileUpload = (event) => {
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result);
+      
       // Validate the data is an array
       if (!Array.isArray(data)) {
         alert("Invalid file format: JSON must be an array of logs.");
         return;
       }
-      // Update allLogs and render the table
+
+      // Update logs and render tables
       allLogs = getLogsWithIds(data);
       renderTable(allLogs, "all-logs");
       renderTable(allLogs, "filtered-logs");
 
-      console.log(typeof data[0]);
+      console.log("Uploading logs with ID:", logID);
       
-      fetch("http://localhost:8000/upload", {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        body:JSON.stringify(data) 
-      }).then((response) => {
-        if (!response.ok){
-          throw new Error("Data not loaded")
-        } else{
-          return response.json();
-        }
-      }).then((data) => {
-        console.log("Elastic search response: ", data);
-      }).catch((error) => {
-        console.log("ERROR: ", error)
+      // Send data to the backend
+      fetch(`http://localhost:8000/upload/${logID}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       })
+        .then((response) => {
+          if (!response.ok) throw new Error("Data not loaded");
+          return response.json();
+        })
+        .then((data) => {
+          console.log("Elastic Search response:", data);
+          
+          logID++;
+
+          populateLogFileDropdown();
+
+          loadLogs();
+        })
+        .catch((error) => {
+          console.error("Upload failed:", error);
+        });
 
     } catch (error) {
       alert("Error parsing the JSON file. Please upload a valid JSON file.");
     }
   };
+  
   reader.readAsText(file);
 };
 
-export const loadLogs = () => {
-  fetch('http://localhost:8000/upload', {
-    method:"GET"
+
+export const handleFileLoad = (id) => {
+  console.log("Loading file with ID:", id);
+  fetch(`http://localhost:8000/upload/${id}`, {
+    method: "GET"
   })
-    .then(response => response.json())
+    .then(response => {
+      console.log("Response status:", response.status);
+      return response.json();
+    })
     .then(data => {
-      const logs = data.logs;
+      console.log("Full response data:", data);
+      
+      // Check if data exists and has the expected structure
+      if (!data) {
+        throw new Error("No data received from server");
+      }
+      
+      // Try to access logs, with fallback options
+      const logs = data.logs || data || [];
+      console.log("Logs extracted:", logs);
+      
       if (!Array.isArray(logs)) {
-        document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Invalid log format.</p>`;
+        document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Invalid log format. Expected array but got ${typeof logs}.</p>`;
         return;
       }
+      
       allLogs = getLogsWithIds(logs);
       renderTable(allLogs, "all-logs");
       renderTable(allLogs, "filtered-logs");
     })
     .catch(err => {
       console.error("Failed to load logs:", err);
-      document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Failed to load logs.</p>`;
+      document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Failed to load logs: ${err.message}</p>`;
     });
+}
+
+export const loadLogs = () => {
+  const dropdownFiles = document.getElementById("dropdown-logfiles");
+  const options = dropdownFiles.querySelectorAll("a");
+  options.forEach((item) => {
+    item.addEventListener("click", function(event) {
+      event.preventDefault();
+      handleFileLoad(this.id);
+    });
+  });
 };
