@@ -10,61 +10,61 @@ export const getLogsWithIds = (logs) => logs.map((log, index) => ({ id: index + 
 export let logID = 0;
 
 export const setupLogFileDropdown = () => {
-  const logfileOptions = document.getElementById("dropdown-log-file-options");
-  const logfileMenu = document.getElementById("dropdown-logfiles");
-  logfileOptions.addEventListener("click", (e) => {
-    const isExpanded = logfileOptions.getAttribute("aria-expanded") === "true";
-    // Toggle the dropdown menu
-    if (isExpanded) {
-      logfileMenu.style.display = "none";
-    } else {
-      logfileMenu.style.display = "block";
-    }
+    const logfileOptions = document.getElementById("dropdown-log-file-options");
+    const logfileMenu = document.getElementById("dropdown-logfiles");
+    logfileOptions.addEventListener("click", (e) => {
+        const isExpanded = logfileOptions.getAttribute("aria-expanded") === "true";
+        // Toggle the dropdown menu
+        if (isExpanded) {
+            logfileMenu.style.display = "none";
+        } else {
+            logfileMenu.style.display = "block";
+        }
 
-    // Update ARIA attributes for accessibility
-    logfileOptions.setAttribute("aria-expanded", !isExpanded);
+        // Update ARIA attributes for accessibility
+        logfileOptions.setAttribute("aria-expanded", !isExpanded);
 
-    // Prevent dropdown from closing immediately when clicked
-    e.stopPropagation();
-  });
+        // Prevent dropdown from closing immediately when clicked
+        e.stopPropagation();
+    });
 
-  logfileMenu.addEventListener("click", (e)=>{
-    e.stopPropagation();
-  })
+    logfileMenu.addEventListener("click", (e)=>{
+        e.stopPropagation();
+    })
 
-  document.addEventListener("click", (event) => {
-    if (
-        !logfileOptions.contains(event.target) &&
-        !logfileMenu.contains(event.target)
-    ) {
-        logfileMenu.style.display = "none";
-        logfileOptions.setAttribute("aria-expanded", "false");
-    }
-  });
+    document.addEventListener("click", (event) => {
+        if (
+            !logfileOptions.contains(event.target) &&
+            !logfileMenu.contains(event.target)
+        ) {
+            logfileMenu.style.display = "none";
+            logfileOptions.setAttribute("aria-expanded", "false");
+        }
+    });
 };
 
 export const populateLogFileDropdown = () => {
-  const dropdownMenu = document.getElementById("dropdown-logfiles");
-  dropdownMenu.innerHTML = '';
-  console.log(logID);
-  for (let i = 0; i < logID; i++) {
-    let option = document.createElement("a");
-    option.classList.add("dropdown-item");
-    option.innerHTML = "LOG: " + (i).toString();
-    option.id = i.toString();
-    dropdownMenu.appendChild(option);
-  }
+    const dropdownMenu = document.getElementById("dropdown-logfiles");
+    dropdownMenu.innerHTML = '';
+    console.log(logID);
+    for (let i = 0; i < logID; i++) {
+        let option = document.createElement("a");
+        option.classList.add("dropdown-item");
+        option.innerHTML = "LOG: " + (i).toString();
+        option.id = i.toString();
+        dropdownMenu.appendChild(option);
+    }
 }
 
 export const renderTable = (logs, id = "filtered-logs", filters = []) => {
-  const tableContainer = document.getElementById(id + "-table");
-  const paginationContainer = document.getElementById(id + "-pagination");
+    const tableContainer = document.getElementById(id + "-table");
+    const paginationContainer = document.getElementById(id + "-pagination");
 
-  if (logs.length === 0) {
-    tableContainer.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
-    paginationContainer.innerHTML = "";
-    return;
-  }
+    if (logs.length === 0) {
+        tableContainer.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
+        paginationContainer.innerHTML = "";
+        return;
+    }
 
   // MAIN TABLE
   const headers = Object.keys(logs[0]);
@@ -95,21 +95,21 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     let currentPage = 0;
 
     function updatePageDisplay(page) {
-      currentPage = page;
+        currentPage = page;
 
       // show only rows for current page
-      $rows.hide().slice(page * rowsPerPage, (page + 1) * rowsPerPage).show();
+        $rows.hide().slice(page * rowsPerPage, (page + 1) * rowsPerPage).show();
 
       // build the navigation bar html
-      const navhtml = `
-                <div class="pagination-controls text-center">
-                <button class="btn btn-secondary prev-page" ${page === 0 ? "disabled" : ""}>Previous</button>
-                <input type="number" class="page-input" value="${page + 1}" min="1" max="${numPages}" 
-                        style="width: 60px; text-align: center; margin: 0 10px;">
-                <span>of ${numPages}</span>
-                <button class="btn btn-secondary next-page" ${page === numPages - 1 ? "disabled" : ""}>Next</button>
-                </div>
-            `
+        const navhtml = `
+                    <div class="pagination-controls text-center">
+                    <button class="btn btn-secondary prev-page" ${page === 0 ? "disabled" : ""}>Previous</button>
+                    <input type="number" class="page-input" value="${page + 1}" min="1" max="${numPages}" 
+                            style="width: 60px; text-align: center; margin: 0 10px;">
+                    <span>of ${numPages}</span>
+                    <button class="btn btn-secondary next-page" ${page === numPages - 1 ? "disabled" : ""}>Next</button>
+                    </div>
+                `
       // render the navigation bar
       $(paginationContainer).html(navhtml);
 
@@ -117,7 +117,7 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
       $(paginationContainer).find(".prev-page").off("click").on("click", function (e) {
         e.preventDefault();
         if (currentPage > 0) {
-          updatePageDisplay(currentPage - 1);
+            updatePageDisplay(currentPage - 1);
         }
       });
 
@@ -125,7 +125,7 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
       $(paginationContainer).find(".next-page").off("click").on("click", function (e) {
         e.preventDefault();
         if (currentPage < numPages - 1) {
-          updatePageDisplay(currentPage + 1);
+            updatePageDisplay(currentPage + 1);
         }
       });
 
@@ -133,9 +133,9 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
       $(paginationContainer).find(".page-input").off("change").on("change", function (e) {
         let newPage = parseInt($(this).val(), 10);
         if (isNaN(newPage) || newPage < 1) {
-          newPage = 1;
+            newPage = 1;
         } else if (newPage > numPages) {
-          newPage = numPages;
+            newPage = numPages;
         }
         updatePageDisplay(newPage - 1);
       });
@@ -143,7 +143,7 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
 
     // If this is the full table, expose the updater globally.
     if (id === "all-logs") {
-      window.allLogsPageUpdater = updatePageDisplay;
+        window.allLogsPageUpdater = updatePageDisplay;
     }
 
     // initialize the first page
@@ -152,131 +152,129 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     $(paginationContainer).html('');
     $rows.show();
     if (id === "all-logs") {
-      window.allLogsPageUpdater = null;
+        window.allLogsPageUpdater = null;
     }
   }
 };
 
 export const applyFilters = (filters) => {
-  const filteredLogs = allLogs.filter((log) => {
-    if (!isWithinDate(log)) return false;
-    if (filters.length === 0) return true;
+    const filteredLogs = allLogs.filter((log) => {
+        if (!isWithinDate(log)) return false;
+        if (filters.length === 0) return true;
 
-    return filters.some(({ regex, caseSensitive, text }) => {
-      return Object.values(log).some((value) => {
-        const strValue = String(value);
-        if (regex) {
-          const pattern = new RegExp(text, caseSensitive ? '' : 'i');
-          return pattern.test(strValue);
-        }
-        return caseSensitive
-          ? strValue.includes(text)
-          : strValue.toLowerCase().includes(text.toLowerCase());
-      });
+        return filters.some(({ regex, caseSensitive, text }) => {
+            return Object.values(log).some((value) => {
+                const strValue = String(value);
+                if (regex) {
+                    const pattern = new RegExp(text, caseSensitive ? '' : 'i');
+                    return pattern.test(strValue);
+                }
+                return caseSensitive
+                ? strValue.includes(text)
+                : strValue.toLowerCase().includes(text.toLowerCase());
+            });
+        });
     });
-  });
-
-  renderTable(allLogs, "all-logs", filters);
-  renderTable(filteredLogs, "filtered-logs", filters);
+    renderTable(allLogs, "all-logs", filters);
+    renderTable(filteredLogs, "filtered-logs", filters);
 };
 
 export const handleFileUpload = (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      
-      // Validate the data is an array
-      if (!Array.isArray(data)) {
-        alert("Invalid file format: JSON must be an array of logs.");
-        return;
-      }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            
+            // Validate the data is an array
+            if (!Array.isArray(data)) {
+                alert("Invalid file format: JSON must be an array of logs.");
+                return;
+            }
 
-      // Update logs and render tables
-      allLogs = getLogsWithIds(data);
-      renderTable(allLogs, "all-logs");
-      renderTable(allLogs, "filtered-logs");
+            // Update logs and render tables
+            allLogs = getLogsWithIds(data);
+            renderTable(allLogs, "all-logs");
+            renderTable(allLogs, "filtered-logs");
 
-      console.log("Uploading logs with ID:", logID);
-      
-      // Send data to the backend
-      fetch(`http://localhost:8000/upload/${logID}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-        .then((response) => {
-          if (!response.ok) throw new Error("Data not loaded");
-          return response.json();
-        })
-        .then((data) => {
-          console.log("Elastic Search response:", data);
-          
-          logID++;
+            console.log("Uploading logs with ID:", logID);
+            
+            // Send data to the backend
+            fetch(`http://localhost:8000/upload/${logID}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            })
+                .then((response) => {
+                if (!response.ok) throw new Error("Data not loaded");
+                    return response.json();
+                })
+                .then((data) => {
+                    console.log("Elastic Search response:", data);
+                    
+                    logID++;
 
-          populateLogFileDropdown();
+                    populateLogFileDropdown();
 
-          loadLogs();
-        })
-        .catch((error) => {
-          console.error("Upload failed:", error);
-        });
+                    loadLogs();
+                })
+                .catch((error) => {
+                    console.error("Upload failed:", error);
+                });
 
-    } catch (error) {
-      alert("Error parsing the JSON file. Please upload a valid JSON file.");
-    }
-  };
-  
-  reader.readAsText(file);
+        } catch (error) {
+            alert("Error parsing the JSON file. Please upload a valid JSON file.");
+        }
+    };
+    reader.readAsText(file);
 };
 
 
 export const handleFileLoad = (id) => {
-  console.log("Loading file with ID:", id);
-  fetch(`http://localhost:8000/upload/${id}`, {
-    method: "GET"
-  })
-    .then(response => {
-      console.log("Response status:", response.status);
-      return response.json();
+    console.log("Loading file with ID:", id);
+    fetch(`http://localhost:8000/upload/${id}`, {
+        method: "GET"
     })
-    .then(data => {
-      console.log("Full response data:", data);
-      
-      // Check if data exists and has the expected structure
-      if (!data) {
-        throw new Error("No data received from server");
-      }
-      
-      // Try to access logs, with fallback options
-      const logs = data.logs || data || [];
-      console.log("Logs extracted:", logs);
-      
-      if (!Array.isArray(logs)) {
-        document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Invalid log format. Expected array but got ${typeof logs}.</p>`;
-        return;
-      }
-      
-      allLogs = getLogsWithIds(logs);
-      renderTable(allLogs, "all-logs");
-      renderTable(allLogs, "filtered-logs");
-    })
-    .catch(err => {
-      console.error("Failed to load logs:", err);
-      document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Failed to load logs: ${err.message}</p>`;
-    });
+        .then(response => {
+            console.log("Response status:", response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log("Full response data:", data);
+            
+            // Check if data exists and has the expected structure
+            if (!data) {
+                throw new Error("No data received from server");
+            }
+            
+            // Try to access logs, with fallback options
+            const logs = data.logs || data || [];
+            console.log("Logs extracted:", logs);
+            
+            if (!Array.isArray(logs)) {
+                document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Invalid log format. Expected array but got ${typeof logs}.</p>`;
+                return;
+            }
+            
+            allLogs = getLogsWithIds(logs);
+            renderTable(allLogs, "all-logs");
+            renderTable(allLogs, "filtered-logs");
+        })
+        .catch(err => {
+            console.error("Failed to load logs:", err);
+            document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Failed to load logs: ${err.message}</p>`;
+        });
 }
 
 export const loadLogs = () => {
-  const dropdownFiles = document.getElementById("dropdown-logfiles");
-  const options = dropdownFiles.querySelectorAll("a");
-  options.forEach((item) => {
-    item.addEventListener("click", function(event) {
-      event.preventDefault();
-      handleFileLoad(this.id);
+    const dropdownFiles = document.getElementById("dropdown-logfiles");
+    const options = dropdownFiles.querySelectorAll("a");
+    options.forEach((item) => {
+        item.addEventListener("click", function(event) {
+            event.preventDefault();
+            handleFileLoad(this.id);
+        });
     });
-  });
 };

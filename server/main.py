@@ -56,7 +56,7 @@ def get_from_elasticsearch(id: str):
 
 from elasticsearch.helpers import bulk
 
-def pushToElasticSearch(logs, idx):
+def push_to_elastic_search(logs, idx):
     es = Elasticsearch([{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False)
 
     if not es.ping():
@@ -88,7 +88,7 @@ def pushToElasticSearch(logs, idx):
 
 
 @app.post("/upload/{id}")
-async def uploadFile(id:str, request: Request):
+async def upload_file(id:str, request: Request):
     try:
         log_data = await request.json()
 
@@ -97,7 +97,7 @@ async def uploadFile(id:str, request: Request):
         if not isinstance(log_data, list):
             raise HTTPException(status_code=400, detail="Expected a JSON array")
             
-        response = pushToElasticSearch(log_data, id)
+        response = push_to_elastic_search(log_data, id)
         return response
     except Exception as e:
         print(f"Error processing request: {str(e)}")
