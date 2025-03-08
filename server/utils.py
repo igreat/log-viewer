@@ -20,7 +20,8 @@ def get_log_level_counts(logs, interval=timedelta(seconds=1)):
     return summary
 
 
-def compute_stats(level_counts):
+def compute_stats(level_counts: dict[str, dict]):
+    # TODO: I can add more stats here such as most common keywords and so on.
     stats = {
         "max_per_level": {},
         "max_total": {"bucket": None, "count": 0},
@@ -63,3 +64,20 @@ def extract_top_rows(logs, keywords, top_n=5):
                     if count >= top_n:
                         break
     return extracted
+
+
+def clean_response_content(response_content: str) -> str:
+    """
+    Removes markdown code block markers (e.g. ```json ... ```)
+    from the response content if present.
+    """
+    content = response_content.strip()
+    if content.startswith("```"):
+        lines = content.splitlines()
+        # Remove the first and last lines if they are code block markers.
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].startswith("```"):
+            lines = lines[:-1]
+        content = "\n".join(lines).strip()
+    return content

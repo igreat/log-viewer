@@ -31,7 +31,7 @@ class OpenAIModelClient(ModelClient):
 
 
 class OfflineModelClient(ModelClient):
-    def __init__(self, model_path: str, context_window: int = 2048):
+    def __init__(self, model_path: str, context_window: int = 1024):
         self.model = Llama(
             model_path=model_path,
             n_gpu_layers=-1,

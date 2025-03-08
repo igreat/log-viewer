@@ -24,10 +24,18 @@ app.add_middleware(
 # Initialize models and client
 models: dict[str, ModelClient] = {
     "gpt-4o": OpenAIModelClient(os.getenv("OPENAI_API_KEY") or "", "gpt-4o"),
-    "granite3.2-2b": OfflineModelClient(
-        "models/granite/granite-3.1-2b-instruct-Q6_K_L.gguf",
-        context_window=3072,
-    ),
+    # "granite-3.2-2b": OfflineModelClient(
+    #     "models/granite/granite-3.2-2b-instruct-Q6_K.gguf",
+    #     context_window=3072,
+    # ),
+    # "llama-3.2-3b": OfflineModelClient(
+    #     "models/llama/Llama-3.2-3B.Q6_K.gguf",
+    #     context_window=3072,
+    # ),
+    # "granite-3.2-8b": OfflineModelClient(
+    #     "models/granite/granite-3.2-8b-instruct-Q3_K_L.gguf",
+    #     context_window=2048,
+    # ),
 }
 
 
@@ -53,7 +61,10 @@ base_prompt = (
     "Your role is to help analyze and filter large log files quickly. "
     "Do not include any additional text."
 )
-chat_agent = ChatAgent(models["granite3.2-2b"], base_prompt)
+# chat_agent = ChatAgent(models["granite-3.2-2b"], base_prompt)
+chat_agent = ChatAgent(models["gpt-4o"], base_prompt)
+# chat_agent = ChatAgent(models["llama-3.2-3b"], base_prompt)
+# chat_agent = ChatAgent(models["granite-3.2-8b"], base_prompt)
 
 
 @app.post("/chat_stream", response_model=ChatResponse)
@@ -67,7 +78,7 @@ async def chat_stream(request: ChatRequest):
         # Step 1: Decide on summary generation.
         print(f"Message: {request.message}")
         generate_summary, explanation = await chat_agent.decide_summary(request.message)
-        print(f"Generate Summary: {generate_summary}")
+        print(f"Generate Summary: {generate_summary}, Explanation: {explanation}")
         tasks.append(
             Action(
                 type="summary_decision",
@@ -83,33 +94,46 @@ async def chat_stream(request: ChatRequest):
             )
             print(f"Summary: {summary_text}")
 
-        # Step 3: Evaluate each known issue.
-        # Build known issues context.
-        known_issues = request.known_issues if request.known_issues else {}
-        issue_context: dict[str, str | dict] = {}
-        logs = load_logs()
-        for issue, details in known_issues.items():
-            extracted_logs = extract_top_rows(logs, details["keywords"])
-            issue_context[issue] = {
-                "description": details["description"],
-                "context": details["context"],
-                "keywords": details["keywords"],
-                "conditions": details["conditions"],
-                "resolution": details["resolution"],
-                "logs": extracted_logs,
-            }
-
-        for issue, details in issue_context.items():
-            issue_text = await chat_agent.evaluate_issue(
-                issue, details, request.message
+        # Step 3: Decide on known issue evaluation.
+        evaluate_issues, explanation = await chat_agent.evaluate_decision(
+            request.message
+        )
+        tasks.append(
+            Action(
+                type="issue_decision",
+                body={"evaluate_issues": evaluate_issues, "explanation": explanation},
             )
-            if issue_text.strip():
-                tasks.append(
-                    Action(
-                        type="flag_issue",
-                        body={"issue": issue, "summary": issue_text},
-                    )
+        )
+        print(f"Evaluate Issues: {evaluate_issues}, Explanation: {explanation}")
+
+        # Step 4: Evaluate each known issue.
+        if evaluate_issues:
+            # Build known issues context.
+            known_issues = request.known_issues if request.known_issues else {}
+            issue_context: dict[str, str | dict] = {}
+            logs = load_logs()
+            for issue, details in known_issues.items():
+                extracted_logs = extract_top_rows(logs, details["keywords"])
+                issue_context[issue] = {
+                    "description": details["description"],
+                    "context": details["context"],
+                    "keywords": details["keywords"],
+                    "conditions": details["conditions"],
+                    "resolution": details["resolution"],
+                    "logs": extracted_logs,
+                }
+
+            for issue, details in issue_context.items():
+                issue_text = await chat_agent.evaluate_issue(
+                    issue, details, request.message
                 )
+                if issue_text.strip():
+                    tasks.append(
+                        Action(
+                            type="flag_issue",
+                            body={"issue": issue, "summary": issue_text},
+                        )
+                    )
 
         return ChatResponse(reply="", actions=tasks)
     except Exception as e:
