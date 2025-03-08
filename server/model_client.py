@@ -31,16 +31,15 @@ class OpenAIModelClient(ModelClient):
 
 
 class OfflineModelClient(ModelClient):
-    def __init__(self, model_path: str):
+    def __init__(self, model_path: str, context_window: int = 2048):
         self.model = Llama(
             model_path=model_path,
-            n_gpu_layers=-1,  # Uncomment to use GPU acceleration
-            # seed=1337, # Uncomment to set a specific seed
-            n_ctx=2048,  # Uncomment to increase the context window
+            n_gpu_layers=-1,
+            n_ctx=context_window,
         )
 
     async def chat_completion(self, prompt: str) -> str:
-        output = self.model(prompt, max_tokens=200)
+        output = self.model(prompt, max_tokens=1024)
         print(output)
         if isinstance(output, Iterator):
             return next(output)["choices"][0]["text"]
