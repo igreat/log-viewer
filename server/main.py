@@ -1,5 +1,4 @@
 import os
-import asyncio
 import json
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +7,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from typing import Optional, Any
 from utils import load_logs, get_log_level_counts, compute_stats, extract_top_rows
+from model_client import ModelClient, OpenAIModelClient, OfflineModelClient
 
 # Load the .env file
 load_dotenv()
@@ -28,6 +28,14 @@ app.add_middleware(
 # Initialize the OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# TODO: here I want paths to work in any environment, so maybe I should use pathlib
+models: dict[str, ModelClient] = {
+    "gpt-4o": OpenAIModelClient(os.getenv("OPENAI_API_KEY") or "", "gpt-4o"),
+    "granite3.2-2b": OfflineModelClient(
+        "models/granite/granite-3.1-2b-instruct-Q6_K_L.gguf"
+    ),
+}
+
 
 # Define the request and response models
 class ChatRequest(BaseModel):
@@ -47,6 +55,9 @@ class ChatResponse(BaseModel):
 
 @app.post("/chat_stream", response_model=ChatResponse)
 async def chat_stream(request: ChatRequest):
+    # TODO: the model should be part of the request, for now it's hardcoded
+    model = models["gpt-4o"]
+
     if not request.message:
         raise HTTPException(status_code=400, detail="Message is required")
     try:
@@ -88,18 +99,11 @@ User Query: {request.message}
 
 Should a summary be generated? Answer with JSON:
 {{ "generate_summary": true/false, "explanation": "Your reasoning" }}"""
-        summary_decision_resp = await asyncio.to_thread(
-            client.chat.completions.create,
-            model="gpt-4o",
-            messages=[{"role": "system", "content": prompt_summary_decision}],
-        )
-        summary_decision_content = clean_response_content(
-            summary_decision_resp.choices[0].message.content or ""
-        )
+        summary_decision_text = await model.chat_completion(prompt_summary_decision)
         summary_decision = {}
-        if summary_decision_content:
+        if summary_decision_text:
             try:
-                summary_decision = json.loads(summary_decision_content)
+                summary_decision = json.loads(summary_decision_text)
                 tasks.append(
                     Action(
                         type="summary_decision",
@@ -123,17 +127,13 @@ Log Statistics:
 User Query: {request.message}
 
 Generate a summary of the log statistics. Respond with just the explanation:"""
-            summary_resp = await asyncio.to_thread(
-                client.chat.completions.create,
-                model="gpt-4o",
-                messages=[{"role": "system", "content": prompt_generate_summary}],
-            )
-            if summary_resp:
+            summary_text = await model.chat_completion(prompt_generate_summary)
+            if summary_text:
                 try:
                     tasks.append(
                         Action(
                             type="generate_summary",
-                            body={"summary": summary_resp.choices[0].message.content},
+                            body={"summary": summary_text},
                         )
                     )
                 except Exception as e:
@@ -152,19 +152,20 @@ Based on the above, should this issue be flagged? Respond with just the issue su
 Make sure to include the resolution in the summary if needed
 If not, respond with an empty string."""
             print("Prompt issue:", prompt_issue)
-            issue_resp = await asyncio.to_thread(
-                client.chat.completions.create,
-                model="gpt-4o",
-                messages=[{"role": "system", "content": prompt_issue}],
-            )
-            print("Issue content:", issue_resp)
-            if issue_resp:
+            issue_text = await model.chat_completion(prompt_issue)
+            # issue_resp = await asyncio.to_thread(
+            #     client.chat.completions.create,
+            #     model="gpt-4o",
+            #     messages=[{"role": "system", "content": prompt_issue}],
+            # )
+            print("Issue content:", issue_text)
+            if issue_text:
                 tasks.append(
                     Action(
                         type="flag_issue",
                         body={
                             "issue": issue,
-                            "summary": issue_resp.choices[0].message.content,
+                            "summary": issue_text,
                         },
                     )
                 )
