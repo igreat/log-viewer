@@ -30,18 +30,18 @@
             <div class="col-md-10">
               <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="mb-0">Log Viewer</h2>
-                <!-- File Upload -->
-                <div class="form-group">
-                  <label for="log-file-input" class="form-label">Upload Log File</label>
-                  <input type="file" id="log-file-input" class="form-control" accept=".json">
-                </div>
-                <div class="big-d">
-                  <button id="upload-to-database-btn" class="btn btn-primary mt-2">Upload to Database</button>
-                  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdown-log-file-options"
-                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Dropdown button
-                  </button>
-                  <div class="dropdown-menu-2" aria-labelledby="dropdown-log-file-options" id="dropdown-logfiles">
+                <!-- Upload Section -->
+                <div class="upload-section card p-2 shadow-sm">
+                  <div class="card-body p-2">
+                    <h6 class="card-title mb-2">Upload Log File</h6>
+                    <div class="d-flex align-items-center">
+                      <div class="custom-file flex-grow-1 mr-2" style="min-width: 0;">
+                        <input type="file" class="custom-file-input" id="log-file-input" accept=".json">
+                        <label class="custom-file-label" for="log-file-input">Choose file...</label>
+                      </div>
+                      <button id="upload-to-database-btn" class="btn btn-primary btn-sm mr-1">Upload</button>
+                      <button id="view-log-files-btn" class="btn btn-outline-info btn-sm">View</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -233,6 +233,31 @@
                       <div id="categoriesContainer" class="container">
                         <div class="row" id="categoriesRow">
                           <!-- Cards inserted here -->
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal for Viewing Uploaded Log Files -->
+              <div id="logFilesModal" class="modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-lg" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header d-flex align-items-center">
+                      <h5 class="modal-title flex-grow-1">Uploaded Log Files</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <!-- Container for log file cards -->
+                      <div id="logFilesContainer" class="container">
+                        <div class="row" id="logFilesRow">
+                          <!-- Cards will be inserted here -->
                         </div>
                       </div>
                     </div>

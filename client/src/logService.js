@@ -9,91 +9,6 @@ export let allLogs = [];
 export const getLogsWithIds = (logs) =>
     logs.map((log, index) => ({ id: index + 1, ...log }));
 
-// Dropdown setup
-export const setupLogFileDropdown = () => {
-    const logfileOptions = document.getElementById("dropdown-log-file-options");
-    const logfileMenu = document.getElementById("dropdown-logfiles");
-
-    logfileOptions.addEventListener("click", (e) => {
-        const isExpanded = logfileOptions.getAttribute("aria-expanded") === "true";
-        // Toggle the dropdown menu
-        logfileMenu.style.display = isExpanded ? "none" : "block";
-        logfileOptions.setAttribute("aria-expanded", !isExpanded);
-        // Prevent dropdown from closing immediately when clicked
-        e.stopPropagation();
-    });
-
-    logfileMenu.addEventListener("click", (e) => {
-        e.stopPropagation();
-    });
-
-    document.addEventListener("click", (event) => {
-        if (
-            !logfileOptions.contains(event.target) &&
-            !logfileMenu.contains(event.target)
-        ) {
-            logfileMenu.style.display = "none";
-            logfileOptions.setAttribute("aria-expanded", "false");
-        }
-    });
-};
-
-// Populate the log file dropdown by retrieving log IDs from the server.
-export const populateLogFileDropdown = () => {
-    const dropdownMenu = document.getElementById("dropdown-logfiles");
-    dropdownMenu.innerHTML = '';
-
-    // Fetch the list of log indices with metadata from the server.
-    fetch('http://localhost:8000/table')
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("Failed to fetch log IDs");
-            }
-            return response.json();
-        })
-        .then((data) => {
-            // Data is now an array of objects with id, title, and description.
-            data.forEach((logFile) => {
-                // Create container for each log item and delete button.
-                let itemContainer = document.createElement("div");
-                itemContainer.classList.add("dropdown-item-container", "d-flex", "justify-content-between", "align-items-center");
-
-                // Create log item.
-                let option = document.createElement("a");
-                option.classList.add("dropdown-item", "flex-grow-1");
-                // Display log id along with its title and description.
-                option.innerHTML = `${logFile.title} (${logFile.description})`;
-                option.id = logFile.id;
-
-                // Add click event listener directly here.
-                option.addEventListener("click", (event) => {
-                    event.preventDefault();
-                    handleFileLoad(logFile.id);
-                });
-
-                // Create delete button.
-                let deleteButton = document.createElement("button");
-                deleteButton.classList.add("btn", "btn-sm", "btn-danger", "ml-2");
-                deleteButton.innerHTML = "×";
-                deleteButton.dataset.logId = logFile.id;
-                deleteButton.addEventListener("click", (e) => {
-                    e.stopPropagation(); // Prevent dropdown item from being clicked
-                    deleteLogFile(e.target.dataset.logId);
-                });
-
-                // Append elements to container.
-                itemContainer.appendChild(option);
-                itemContainer.appendChild(deleteButton);
-
-                // Add container to dropdown menu.
-                dropdownMenu.appendChild(itemContainer);
-            });
-        })
-        .catch((err) => {
-            console.error("Error fetching log IDs:", err);
-        });
-};
-
 // Function to handle log deletion.
 const deleteLogFile = (id) => {
     console.log(`Deleting log file with ID: ${id}`);
@@ -102,8 +17,8 @@ const deleteLogFile = (id) => {
     })
         .then((response) => {
             if (response.ok) {
-                // Simply refresh the dropdown after deletion.
-                populateLogFileDropdown();
+                // refresh the log files modal
+                loadLogFilesModal();
             } else {
                 console.error("Failed to delete log file:", response.status);
             }
@@ -226,6 +141,68 @@ export const applyFilters = (filters) => {
     renderTable(filteredLogs, "filtered-logs", filters);
 };
 
+export const loadLogFilesModal = () => {
+    // Fetch log file metadata from the backend.
+    fetch('http://localhost:8000/table')
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Failed to fetch log files");
+            }
+            return response.json();
+        })
+        .then((data) => {
+            const logFilesRow = document.getElementById("logFilesRow");
+            logFilesRow.innerHTML = ""; // Clear previous content
+
+            // Data is expected to be an array of objects: { id, title, description }
+            data.forEach((logFile) => {
+                const cardHtml = `
+                    <div class="col-sm-6 col-md-4 mb-3">
+                        <div class="card logfile-card h-100" style="cursor: pointer;">
+                            <div class="card-body d-flex flex-column">
+                                <div class="logfile-info mb-3">
+                                    <h5 class="card-title mb-1">${logFile.title}</h5>
+                                    <p class="card-text small text-muted">${logFile.description}</p>
+                                    <p class="card-text"><small>ID: ${logFile.id}</small></p>
+                                </div>
+                                <div class="mt-auto d-flex justify-content-between align-items-center">
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-log-btn" data-log-id="${logFile.id}">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                logFilesRow.insertAdjacentHTML('beforeend', cardHtml);
+            });
+
+            // Attach click event listeners to each card and delete button.
+            document.querySelectorAll(".logfile-card").forEach(card => {
+                card.addEventListener("click", function (e) {
+                    // Avoid card click if delete button was pressed.
+                    if (e.target.closest(".delete-log-btn")) return;
+                    const id = card.querySelector("p.card-text small").textContent.replace("ID: ", "").trim();
+                    handleFileLoad(id);
+                });
+            });
+
+            document.querySelectorAll(".delete-log-btn").forEach(btn => {
+                btn.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    const logId = btn.dataset.logId;
+                    deleteLogFile(logId);
+                });
+            });
+
+            // Finally, show the modal.
+            $('#logFilesModal').modal('show');
+        })
+        .catch((err) => {
+            console.error("Error fetching log files:", err);
+        });
+};
+
 // Reads file locally (parses, renders, and saves logs in 'allLogs').
 export const handleFileUploadLocal = (event) => {
     const file = event.target.files[0];
@@ -278,7 +255,6 @@ export const uploadLogsToDatabase = () => {
         })
         .then((data) => {
             console.log("Elastic Search response:", data);
-            populateLogFileDropdown();
         })
         .catch((error) => {
             console.error("Upload failed:", error);

@@ -3,8 +3,7 @@ import {
     handleFileUploadLocal,
     uploadLogsToDatabase,
     ROWS_PER_PAGE,
-    setupLogFileDropdown,
-    populateLogFileDropdown
+    loadLogFilesModal
 } from './logService.js';
 import {
     populateFilterGroups,
@@ -60,6 +59,10 @@ const initializeApp = () => {
         $('#filterGroupModal').modal('show');
     });
 
+    // --- Log File Dropdown Setup ---
+    const viewLogFilesBtn = document.getElementById("view-log-files-btn");
+    viewLogFilesBtn.addEventListener("click", loadLogFilesModal);
+
     // --- Delegate Remove-Filter Button in Modal ---
     document.getElementById("filter-list").addEventListener("click", (e) => {
         if (e.target.classList.contains("remove-filter-btn")) {
@@ -105,9 +108,6 @@ const initializeApp = () => {
     // Set up dropdown behavior for filter groups and then populate them.
     setupDropdown();
     populateFilterGroups();
-
-    setupLogFileDropdown();
-    populateLogFileDropdown();
 }
 
 document.addEventListener("DOMContentLoaded", initializeApp);
