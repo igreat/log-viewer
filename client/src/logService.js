@@ -148,14 +148,14 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
 
             // build the navigation bar html
             const navhtml = `
-                    <div class="pagination-controls text-center">
+                <div class="pagination-controls text-center">
                     <button class="btn btn-secondary prev-page" ${page === 0 ? "disabled" : ""}>Previous</button>
                     <input type="number" class="page-input" value="${page + 1}" min="1" max="${numPages}" 
                             style="width: 60px; text-align: center; margin: 0 10px;">
                     <span>of ${numPages}</span>
                     <button class="btn btn-secondary next-page" ${page === numPages - 1 ? "disabled" : ""}>Next</button>
-                    </div>
-                `
+                </div>
+            `
             // render the navigation bar
             $(paginationContainer).html(navhtml);
 
