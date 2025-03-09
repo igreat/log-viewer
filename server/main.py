@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, File, UploadFile, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Any
 from pydantic import BaseModel
@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from model_client import ModelClient, OpenAIModelClient, OfflineModelClient
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
-from typing import List
 from fastapi.responses import StreamingResponse
 from agent import ChatAgent
 from utils import extract_top_rows, load_logs
@@ -192,7 +191,7 @@ def push_to_elastic_search(logs, idx):
         query = {"query": {"match_all": {}}}
         es.delete_by_query(index=index_name, body=query, wait_for_completion=True)
     else:
-        es.indices.create(index=index_name, ignore=400)
+        es.indices.create(index=index_name)
 
     # Use bulk indexing for better performance
     actions = [
@@ -225,18 +224,36 @@ async def upload_file(id: str, request: Request):
 
 
 @app.delete("/table/{id}")
-async def delete_file(id: int):
+async def delete_file(id: str):
     es = Elasticsearch(
         [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
     )
     try:
-        if es.indices.exists(str(id)):
-            es.indices.delete(str(id))
+        if es.indices.exists(index=id):
+            es.indices.delete(index=id)
             return {"status": "success", "message": "log table deleted successfully"}
         else:
             return {"status": "error", "message": f"log file with id: {id} not found"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@app.get("/table")
+def list_log_indices():
+    try:
+        es = Elasticsearch("http://localhost:9200", verify_certs=False)
+        if not es.ping():
+            raise Exception("Could not connect to Elasticsearch")
+
+        # Get all indices; this returns a dict of index names as keys.
+        all_indices = es.indices.get_alias(index="*")
+
+        # Filter out system indices (those starting with a dot) or any indices that shouldn't be treated as logs.
+        log_ids = [index for index in all_indices.keys() if not index.startswith(".")]
+
+        return log_ids
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Run the app with uvicorn
