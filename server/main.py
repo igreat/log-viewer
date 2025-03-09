@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, File, UploadFile, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Any
 from pydantic import BaseModel
@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from model_client import ModelClient, OpenAIModelClient, OfflineModelClient
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
-from typing import List
 from fastapi.responses import StreamingResponse
 from agent import ChatAgent
 from utils import extract_top_rows, load_logs
@@ -176,11 +175,10 @@ def get_from_elasticsearch(id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def push_to_elastic_search(logs, idx):
+def push_to_elastic_search(logs, idx, title, description):
     es = Elasticsearch(
         [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
     )
-
     if not es.ping():
         raise Exception("Could not connect to Elasticsearch")
 
@@ -188,17 +186,24 @@ def push_to_elastic_search(logs, idx):
 
     if es.indices.exists(index=index_name):
         print(f"Index '{index_name}' exists. Replacing records instead of deleting.")
-
         query = {"query": {"match_all": {}}}
         es.delete_by_query(index=index_name, body=query, wait_for_completion=True)
     else:
-        es.indices.create(index=index_name, ignore=400)
+        # Create the index with provided metadata.
+        es.indices.create(
+            index=index_name,
+            body={
+                "mappings": {
+                    "_meta": {"title": title, "description": description},
+                    "properties": {},  # Define your properties here if needed.
+                }
+            },
+        )
 
-    # Use bulk indexing for better performance
+    # Use bulk indexing for better performance.
     actions = [
         {"_index": index_name, "_id": i, "_source": log} for i, log in enumerate(logs)
     ]
-
     bulk(es, actions)
 
     return {
@@ -210,14 +215,20 @@ def push_to_elastic_search(logs, idx):
 @app.post("/table/{id}")
 async def upload_file(id: str, request: Request):
     try:
-        log_data = await request.json()
+        data = await request.json()
 
-        # print(f"Received data type: {type(log_data)}")
-        # print(f"log id: {id}")
-        if not isinstance(log_data, list):
-            raise HTTPException(status_code=400, detail="Expected a JSON array")
+        # Expecting an object with a "logs" key containing an array.
+        const_logs = data.get("logs")
+        if not const_logs or not isinstance(const_logs, list):
+            raise HTTPException(
+                status_code=400, detail="Expected 'logs' to be a JSON array"
+            )
 
-        response = push_to_elastic_search(log_data, id)
+        # Extract title and description, using default values if not provided.
+        title = data.get("title", str(id))
+        description = data.get("description", "")
+
+        response = push_to_elastic_search(const_logs, id, title, description)
         return response
     except Exception as e:
         print(f"Error processing request: {str(e)}")
@@ -225,18 +236,41 @@ async def upload_file(id: str, request: Request):
 
 
 @app.delete("/table/{id}")
-async def delete_file(id: int):
+async def delete_file(id: str):
     es = Elasticsearch(
         [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
     )
     try:
-        if es.indices.exists(str(id)):
-            es.indices.delete(str(id))
+        if es.indices.exists(index=id):
+            es.indices.delete(index=id)
             return {"status": "success", "message": "log table deleted successfully"}
         else:
             return {"status": "error", "message": f"log file with id: {id} not found"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@app.get("/table")
+def list_log_indices():
+    try:
+        es = Elasticsearch("http://localhost:9200", verify_certs=False)
+        if not es.ping():
+            raise Exception("Could not connect to Elasticsearch")
+
+        # Get all indices (aliases) as a dict.
+        all_indices = es.indices.get_alias(index="*")
+        log_files = []
+        for index in all_indices.keys():
+            if index.startswith("."):
+                continue
+            mapping = es.indices.get_mapping(index=index)
+            meta = mapping[index]["mappings"].get("_meta", {})
+            title = meta.get("title", "TITLE")
+            description = meta.get("description", "DESCRIPTION")
+            log_files.append({"id": index, "title": title, "description": description})
+        return log_files
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Run the app with uvicorn

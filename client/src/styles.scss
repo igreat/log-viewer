@@ -528,3 +528,36 @@ label.form-check-label {
   border-top: 1px solid #ddd;
   padding-top: 5px;
 }
+
+.upload-section {
+  max-width: 500px;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.upload-section .card-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.upload-section .custom-file-input {
+  cursor: pointer;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 6px 12px;
+}
+
+.upload-section .custom-file-label {
+  padding: 6px 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-section button {
+  min-width: 120px;
+}

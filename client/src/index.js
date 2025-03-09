@@ -1,10 +1,9 @@
 import './styles.scss';
 import {
-    loadLogs,
-    handleFileUpload,
+    handleFileUploadLocal,
+    uploadLogsToDatabase,
     ROWS_PER_PAGE,
-    setupLogFileDropdown,
-    populateLogFileDropdown
+    loadLogFilesModal
 } from './logService.js';
 import {
     populateFilterGroups,
@@ -23,7 +22,11 @@ const initializeApp = () => {
     // --- File Upload Listener ---
     const logFileInput = document.getElementById("log-file-input");
     logFileInput.value = '';
-    logFileInput.addEventListener("change", handleFileUpload);
+    logFileInput.addEventListener("change", handleFileUploadLocal);
+
+    // --- Upload to Database Button Listener ---
+    const uploadBtn = document.getElementById("upload-to-database-btn");
+    uploadBtn.addEventListener("click", uploadLogsToDatabase);
 
     // --- Search Input Listeners ---
     initSearch();
@@ -55,6 +58,10 @@ const initializeApp = () => {
         // Show the modal (using jQuery for Bootstrap modal)
         $('#filterGroupModal').modal('show');
     });
+
+    // --- Log File Dropdown Setup ---
+    const viewLogFilesBtn = document.getElementById("view-log-files-btn");
+    viewLogFilesBtn.addEventListener("click", loadLogFilesModal);
 
     // --- Delegate Remove-Filter Button in Modal ---
     document.getElementById("filter-list").addEventListener("click", (e) => {
@@ -101,12 +108,6 @@ const initializeApp = () => {
     // Set up dropdown behavior for filter groups and then populate them.
     setupDropdown();
     populateFilterGroups();
-
-    setupLogFileDropdown();
-    populateLogFileDropdown();
-
-    // Load logs from the JSON file.
-    loadLogs();
 }
 
 document.addEventListener("DOMContentLoaded", initializeApp);
