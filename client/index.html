@@ -263,57 +263,56 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Chatbot Column -->
-    <div id="chatbot-container" class="col-md-4 d-none">
-      <div id="chatbot-header" class="text-white d-flex justify-content-between align-items-center">
-        <span>AI Assistant</span>
-        <div class="dropdown-wrapper ml-auto" style="max-width: 200px;">
-          <select id="chatbot-workspace-select" class="minimal-dropdown">
-            <!-- Options will be populated via JavaScript -->
-          </select>
-          <span class="dropdown-arrow">▼</span>
-        </div>
-      </div>
-
-      <div id="chatbot-body" class="p-2" style="height: calc(100vh - 150px); overflow-y: auto;">
-        <div id="chatbot-messages">
-          <p class="chat-message bot">Hi there! Ask me anything.</p>
+      <!-- Chatbot Column -->
+      <div id="chatbot-container" class="col-md-4 d-none">
+        <div id="chatbot-header" class="text-white d-flex justify-content-between align-items-center">
+          <span>AI Assistant</span>
+          <div class="dropdown-wrapper ml-auto" style="max-width: 200px;">
+            <select id="chatbot-workspace-select" class="minimal-dropdown">
+              <!-- Options will be populated via JavaScript -->
+            </select>
+            <span class="dropdown-arrow">▼</span>
+          </div>
         </div>
 
-        <!-- Keep chatbot-form for JavaScript compatibility -->
-        <form id="chatbot-form" class="input-group mt-2">
-          <!-- Outer rounded input box -->
-          <div class="chatbot-input-container">
-            <!-- Seamless input -->
-            <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Ask anything">
+        <div id="chatbot-body" class="p-2" style="height: calc(100vh - 150px); overflow-y: auto;">
+          <div id="chatbot-messages">
+            <p class="chat-message bot">Hi there! Ask me anything.</p>
+          </div>
 
-            <!-- Options inside input box -->
-            <div class="bottom-options">
-              <div class="chatbot-options">
-                <button id="add-category-btn" type="button" class="chatbot-option">
-                  <span class="material-symbols-outlined">
-                    add_circle
-                  </span>
-                  Add Category
-                </button>
-                <button id="search-categories-btn" type="button" class="chatbot-option">
-                  <span class="material-symbols-outlined">
-                    explore
-                  </span>
-                  Search Categories</button>
-              </div>
-              <div>
-                <button type="submit" id="chatbot-send-btn" class="chatbot-send-btn">️
-                  <span class="material-symbols-outlined">
-                    arrow_upward
-                  </span>
-                </button>
+          <!-- Keep chatbot-form for JavaScript compatibility -->
+          <form id="chatbot-form" class="input-group mt-2">
+            <!-- Outer rounded input box -->
+            <div class="chatbot-input-container">
+              <!-- Seamless input -->
+              <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Ask anything">
+
+              <!-- Options inside input box -->
+              <div class="bottom-options">
+                <div class="chatbot-options">
+                  <button id="add-category-btn" type="button" class="chatbot-option">
+                    <span class="material-symbols-outlined">
+                      add_circle
+                    </span>
+                    Add Category
+                  </button>
+                  <button id="search-categories-btn" type="button" class="chatbot-option">
+                    <span class="material-symbols-outlined">
+                      explore
+                    </span>
+                    Search Categories</button>
+                </div>
+                <div>
+                  <button type="submit" id="chatbot-send-btn" class="chatbot-send-btn">️
+                    <span class="material-symbols-outlined">
+                      arrow_upward
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   </div>

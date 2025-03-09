@@ -14,6 +14,7 @@ import {
     initFilterGroups
 } from './filterGroup.js';
 import { initSearch } from './search.js';
+import { initChatbot } from './agent.js';
 
 const initializeApp = () => {
     // --- Initialize Local Storage State for Filter Groups ---
