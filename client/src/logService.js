@@ -62,7 +62,7 @@ export const populateLogFileDropdown = () => {
                 let option = document.createElement("a");
                 option.classList.add("dropdown-item", "flex-grow-1");
                 // Display log id along with its title and description.
-                option.innerHTML = `LOG: ${logFile.id} – ${logFile.title} (${logFile.description})`;
+                option.innerHTML = `${logFile.title} (${logFile.description})`;
                 option.id = logFile.id;
 
                 // Add click event listener directly here.
@@ -226,52 +226,63 @@ export const applyFilters = (filters) => {
     renderTable(filteredLogs, "filtered-logs", filters);
 };
 
-export const handleFileUpload = (event) => {
+// Reads file locally (parses, renders, and saves logs in 'allLogs').
+export const handleFileUploadLocal = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
             const data = JSON.parse(e.target.result);
-
-            // Validate the data is an array.
             if (!Array.isArray(data)) {
                 alert("Invalid file format: JSON must be an array of logs.");
                 return;
             }
-
-            // Update logs and render tables.
             allLogs = getLogsWithIds(data);
             renderTable(allLogs, "all-logs");
             renderTable(allLogs, "filtered-logs");
-
-            // Generate a new ID for the log file.
-            let id = crypto.randomUUID(); // Using crypto.randomUUID() is enough for uniqueness.
-
-            // Send data to the backend.
-            fetch(`http://localhost:8000/table/${id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            })
-                .then((response) => {
-                    if (!response.ok) throw new Error("Data not loaded");
-                    return response.json();
-                })
-                .then((data) => {
-                    console.log("Elastic Search response:", data);
-                    // Refresh the dropdown after a successful upload.
-                    populateLogFileDropdown();
-                })
-                .catch((error) => {
-                    console.error("Upload failed:", error);
-                });
+            console.log("File loaded locally.");
         } catch (error) {
             alert("Error parsing the JSON file. Please upload a valid JSON file.");
         }
     };
     reader.readAsText(file);
+};
+
+// Uploads the logs (with title and description) to the backend.
+export const uploadLogsToDatabase = () => {
+    if (!allLogs.length) {
+        alert("No logs loaded locally. Please load a file first.");
+        return;
+    }
+    // Prompt user for title and description (you can later replace these with a proper UI)
+    const title = prompt("Enter log title", "TITLE") || "TITLE";
+    const description = prompt("Enter log description", "DESCRIPTION") || "DESCRIPTION";
+    const id = crypto.randomUUID();
+
+    // Build payload: logs plus metadata.
+    const payload = {
+        logs: allLogs.map(log => log), // or strip out local IDs if necessary
+        title: title,
+        description: description
+    };
+
+    fetch(`http://localhost:8000/table/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    })
+        .then((response) => {
+            if (!response.ok) throw new Error("Data not loaded");
+            return response.json();
+        })
+        .then((data) => {
+            console.log("Elastic Search response:", data);
+            populateLogFileDropdown();
+        })
+        .catch((error) => {
+            console.error("Upload failed:", error);
+        });
 };
 
 export const handleFileLoad = (id) => {

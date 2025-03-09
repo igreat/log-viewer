@@ -1,6 +1,7 @@
 import './styles.scss';
 import {
-    handleFileUpload,
+    handleFileUploadLocal,
+    uploadLogsToDatabase,
     ROWS_PER_PAGE,
     setupLogFileDropdown,
     populateLogFileDropdown
@@ -22,7 +23,11 @@ const initializeApp = () => {
     // --- File Upload Listener ---
     const logFileInput = document.getElementById("log-file-input");
     logFileInput.value = '';
-    logFileInput.addEventListener("change", handleFileUpload);
+    logFileInput.addEventListener("change", handleFileUploadLocal);
+
+    // --- Upload to Database Button Listener ---
+    const uploadBtn = document.getElementById("upload-to-database-btn");
+    uploadBtn.addEventListener("click", uploadLogsToDatabase);
 
     // --- Search Input Listeners ---
     initSearch();

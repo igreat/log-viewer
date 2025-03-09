@@ -175,7 +175,7 @@ def get_from_elasticsearch(id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def push_to_elastic_search(logs, idx):
+def push_to_elastic_search(logs, idx, title, description):
     es = Elasticsearch(
         [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
     )
@@ -189,13 +189,13 @@ def push_to_elastic_search(logs, idx):
         query = {"query": {"match_all": {}}}
         es.delete_by_query(index=index_name, body=query, wait_for_completion=True)
     else:
-        # Create the index with default metadata
+        # Create the index with provided metadata.
         es.indices.create(
             index=index_name,
             body={
                 "mappings": {
-                    "_meta": {"title": "TITLE", "description": "DESCRIPTION"},
-                    "properties": {}, # if needed, i can add properties here
+                    "_meta": {"title": title, "description": description},
+                    "properties": {},  # Define your properties here if needed.
                 }
             },
         )
@@ -215,11 +215,20 @@ def push_to_elastic_search(logs, idx):
 @app.post("/table/{id}")
 async def upload_file(id: str, request: Request):
     try:
-        log_data = await request.json()
-        if not isinstance(log_data, list):
-            raise HTTPException(status_code=400, detail="Expected a JSON array")
+        data = await request.json()
 
-        response = push_to_elastic_search(log_data, id)
+        # Expecting an object with a "logs" key containing an array.
+        const_logs = data.get("logs")
+        if not const_logs or not isinstance(const_logs, list):
+            raise HTTPException(
+                status_code=400, detail="Expected 'logs' to be a JSON array"
+            )
+
+        # Extract title and description, using default values if not provided.
+        title = data.get("title", str(id))
+        description = data.get("description", "")
+
+        response = push_to_elastic_search(const_logs, id, title, description)
         return response
     except Exception as e:
         print(f"Error processing request: {str(e)}")
