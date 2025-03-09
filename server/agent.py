@@ -103,9 +103,9 @@ User Query: {message}
 
 Based on the above, should this issue be flagged?
 If yes, respond in the following format:
-Issue Summary:
+**Issue Summary**:
 <ISSUE SUMMARY>
-Resolution:
+**Resolution**:
 <RESOLUTION>
 Else, respond with an empty string."""
         return await self.model.chat_completion(prompt)

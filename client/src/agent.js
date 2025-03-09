@@ -80,7 +80,7 @@ export const initChatbot = () => {
         // Append a placeholder bot message.
         const loadingMessage = document.createElement("div");
         loadingMessage.className = "chat-message bot";
-        loadingMessage.textContent = "Waiting for response...";
+        loadingMessage.textContent = "...";
         messagesContainer.appendChild(loadingMessage);
 
         try {
@@ -220,7 +220,7 @@ const processAction = (action, messagesContainer) => {
             decisionEl.className = "chat-message bot thinking";
             // Modern styling:
             decisionEl.style.fontSize = "0.8rem";
-            decisionEl.style.padding = "10px 15px";
+            decisionEl.style.padding = "5px 10px";
             decisionEl.style.margin = "8px 0";
             decisionEl.style.backgroundColor = "#ffffff";
             decisionEl.style.border = "1px solid #e0e0e0";
@@ -237,7 +237,7 @@ const processAction = (action, messagesContainer) => {
             // Removed border-bottom for a cleaner look.
 
             const titleSpan = document.createElement("span");
-            titleSpan.innerHTML = "<strong>Agent thinking</strong>";
+            titleSpan.innerHTML = "Agent thinking";
             header.appendChild(titleSpan);
 
             const ellipsisSpan = document.createElement("span");
@@ -288,7 +288,7 @@ const processAction = (action, messagesContainer) => {
             decisionEl.id = "issue-decision-message";
             decisionEl.className = "chat-message bot thinking";
             decisionEl.style.fontSize = "0.8rem";
-            decisionEl.style.padding = "10px 15px";
+            decisionEl.style.padding = "5px 10px";
             decisionEl.style.margin = "8px 0";
             decisionEl.style.backgroundColor = "#ffffff";
             decisionEl.style.border = "1px solid #e0e0e0";
@@ -304,7 +304,7 @@ const processAction = (action, messagesContainer) => {
             // Removed border-bottom for a cleaner look.
 
             const titleSpan = document.createElement("span");
-            titleSpan.innerHTML = "<strong>Evaluating issues</strong>";
+            titleSpan.innerHTML = "Evaluating issues";
             header.appendChild(titleSpan);
 
             const ellipsisSpan = document.createElement("span");
@@ -367,9 +367,55 @@ const processAction = (action, messagesContainer) => {
         const { issue, summary } = action.body;
         const botMessage = document.createElement("div");
         botMessage.className = "chat-message bot";
-        botMessage.innerHTML = marked.parse(`Detected issue: **${issue}**\n\n${summary}`);
+        botMessage.style.margin = "8px 0";  // spacing
+    
+        // Create a header container with flex styling to align items on one line.
+        const header = document.createElement("div");
+        header.className = "flag-issue-header";
+        header.style.cursor = "pointer";
+        header.style.display = "flex";
+        header.style.alignItems = "center";
+        
+        // Create a container for the issue title.
+        const issueTitleContainer = document.createElement("div");
+        // Use inline parsing to avoid extra paragraph tags.
+        issueTitleContainer.innerHTML = marked.parseInline(`Detected issue: **${issue}**`);
+        // Set the text color to dark red for emphasis.
+        issueTitleContainer.style.color = "#950606";
+        header.appendChild(issueTitleContainer);
+    
+        // Create an arrow indicator using Material Icons.
+        const arrow = document.createElement("span");
+        arrow.className = "material-icons";
+        arrow.textContent = "keyboard_arrow_down"; // initial icon (down arrow)
+        arrow.style.marginLeft = "auto";
+        header.appendChild(arrow);
+    
+        // Create a container for the detailed summary, hidden by default.
+        const details = document.createElement("div");
+        details.className = "flag-issue-details";
+        details.style.display = "none";
+        details.style.marginTop = "5px";
+        details.style.fontSize = "0.85rem";
+        details.style.color = "#555";
+        details.innerHTML = marked.parse(summary);
+    
+        // Toggle details when header is clicked.
+        header.addEventListener("click", () => {
+            if (details.style.display === "none") {
+                details.style.display = "block";
+                arrow.textContent = "expand_less"; // up arrow
+            } else {
+                details.style.display = "none";
+                arrow.textContent = "expand_more"; // down arrow
+            }
+        });
+    
+        botMessage.appendChild(header);
+        botMessage.appendChild(details);
         messagesContainer.appendChild(botMessage);
     }
+    
     // Auto-scroll to the bottom after each update.
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
