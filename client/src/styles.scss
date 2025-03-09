@@ -3,7 +3,7 @@ $breakpoint-md: 768px;
 $breakpoint-lg: 992px;
 
 body {
-  font-family: "Roboto", serif;
+  font-family: "Inter", sans-serif;
 }
 
 .dropdown-menu {
@@ -223,6 +223,12 @@ label.form-check-label {
 
 #main-content {
   transition: width 0.3s ease-in-out;
+}
+
+.header-container {
+  display: flex;
+  align-items: center; /* Vertically centers items */
+  gap: 8px; /* Optional: space between the icon and text */
 }
 
 #chatbot-container {
@@ -560,4 +566,111 @@ label.form-check-label {
 
 .upload-section button {
   min-width: 120px;
+}
+
+.vertical-split-container {
+  display: flex;
+  flex-direction: column;
+  height: 500px; /* Total available height */
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.split-pane {
+  overflow: auto;
+  min-height: 100px; /* Prevent panes from being too small */
+}
+
+/* Split.js will automatically create a gutter; style it if desired: */
+.gutter {
+  background-color: #f0f0f0;
+  cursor: row-resize;
+  height: 5px;
+}
+
+.empty-placeholder {
+  text-align: center;
+  padding: 30px;
+  font-style: italic;
+  color: #6c757d; /* Bootstrap's text-muted color */
+}
+
+table.table tbody tr:hover {
+  background-color: #cbcbcb;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Compact Filters Bar Card */
+.filters-bar {
+  background-color: #fff;
+  border: 1px solid #e3e6f0;
+  border-radius: 8px;
+}
+
+/* Reduce spacing for input groups and buttons */
+.filters-bar .input-group-sm > .form-control {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.filters-bar .custom-control-label {
+  font-size: 0.875rem;
+}
+
+/* Ensure dropdown suggestions appear compact if needed */
+.dropdown-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-top: none;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.875rem;
+}
+
+/* Optional: Hover effect for dropdown suggestions */
+.dropdown-suggestions li {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.dropdown-suggestions li:hover {
+  background-color: #f1f1f1;
+}
+
+/* Modern, compact styling for filter group items */
+.filter-group-item {
+  background-color: #f8f9fa;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.filter-group-item:hover {
+  background-color: #e9ecef;
+}
+
+/* Reduce margin/padding if needed */
+.filter-group-item .form-check-label {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.filter-group-item .form-check-input {
+  margin-top: 0.2rem;
+}
+
+.edit-filter-group-btn {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px; /* Prevents flex-grow and flex-shrink */
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
 }

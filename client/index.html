@@ -29,7 +29,12 @@
           <div class="row justify-content-center">
             <div class="col-md-10">
               <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">Log Viewer</h2>
+                <div class="header-container">
+                  <span class="material-symbols-outlined" style="font-size: 2.5rem;">
+                    search
+                  </span>
+                  <h2 class="mb-0">Log Viewer</h2>
+                </div>
                 <!-- Upload Section -->
                 <div class="upload-section card p-2 shadow-sm">
                   <div class="card-body p-2">
@@ -46,49 +51,68 @@
                 </div>
               </div>
 
-              <!-- Filters bar -->
-              <div class="row g-3 align-items-center mb-4">
-                <div class="col-md-8">
-                  <div class="input-group" style="gap: 10px;">
-                    <input type="text" id="log-search" class="form-control" placeholder="Search logs...">
-                    <button type="submit" class="btn btn-primary enter-button" id="enter-btn">
-                      <i class="bi bi-arrow-return-right"></i>
-                    </button>
-                    <ul class="dropdown-suggestions" id="search-suggestions"></ul>
+              <!-- Toolbar -->
+              <div class="filters-bar card p-2 mb-3 shadow-sm">
+                <div class="d-flex flex-wrap">
+                  <!-- Search and Toggles Section -->
+                  <div class="d-flex align-items-center mb-2 mr-3" style="flex: 2 1 275px;">
+                    <div class="input-group input-group-sm mr-2 flex-grow-1">
+                      <input type="text" id="log-search" class="form-control" placeholder="Search logs...">
+                      <div class="input-group-append">
+                        <button type="submit" class="btn btn-primary" id="enter-btn">
+                          <i class="bi bi-arrow-return-right"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="custom-control custom-checkbox mr-2">
+                      <input type="checkbox" class="custom-control-input" id="use-regex">
+                      <label class="custom-control-label" for="use-regex">Regex</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="case-sensitive">
+                      <label class="custom-control-label" for="case-sensitive">Case</label>
+                    </div>
                   </div>
-                </div>
-                <div class="col-md-1">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="use-regex">
-                    <label class="form-check-label" for="use-regex">Use Regex</label>
-                  </div>
-                </div>
-                <div class="col-md-1">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="case-sensitive">
-                    <label class="form-check-label" for="case-sensitive">Match Case</label>
-                  </div>
-                </div>
-              </div>
 
-              <!-- Premade Filters Dropdown and Add Button -->
-              <div class="dropdown d-flex align-items-center mb-4">
-                <button id="premade-filters-dropdown" class="btn btn-secondary dropdown-toggle w-100" type="button"
-                  aria-haspopup="true" aria-expanded="false" data-bs-auto-close="outside">
-                  Select Filter Groups
-                </button>
-                <div class="dropdown-menu p-3" aria-labelledby="premade-filters-dropdown"
-                  style="max-height: 300px; overflow-y: auto;">
-                  <!-- Filter groups will be populated here -->
+                  <!-- Date Filters Section with smaller text -->
+                  <div class="d-flex align-items-center mb-2 mr-3" style="flex: 3 1;">
+                    <div class="input-group input-group-sm mr-2" style="width: 180px;">
+                      <input type="text" id="from-timestamp" class="form-control" placeholder="From"
+                        style="font-size: 0.75rem;">
+                    </div>
+                    <div class="input-group input-group-sm mr-2" style="width: 180px;">
+                      <input type="text" id="to-timestamp" class="form-control" placeholder="To"
+                        style="font-size: 0.75rem;">
+                    </div>
+                    <button id="apply-date-btn" class="btn btn-primary btn-sm mr-2">Apply</button>
+                    <button id="clear-date-btn" class="btn btn-danger btn-sm mr-2">Clear</button>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="apply-date-chkbox" checked>
+                      <label class="custom-control-label small" for="apply-date-chkbox">Use Date</label>
+                    </div>
+                  </div>
+
+                  <!-- Filter Groups Section -->
+                  <div class="d-flex align-items-center mb-2" style="flex: 2 1 250px;">
+                    <div class="dropdown position-relative" style="min-width: 200px; flex-grow: 1;">
+                      <button id="premade-filters-dropdown" class="btn btn-secondary dropdown-toggle btn-sm w-100"
+                        type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Filter Groups
+                      </button>
+                      <div class="dropdown-menu p-2" aria-labelledby="premade-filters-dropdown"
+                        style="max-height: 300px; overflow-y: auto;">
+                        <p class="mb-0 text-muted">No filter groups available.</p>
+                      </div>
+                    </div>
+                    <button id="add-filter-group-btn" class="btn btn-success btn-sm ml-2" style="flex: 0 0 auto;"
+                      title="Add Custom Filter Group">
+                      <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px"
+                        fill="white">
+                        <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <button id="add-filter-group-btn"
-                  class="btn btn-success ml-2 d-flex justify-content-center align-items-center"
-                  title="Add Custom Filter Group">
-                  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                    fill="white">
-                    <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
-                  </svg>
-                </button>
               </div>
 
               <!-- Modal for Adding Custom Filter Group -->
@@ -132,21 +156,6 @@
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <!-- Modal for Adding Custom Time Filter -->
-
-              <div id="timeFilter" class="d-flex align-items-center gap-2 mb-3">
-                <div id="fromTime">
-                  <input type="text" id="from-timestamp" placeholder="From" style="width: 210px; height: 35px;">
-                </div>
-                <div id="toTime">
-                  <input type="text" id="to-timestamp" placeholder="To" style="width: 210px; height: 35px;">
-                </div>
-                <button id="apply-date-btn" class="btn btn-primary btn-sm">Apply</button>
-                <button id="clear-date-btn" class="btn btn-danger btn-sm">Clear</button>
-                <input type="checkbox" name="apply-date-chkbox" id="apply-date-chkbox" checked>
-                <label for="apply-date-chkbox">Use Date</label>
               </div>
 
               <!-- Modal for Adding Issue Category -->
@@ -269,25 +278,37 @@
               </div>
 
               <!-- Log Viewer -->
-              <div id="all-logs-table" class="border p-3 rounded"
-                style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
-                <p class="text-muted">Click "Load Logs" to view log data.</p>
-              </div>
-              <div id="all-logs-pagination" class="d-flex justify-content-center mt-3">
-                <!-- Pagination buttons will be populated here -->
-              </div>
+              <!-- Common Header -->
+              <div id="common-header" class="table-header-container"></div>
 
-              <div id="filtered-logs-table" class="border p-3 rounded mt-3"
-                style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
-                <p class="text-muted">Click "Load Logs" to view filtered log data.</p>
-              </div>
-              <div id="filtered-logs-pagination" class="d-flex justify-content-center mt-3">
-                <!-- Pagination buttons will be populated here -->
+              <!-- Combined Tables Container (Vertical Split) -->
+              <div id="tablesContainer" class="vertical-split-container">
+                <!-- Top Pane: All Logs Table (Body Only) -->
+                <div id="all-logs-pane" class="split-pane">
+                  <div id="all-logs-table" class="table-container border p-2 rounded"
+                    style="background-color: #f8f9fa; overflow-y: auto;">
+                    <!-- Table body will be injected here -->
+                  </div>
+                  <div id="all-logs-pagination" class="d-flex justify-content-center mt-2"></div>
+                </div>
+
+                <!-- Divider (handled by Split.js or manual code) -->
+                <div id="divider" class="divider"></div>
+
+                <!-- Bottom Pane: Filtered Logs Table (Body Only) -->
+                <div id="filtered-logs-pane" class="split-pane">
+                  <div id="filtered-logs-table" class="table-container border p-2 rounded"
+                    style="background-color: #f8f9fa; overflow-y: auto;">
+                    <!-- Table body will be injected here -->
+                  </div>
+                  <div id="filtered-logs-pagination" class="d-flex justify-content-center mt-2"></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
       <!-- Chatbot Column -->
       <div id="chatbot-container" class="col-md-4 d-none">
         <div id="chatbot-header" class="text-white d-flex justify-content-between align-items-center">
@@ -342,8 +363,16 @@
     </div>
   </div>
 
+  <!-- footer -->
+  <footer class="footer m-5">
+    <div class="container">
+      <span class="text-muted
+        text-center">Log Viewer &copy; 2022</span>
+    </div>
+  </footer>
+
   <!-- Scripts -->
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src=" https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module" src="./src/index.js"></script>
 </body>

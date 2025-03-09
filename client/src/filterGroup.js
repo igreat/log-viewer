@@ -18,6 +18,7 @@ export const initFilterGroups = () => {
         filterGroups = DEFAULT_FILTER_GROUPS;
         window.localStorage.setItem('filterGroups', JSON.stringify(filterGroups));
     }
+    populateFilterGroups();
 };
 
 export const extendFilterGroups = (newFilterGroups) => {
@@ -252,7 +253,7 @@ export const deleteFilterGroup = (index) => {
 
 export const setupDropdown = () => {
     const dropdownButton = document.getElementById("premade-filters-dropdown");
-    const dropdownMenu = dropdownButton.nextElementSibling;
+    const dropdownMenu = dropdownButton.nextElementSibling.nextElementSibling;
 
     dropdownButton.addEventListener("click", (event) => {
         const isExpanded = dropdownButton.getAttribute("aria-expanded") === "true";
@@ -292,25 +293,23 @@ export const populateFilterGroups = () => {
 
     filterGroups.forEach((group, index) => {
         const groupHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-2">
-            <div class="form-check flex-grow-1 d-flex">
+            <div class="filter-group-item d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+            <div class="form-check flex-grow-1">
                 <input
                 class="form-check-input me-2"
                 type="checkbox"
                 id="filter-group-${index}"
-                value="${index}"
-                >
-                <label class="form-check-label flex-grow-1" for="filter-group-${index}">
-                ${group.title} - ${group.description}
+                value="${index}">
+                <label class="form-check-label" for="filter-group-${index}">
+                <strong>${group.title}</strong>
+                <span class="text-muted"> – ${group.description}</span>
                 </label>
             </div>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-light edit-filter-group-btn rounded-circle d-flex justify-content-center align-items-center p-1" data-index="${index}">
-                <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-                    <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/>
+            <button type="button" class="btn btn-sm btn-outline-secondary edit-filter-group-btn rounded-circle p-1" data-index="${index}">
+                <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#5f6368">
+                <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/>
                 </svg>
-                </button>
-            </div>
+            </button>
             </div>
         `;
         dropdownMenu.insertAdjacentHTML('beforeend', groupHTML);
@@ -330,15 +329,16 @@ export const populateFilterGroups = () => {
     // Attach event listeners to the Edit buttons
     dropdownMenu.querySelectorAll(".edit-filter-group-btn").forEach((button) => {
         button.addEventListener("click", (event) => {
-            const index = parseInt(event.target.getAttribute("data-index"));
+            // Use dataset to get the proper index
+            const index = parseInt(button.getAttribute("data-index"));
             editFilterGroup(index);
         });
     });
 
-    // Attach event listeners to the Delete buttons
+    // Attach event listeners to the Delete buttons, if any (if you later add them)
     dropdownMenu.querySelectorAll(".delete-filter-group-btn").forEach((button) => {
         button.addEventListener("click", (event) => {
-            const index = parseInt(event.target.getAttribute("data-index"));
+            const index = parseInt(button.getAttribute("data-index"));
             deleteFilterGroup(index);
         });
     });

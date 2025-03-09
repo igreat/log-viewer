@@ -33,30 +33,35 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     const paginationContainer = document.getElementById(id + "-pagination");
 
     if (logs.length === 0) {
-        tableContainer.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
+        console.log("No logs to render.");
+        tableContainer.innerHTML = `<div class="empty-placeholder">No logs match your search criteria.</div>`;
         paginationContainer.innerHTML = "";
         return;
     }
-
+    
     // MAIN TABLE
     const headers = Object.keys(logs[0]);
-    tableContainer.innerHTML = `
-        <table class="table table-striped table-bordered text-nowrap small" id="${id}-table">
+    const headerHTML = id === "all-logs" ? `
         <thead class="table-dark">
             <tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr>
         </thead>
-        <tbody>
-            ${logs.map(log => `
-            <tr id="log-${log.id}">
-                ${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}
-            </tr>
-            `).join('')}
-        </tbody>
+    ` : "";
+
+    tableContainer.innerHTML = `
+        <table class="table table-striped table-bordered text-nowrap small" id="${id}-table">
+            ${headerHTML}
+            <tbody>
+                ${logs.map(log => `
+                    <tr id="log-${log.id}">
+                        ${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}
+                    </tr>
+                `).join('')}
+            </tbody>
         </table>
         <div id="pagination-${id}" class="pagination-container mt-2"></div>
     `;
 
-    // TABLE PAGINATION
+    // TABLE PAGINATION (unchanged)
     const rowsPerPage = ROWS_PER_PAGE;
     const $rows = $(`#${id}-table tbody tr`);
     const totalRows = $rows.length;
@@ -71,14 +76,13 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
 
             const navhtml = `
                 <div class="pagination-controls text-center">
-                <button class="btn btn-secondary prev-page" ${page === 0 ? "disabled" : ""}>Previous</button>
-                <input type="number" class="page-input" value="${page + 1}" min="1" max="${numPages}" 
-                        style="width: 60px; text-align: center; margin: 0 10px;">
-                <span>of ${numPages}</span>
-                <button class="btn btn-secondary next-page" ${page === numPages - 1 ? "disabled" : ""}>Next</button>
+                    <button class="btn btn-secondary prev-page" ${page === 0 ? "disabled" : ""}>Previous</button>
+                    <input type="number" class="page-input" value="${page + 1}" min="1" max="${numPages}" 
+                            style="width: 60px; text-align: center; margin: 0 10px;">
+                    <span>of ${numPages}</span>
+                    <button class="btn btn-secondary next-page" ${page === numPages - 1 ? "disabled" : ""}>Next</button>
                 </div>
             `;
-
             $(paginationContainer).html(navhtml);
 
             $(paginationContainer).find(".prev-page").off("click").on("click", function (e) {
