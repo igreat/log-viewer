@@ -7,7 +7,9 @@ export let allLogs = [];
 
 export const getLogsWithIds = (logs) => logs.map((log, index) => ({ id: index + 1, ...log }));
 
-export let logID = 0;
+const MAX_FILES = 5;
+
+export let unusedIDS = [0, 1, 2, 3, 4];
 
 export const setupLogFileDropdown = () => {
     const logfileOptions = document.getElementById("dropdown-log-file-options");
@@ -46,15 +48,59 @@ export const setupLogFileDropdown = () => {
 export const populateLogFileDropdown = () => {
     const dropdownMenu = document.getElementById("dropdown-logfiles");
     dropdownMenu.innerHTML = '';
-    console.log(logID);
-    for (let i = 0; i < logID; i++) {
+    for (let i = 0; i < MAX_FILES; i++) {
+        if (unusedIDS.includes(i)){
+            continue;
+        }
+        // Create container for each log item and delete button
+        let itemContainer = document.createElement("div");
+        itemContainer.classList.add("dropdown-item-container", "d-flex", "justify-content-between", "align-items-center");
+        
+        // Create log item
         let option = document.createElement("a");
-        option.classList.add("dropdown-item");
+        option.classList.add("dropdown-item", "flex-grow-1");
         option.innerHTML = "LOG: " + (i).toString();
         option.id = i.toString();
-        dropdownMenu.appendChild(option);
+        
+        // Create delete button
+        let deleteButton = document.createElement("button");
+        deleteButton.classList.add("btn", "btn-sm", "btn-danger", "ml-2");
+        deleteButton.innerHTML = "×";
+        deleteButton.dataset.logId = i.toString();
+        deleteButton.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent dropdown item from being clicked
+            deleteLogFile(e.target.dataset.logId);
+        });
+        
+        // Append elements to container
+        itemContainer.appendChild(option);
+        itemContainer.appendChild(deleteButton);
+        
+        // Add container to dropdown menu
+        dropdownMenu.appendChild(itemContainer);
     }
-}
+};
+
+// Function to handle log deletion
+const deleteLogFile = (id) => {
+    // Add your deletion logic here
+    console.log(`Deleting log file with ID: ${id}`);
+    fetch(`http://localhost:8000/table/${id}`, {
+        method:"DELETE"
+    }).then((response) => {
+        if (response.ok) {
+            console.log("UNUSED IDS: ", unusedIDS);
+            unusedIDS.push(Number(id));
+            unusedIDS.sort();
+            console.log("UNUSED IDS:", unusedIDS);
+            populateLogFileDropdown();
+        } else {
+            console.error("Failed to delete log file:", response.status);
+        }
+    }).catch(error => {
+        console.log("ERROR IN DELETING: ", error);
+    });
+};
 
 export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     const tableContainer = document.getElementById(id + "-table");
@@ -198,11 +244,15 @@ export const handleFileUpload = (event) => {
             allLogs = getLogsWithIds(data);
             renderTable(allLogs, "all-logs");
             renderTable(allLogs, "filtered-logs");
+            
+            unusedIDS.sort();
 
-            console.log("Uploading logs with ID:", logID);
+            let id = unusedIDS.shift();
+
+            console.log("Uploading logs with ID:", id);
             
             // Send data to the backend
-            fetch(`http://localhost:8000/upload/${logID}`, {
+            fetch(`http://localhost:8000/table/${id}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
@@ -213,8 +263,6 @@ export const handleFileUpload = (event) => {
                 })
                 .then((data) => {
                     console.log("Elastic Search response:", data);
-                    
-                    logID++;
 
                     populateLogFileDropdown();
 
@@ -234,7 +282,7 @@ export const handleFileUpload = (event) => {
 
 export const handleFileLoad = (id) => {
     console.log("Loading file with ID:", id);
-    fetch(`http://localhost:8000/upload/${id}`, {
+    fetch(`http://localhost:8000/table/${id}`, {
         method: "GET"
     })
         .then(response => {

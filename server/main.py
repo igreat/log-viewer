@@ -17,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/upload/{id}")
+@app.get("/table/{id}")
 def get_from_elasticsearch(id: str):
     try:
         es = Elasticsearch("http://localhost:9200", verify_certs=False)
@@ -54,7 +54,6 @@ def get_from_elasticsearch(id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-from elasticsearch.helpers import bulk
 
 def push_to_elastic_search(logs, idx):
     es = Elasticsearch([{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False)
@@ -87,7 +86,7 @@ def push_to_elastic_search(logs, idx):
     return {"message": "Logs successfully uploaded and indexed.", "total_logs": len(logs)}
 
 
-@app.post("/upload/{id}")
+@app.post("/table/{id}")
 async def upload_file(id:str, request: Request):
     try:
         log_data = await request.json()
@@ -103,6 +102,26 @@ async def upload_file(id:str, request: Request):
         print(f"Error processing request: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/table/{id}")
+async def delete_file(id:int):
+    es = Elasticsearch([{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False)
+    try:
+        if (es.indices.exists(str(id))):
+            es.indices.delete(str(id))
+            return {
+                "status": "success",
+                "message": "log table deleted successfully"
+            }
+        else:
+            return {
+                "status":"error",
+                "message": f"log file with id: {id} not found"
+            }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e) 
+        }
 # Run the app with uvicorn
 if __name__ == "__main__":
     import uvicorn
