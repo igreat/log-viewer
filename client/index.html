@@ -5,149 +5,315 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Log Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 
 <body>
-  <div id="app" class="container mt-3">
-    <!-- Log Viewer Section -->
-    <div class="row justify-content-center">
-      <div class="col-md-10">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="mb-0">Log Viewer</h2>
-          <!-- File Upload -->
-          <div class="form-group">
-            <label for="log-file-input" class="form-label">Upload Log File</label>
-            <input type="file" id="log-file-input" class="form-control" accept=".json">
-          </div>
-          <div class="big-d">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdown-log-file-options" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Dropdown button
-            </button>
-            <div class="dropdown-menu-2" aria-labelledby="dropdown-log-file-options" id="dropdown-logfiles">
+  <div class="container mt-3">
+    <div class="row">
+      <!-- Toggle Button (always visible) -->
+      <button id="chatbot-toggle-btn" class="chatbot-toggle-btn">💬</button>
 
-            </div>
-          </div>
-        </div>
+      <!-- Main Content Column -->
+      <div id="main-content" class="col-md-12">
+        <div id="app" class="container mt-3">
+          <!-- Log Viewer Section -->
+          <div class="row justify-content-center">
+            <div class="col-md-10">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Log Viewer</h2>
+                <!-- File Upload -->
+                <div class="form-group">
+                  <label for="log-file-input" class="form-label">Upload Log File</label>
+                  <input type="file" id="log-file-input" class="form-control" accept=".json">
+                </div>
+                <div class="big-d">
+                  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdown-log-file-options"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Dropdown button
+                  </button>
+                  <div class="dropdown-menu-2" aria-labelledby="dropdown-log-file-options" id="dropdown-logfiles">
 
-        <!-- Filters bar -->
-        <div class="row g-3 align-items-center mb-4">
-          <div class="col-md-8">
-            <div class="input-group" style="gap: 10px;">
-              <input type="text" id="log-search" class="form-control" placeholder="Search logs...">
-              <button type="submit" class="btn btn-primary enter-button" id="enter-btn">
-                <i class="bi bi-arrow-return-right"></i>
-              </button>
-              <ul class="dropdown-suggestions" id="search-suggestions"></ul>
-            </div>
-          </div>
-          <div class="col-md-1">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="use-regex">
-              <label class="form-check-label" for="use-regex">Use Regex</label>
-            </div>
-          </div>
-          <div class="col-md-1">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="case-sensitive">
-              <label class="form-check-label" for="case-sensitive">Match Case</label>
-            </div>
-          </div>
-        </div>
+                  </div>
+                </div>
+              </div>
 
-        <!-- Premade Filters Dropdown and Add Button -->
-        <div class="dropdown d-flex align-items-center mb-4">
-          <button id="premade-filters-dropdown" class="btn btn-secondary dropdown-toggle w-100" type="button"
-            aria-haspopup="true" aria-expanded="false" data-bs-auto-close="outside">
-            Select Filter Groups
-          </button>
-          <div class="dropdown-menu p-3" aria-labelledby="premade-filters-dropdown"
-            style="max-height: 300px; overflow-y: auto;">
-            <!-- Filter groups will be populated here -->
-          </div>
-          <button id="add-filter-group-btn"
-            class="btn btn-success ml-2 d-flex justify-content-center align-items-center"
-            title="Add Custom Filter Group">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white">
-              <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
-            </svg>
-          </button>
-        </div>
+              <!-- Filters bar -->
+              <div class="row g-3 align-items-center mb-4">
+                <div class="col-md-8">
+                  <div class="input-group" style="gap: 10px;">
+                    <input type="text" id="log-search" class="form-control" placeholder="Search logs...">
+                    <button type="submit" class="btn btn-primary enter-button" id="enter-btn">
+                      <i class="bi bi-arrow-return-right"></i>
+                    </button>
+                    <ul class="dropdown-suggestions" id="search-suggestions"></ul>
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="use-regex">
+                    <label class="form-check-label" for="use-regex">Use Regex</label>
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="case-sensitive">
+                    <label class="form-check-label" for="case-sensitive">Match Case</label>
+                  </div>
+                </div>
+              </div>
 
-        <!-- Modal for Adding Custom Filter Group -->
-        <div id="filterGroupModal" class="modal" tabindex="-1" role="dialog">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Dynamic Title: Add or Edit Custom Filter Group</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
+              <!-- Premade Filters Dropdown and Add Button -->
+              <div class="dropdown d-flex align-items-center mb-4">
+                <button id="premade-filters-dropdown" class="btn btn-secondary dropdown-toggle w-100" type="button"
+                  aria-haspopup="true" aria-expanded="false" data-bs-auto-close="outside">
+                  Select Filter Groups
+                </button>
+                <div class="dropdown-menu p-3" aria-labelledby="premade-filters-dropdown"
+                  style="max-height: 300px; overflow-y: auto;">
+                  <!-- Filter groups will be populated here -->
+                </div>
+                <button id="add-filter-group-btn"
+                  class="btn btn-success ml-2 d-flex justify-content-center align-items-center"
+                  title="Add Custom Filter Group">
+                  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                    fill="white">
+                    <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+                  </svg>
                 </button>
               </div>
-              <div class="modal-body">
-                <form id="filter-group-form">
-                  <div id="filter-title-description" class="d-flex mb-3">
-                    <!-- Title Input -->
-                    <div id="filter-title">
-                      <label for="filter-group-title" class="form-label">Title</label>
-                      <input type="text" id="filter-group-title" class="form-control"
-                        placeholder="Enter a title for the filter group" required>
-                    </div>
 
-                    <!-- Description Input -->
-                    <div id="filter-description">
-                      <label for="filter-group-description" class="form-label">Description</label>
-                      <input type="text" id="filter-group-description" class="form-control"
-                        placeholder="Enter description" required>
+              <!-- Modal for Adding Custom Filter Group -->
+              <div id="filterGroupModal" class="modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Dynamic Title: Add or Edit Custom Filter Group</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <form id="filter-group-form">
+                        <div id="filter-title-description" class="d-flex mb-3">
+                          <!-- Title Input -->
+                          <div id="filter-title">
+                            <label for="filter-group-title" class="form-label">Title</label>
+                            <input type="text" id="filter-group-title" class="form-control"
+                              placeholder="Enter a title for the filter group" required>
+                          </div>
+
+                          <!-- Description Input -->
+                          <div id="filter-description">
+                            <label for="filter-group-description" class="form-label">Description</label>
+                            <input type="text" id="filter-group-description" class="form-control"
+                              placeholder="Enter description" required>
+                          </div>
+                        </div>
+
+                        <!-- Filters List -->
+                        <div id="filter-list" class="mb-3">
+                          <!-- Dynamically added filters go here -->
+                        </div>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
+                      <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
+                      <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
                     </div>
                   </div>
-
-                  <!-- Filters List -->
-                  <div id="filter-list" class="mb-3">
-                    <!-- Dynamically added filters go here -->
-                  </div>
-                </form>
+                </div>
               </div>
-              <div class="modal-footer">
-                <button type="button" id="add-filter-btn" class="btn btn-primary">Add Filter</button>
-                <button type="button" id="save-filter-group-btn" class="btn btn-success">Save</button>
-                <button type="button" id="delete-filter-group-btn" class="btn btn-danger">Delete</button>
+
+              <!-- Modal for Adding Custom Time Filter -->
+
+              <div id="timeFilter" class="d-flex align-items-center gap-2 mb-3">
+                <div id="fromTime">
+                  <input type="text" id="from-timestamp" placeholder="From" style="width: 210px; height: 35px;">
+                </div>
+                <div id="toTime">
+                  <input type="text" id="to-timestamp" placeholder="To" style="width: 210px; height: 35px;">
+                </div>
+                <button id="apply-date-btn" class="btn btn-primary btn-sm">Apply</button>
+                <button id="clear-date-btn" class="btn btn-danger btn-sm">Clear</button>
+                <input type="checkbox" name="apply-date-chkbox" id="apply-date-chkbox" checked>
+                <label for="apply-date-chkbox">Use Date</label>
+              </div>
+
+              <!-- Modal for Adding Issue Category -->
+              <div id="issueModal" class="modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Add or Edit Issue Category</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <form id="issue-form">
+                        <!-- Row for Category Name and Description -->
+                        <div id="issue-title-description" class="mb-3">
+                          <!-- Category Name Input -->
+                          <div id="issue-title" class="mb-3">
+                            <label for="issue-category" class="form-label">Category Name</label>
+                            <input type="text" id="issue-category" class="form-control"
+                              placeholder="e.g. Missing Media Track Error" required>
+                          </div>
+                          <!-- Description Input -->
+                          <div id="issue-description" class="mb-3">
+                            <label for="issue-description-input" class="form-label">Description</label>
+                            <input type="text" id="issue-description-input" class="form-control"
+                              placeholder="Brief description of the issue" required>
+                          </div>
+                        </div>
+                        <!-- Context Input -->
+                        <div class="mb-3">
+                          <label for="issue-context" class="form-label">Context</label>
+                          <textarea id="issue-context" class="form-control" rows="3"
+                            placeholder="Additional context or background" required></textarea>
+                        </div>
+                        <!-- Keywords Input (Dynamic) -->
+                        <div class="mb-3">
+                          <label class="form-label">Keywords</label>
+                          <div id="keywords-container"></div>
+                          <button type="button" id="add-keyword-category" class="btn btn-sm btn-outline-primary mt-2">
+                            Add Keyword Category
+                          </button>
+                        </div>
+                        <!-- Conditions (optional) -->
+                        <div class="mb-3">
+                          <label for="issue-conditions" class="form-label">Conditions (optional)</label>
+                          <input type="text" id="issue-conditions" class="form-control"
+                            placeholder="e.g. Occurs during call setup">
+                        </div>
+                        <!-- Resolution (optional) -->
+                        <div class="mb-3">
+                          <label for="issue-resolution" class="form-label">Resolution (optional)</label>
+                          <input type="text" id="issue-resolution" class="form-control"
+                            placeholder="Recommended resolution steps">
+                        </div>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" id="save-issue-btn" class="btn btn-success">Save</button>
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal for Searching/Editing Categories -->
+              <div id="categoriesModal" class="modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-lg" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header d-flex align-items-center">
+                      <h5 class="modal-title flex-grow-1">Categories</h5>
+                      <div class="dropdown-wrapper w-auto ml-3">
+                        <select id="workspace-select" class="minimal-dropdown">
+                          <!-- Options will be populated via JavaScript -->
+                        </select>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <!-- Category cards container -->
+                      <div id="categoriesContainer" class="container">
+                        <div class="row" id="categoriesRow">
+                          <!-- Cards inserted here -->
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Log Viewer -->
+              <div id="all-logs-table" class="border p-3 rounded"
+                style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
+                <p class="text-muted">Click "Load Logs" to view log data.</p>
+              </div>
+              <div id="all-logs-pagination" class="d-flex justify-content-center mt-3">
+                <!-- Pagination buttons will be populated here -->
+              </div>
+
+              <div id="filtered-logs-table" class="border p-3 rounded mt-3"
+                style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
+                <p class="text-muted">Click "Load Logs" to view filtered log data.</p>
+              </div>
+              <div id="filtered-logs-pagination" class="d-flex justify-content-center mt-3">
+                <!-- Pagination buttons will be populated here -->
               </div>
             </div>
           </div>
         </div>
-        
-        <!-- Modal for Adding Custom Time Filter -->
+      </div>
+    </div>
 
-        <div id="timeFilter" class="d-flex align-items-center gap-2 mb-3">
-          <div id="fromTime">
-            <input type="text" id="from-timestamp" placeholder="From" style="width: 210px; height: 35px;">
-          </div>
-          <div id="toTime">
-            <input type="text" id="to-timestamp" placeholder="To" style="width: 210px; height: 35px;">
-          </div>
-          <button id="apply-date-btn" class="btn btn-primary btn-sm">Apply</button>
-          <button id="clear-date-btn" class="btn btn-danger btn-sm">Clear</button>
-          <input type="checkbox" name="apply-date-chkbox" id="apply-date-chkbox" checked>
-          <label for="apply-date-chkbox">Use Date</label>
-        </div> 
-         
-        <!-- Log Viewer -->
-        <div id="all-logs-table" class="border p-3 rounded"
-          style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
-          <p class="text-muted">Click "Load Logs" to view log data.</p>
+    <!-- Chatbot Column -->
+    <div id="chatbot-container" class="col-md-4 d-none">
+      <div id="chatbot-header" class="text-white d-flex justify-content-between align-items-center">
+        <span>AI Assistant</span>
+        <div class="dropdown-wrapper ml-auto" style="max-width: 200px;">
+          <select id="chatbot-workspace-select" class="minimal-dropdown">
+            <!-- Options will be populated via JavaScript -->
+          </select>
+          <span class="dropdown-arrow">▼</span>
         </div>
-        <div id="all-logs-pagination" class="d-flex justify-content-center mt-3">
-          <!-- Pagination buttons will be populated here -->
+      </div>
+
+      <div id="chatbot-body" class="p-2" style="height: calc(100vh - 150px); overflow-y: auto;">
+        <div id="chatbot-messages">
+          <p class="chat-message bot">Hi there! Ask me anything.</p>
         </div>
 
-        <div id="filtered-logs-table" class="border p-3 rounded mt-3"
-          style="background-color: #f8f9fa; max-height: 500px; overflow-y: auto;">
-          <p class="text-muted">Click "Load Logs" to view filtered log data.</p>
-        </div>
-        <div id="filtered-logs-pagination" class="d-flex justify-content-center mt-3">
-          <!-- Pagination buttons will be populated here -->
+        <!-- Keep chatbot-form for JavaScript compatibility -->
+        <form id="chatbot-form" class="input-group mt-2">
+          <!-- Outer rounded input box -->
+          <div class="chatbot-input-container">
+            <!-- Seamless input -->
+            <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Ask anything">
+
+            <!-- Options inside input box -->
+            <div class="bottom-options">
+              <div class="chatbot-options">
+                <button id="add-category-btn" type="button" class="chatbot-option">
+                  <span class="material-symbols-outlined">
+                    add_circle
+                  </span>
+                  Add Category
+                </button>
+                <button id="search-categories-btn" type="button" class="chatbot-option">
+                  <span class="material-symbols-outlined">
+                    explore
+                  </span>
+                  Search Categories</button>
+              </div>
+              <div>
+                <button type="submit" id="chatbot-send-btn" class="chatbot-send-btn">️
+                  <span class="material-symbols-outlined">
+                    arrow_upward
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
   </div>

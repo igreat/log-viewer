@@ -2,6 +2,10 @@ $breakpoint-sm: 576px;
 $breakpoint-md: 768px;
 $breakpoint-lg: 992px;
 
+body {
+  font-family: "Roboto", serif;
+}
+
 .dropdown-menu {
   position: absolute;
   top: 100%;
@@ -187,7 +191,8 @@ button .svg-icon {
 }
 
 // Ensure the table container spans the entire width
-#all-logs, #filtered-logs {
+#all-logs,
+#filtered-logs {
   width: 100%; /* Use full width */
   padding: 0; /* Remove internal padding */
   margin: 0; /* Remove external margins */
@@ -196,8 +201,8 @@ button .svg-icon {
 
 // Remove the left padding or margin for the search bar container
 .col-md-8 {
-  padding-left: 0; /* Remove any padding on the left */
-  margin-left: 0; /* Remove any margin on the left */
+  padding-left: 0;
+  margin-left: 0;
 }
 
 // Ensure the input group aligns to the left
@@ -213,5 +218,313 @@ button .svg-icon {
 
 // Remove extra margin from the "Use Regex" label
 label.form-check-label {
-  margin-right: 0 !important; /* Remove the right margin */
+  margin-right: 0 !important;
+}
+
+#main-content {
+  transition: width 0.3s ease-in-out;
+}
+
+#chatbot-container {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 0;
+}
+
+/* Chatbot header styling */
+#chatbot-header {
+  background: #4a4a4a; /* Neutral dark gray */
+  color: #ffffff;
+  padding: 10px 20px;
+  font-family: "Roboto", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  border-bottom: 1px solid #ddd;
+}
+
+.chatbot-title {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.chatbot-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 5px;
+  text-align: left;
+}
+
+/* Outer rounded box give it a drop shadow*/
+.chatbot-input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border: 1px solid #cfcfcf;
+  border-radius: 25px;
+  padding: 12px;
+  background: #ffffff;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Hidden-border input so it blends in */
+.chatbot-input {
+  border: none;
+  outline: none;
+  padding: 5px 10px 16px 10px;
+  font-size: 16px;
+  background: transparent;
+  width: 100%;
+}
+
+.bottom-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Options inside the same outer box, below the input */
+.chatbot-options {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.chatbot-option {
+  border: 1px solid #ddd;
+  background: white;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chatbot-send-btn {
+  width: 35px;
+  height: 35px;
+  background-color: black; /* Button background */
+  border: none;
+  border-radius: 50%; /* Makes it circular */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.chatbot-send-btn .material-symbols-outlined {
+  color: white; /* Icon color */
+  font-size: 24px;
+}
+
+/* Fixed Chat Toggle Button */
+.chatbot-toggle-btn {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 15px;
+  font-size: 18px;
+  border-radius: 20px 0 0 20px;
+  cursor: pointer;
+  z-index: 1100;
+  transition: all 0.3s ease-in-out;
+}
+
+.chatbot-toggle-btn:hover {
+  background: #0056b3;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+/* Style for category cards to appear modern and clean */
+.category-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.category-info h5 {
+  font-weight: 600;
+}
+
+.category-info p {
+  margin-bottom: 0;
+}
+
+.btn-circle {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ccc; /* light gray border */
+  background-color: #f8f9fa; /* light gray background */
+  color: #555; /* medium gray text */
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.btn-circle:hover {
+  background-color: #e0e0e0; /* slightly darker on hover */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-circle .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 20px;
+}
+
+/* Wrapper to position the arrow over the select */
+.dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+/* Minimalistic dropdown with an underline */
+.minimal-dropdown {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid currentColor; /* Underline */
+  font-size: 1rem;
+  color: inherit; /* Inherit color (white for header, dark for modal) */
+  padding: 0.25rem 2rem 0.25rem 0.5rem; /* extra right padding for the arrow */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+
+/* The downward arrow positioned at the right end */
+.dropdown-arrow {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 0.75rem;
+  color: inherit;
+}
+
+/* Chat message bubble styling */
+.chat-message {
+  max-width: 75%;
+  padding: 10px 15px;
+  border-radius: 18px;
+  margin: 8px 0;
+  clear: both;
+  font-family: "Roboto", sans-serif;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+/* User messages: greenish bubble on the right */
+.chat-message.user {
+  background-color: #dcf8c6;
+  float: right;
+  text-align: right;
+  border-bottom-right-radius: 0;
+}
+
+/* Bot messages: light gray bubble on the left */
+.chat-message.bot {
+  background-color: #f1f0f0;
+  float: left;
+  text-align: left;
+  border-bottom-left-radius: 0;
+}
+
+.chat-message.bot table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: #fff; /* white background for contrast */
+  border-radius: 6px; /* slightly reduced for compact look */
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* lighter shadow */
+  margin-bottom: 12px; /* reduced margin */
+}
+
+.chat-message.bot th,
+.chat-message.bot td {
+  padding: 8px 10px; /* reduced padding for compactness */
+  text-align: left;
+  vertical-align: middle;
+}
+
+.chat-message.bot th {
+  background-color: #f7f7f7; /* light header background */
+  font-weight: 600;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.chat-message.bot td {
+  border-top: 1px solid #e0e0e0;
+}
+
+.chat-message.bot table tr:hover td {
+  background-color: #f5f5f5; /* subtle hover effect */
+}
+
+/* Ensure the messages container clears floats */
+#chatbot-messages::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.sample-question {
+  border: 1px solid #cfcfcf;
+  border-radius: 25px;
+  background: #ffffff;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  margin-bottom: 14px;
+  display: inline-block;
+  color: #555;
+}
+
+// hover effect to the sample question with ease-in-out transition (background color change)
+.sample-question:hover {
+  background-color: #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.thinking-header {
+  cursor: pointer;
+}
+
+.thinking-dots {
+  font-weight: normal;
+}
+
+.thinking-content {
+  margin-top: 8px;
+  font-size: 0.9em;
+  color: #555;
+  border-top: 1px solid #ddd;
+  padding-top: 5px;
 }

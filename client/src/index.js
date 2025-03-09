@@ -64,6 +64,9 @@ const initializeApp = () => {
         }
     });
 
+    // --- Initialize Chatbot ---
+    initChatbot();
+
     // --- Filtered Logs Table Row Click Behavior ---
     const filteredTable = document.getElementById("filtered-logs-table");
     if (filteredTable) {

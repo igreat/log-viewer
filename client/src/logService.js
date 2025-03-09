@@ -221,6 +221,7 @@ export const applyFilters = (filters) => {
             });
         });
     });
+
     renderTable(allLogs, "all-logs", filters);
     renderTable(filteredLogs, "filtered-logs", filters);
 };
@@ -271,7 +272,6 @@ export const handleFileUpload = (event) => {
                 .catch((error) => {
                     console.error("Upload failed:", error);
                 });
-
         } catch (error) {
             alert("Error parsing the JSON file. Please upload a valid JSON file.");
         }
