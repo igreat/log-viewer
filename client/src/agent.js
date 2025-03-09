@@ -80,7 +80,7 @@ export const initChatbot = () => {
         // Append a placeholder bot message.
         const loadingMessage = document.createElement("div");
         loadingMessage.className = "chat-message bot";
-        loadingMessage.textContent = "...";
+        loadingMessage.textContent = "Waiting for response...";
         messagesContainer.appendChild(loadingMessage);
 
         try {
@@ -116,6 +116,12 @@ export const initChatbot = () => {
         form.reset();
         window.currentEditingCategory = null;
         $('#issueModal').modal('show');
+    });
+
+    // Attach event listener to the "Add Keyword Category" button.
+    const addKeywordCategoryBtn = document.getElementById("add-keyword-category");
+    addKeywordCategoryBtn.addEventListener("click", function () {
+        addKeywordRow();
     });
 
     // When the "Search Categories" button is clicked, load known issues into the categories modal and show it.
@@ -368,14 +374,14 @@ const processAction = (action, messagesContainer) => {
         const botMessage = document.createElement("div");
         botMessage.className = "chat-message bot";
         botMessage.style.margin = "8px 0";  // spacing
-    
+
         // Create a header container with flex styling to align items on one line.
         const header = document.createElement("div");
         header.className = "flag-issue-header";
         header.style.cursor = "pointer";
         header.style.display = "flex";
         header.style.alignItems = "center";
-        
+
         // Create a container for the issue title.
         const issueTitleContainer = document.createElement("div");
         // Use inline parsing to avoid extra paragraph tags.
@@ -383,14 +389,14 @@ const processAction = (action, messagesContainer) => {
         // Set the text color to dark red for emphasis.
         issueTitleContainer.style.color = "#950606";
         header.appendChild(issueTitleContainer);
-    
+
         // Create an arrow indicator using Material Icons.
         const arrow = document.createElement("span");
         arrow.className = "material-icons";
         arrow.textContent = "keyboard_arrow_down"; // initial icon (down arrow)
         arrow.style.marginLeft = "auto";
         header.appendChild(arrow);
-    
+
         // Create a container for the detailed summary, hidden by default.
         const details = document.createElement("div");
         details.className = "flag-issue-details";
@@ -399,7 +405,7 @@ const processAction = (action, messagesContainer) => {
         details.style.fontSize = "0.85rem";
         details.style.color = "#555";
         details.innerHTML = marked.parse(summary);
-    
+
         // Toggle details when header is clicked.
         header.addEventListener("click", () => {
             if (details.style.display === "none") {
@@ -410,12 +416,12 @@ const processAction = (action, messagesContainer) => {
                 arrow.textContent = "expand_more"; // down arrow
             }
         });
-    
+
         botMessage.appendChild(header);
         botMessage.appendChild(details);
         messagesContainer.appendChild(botMessage);
     }
-    
+
     // Auto-scroll to the bottom after each update.
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
@@ -600,12 +606,69 @@ const loadCategoriesModal = () => {
     });
 };
 
+// Initialize the keywords section. Pass an object if editing an existing category.
+function initKeywordsSection(existingKeywords) {
+    const container = document.getElementById("keywords-container");
+    container.innerHTML = ""; // clear previous content
+    if (existingKeywords) {
+        for (const key in existingKeywords) {
+            if (existingKeywords.hasOwnProperty(key)) {
+                addKeywordRow(key, existingKeywords[key]);
+            }
+        }
+    }
+}
+
+// Create and add a new keyword row to the container using Bootstrap's input group.
+function addKeywordRow(category = "", keywordsArray = []) {
+    const container = document.getElementById("keywords-container");
+
+    // Create a row container using Bootstrap input group.
+    const row = document.createElement("div");
+    row.className = "input-group mb-2 keyword-row";
+
+    // Category input.
+    const catInput = document.createElement("input");
+    catInput.type = "text";
+    catInput.className = "form-control";
+    catInput.placeholder = "Category (e.g. media)";
+    catInput.value = category;
+
+    // Keywords input (comma separated).
+    const keyInput = document.createElement("input");
+    keyInput.type = "text";
+    keyInput.className = "form-control";
+    keyInput.placeholder = "Keywords (comma separated)";
+    keyInput.value = keywordsArray.join(", ");
+
+    // Remove button with Material Icon.
+    const removeBtnWrapper = document.createElement("div");
+    removeBtnWrapper.className = "input-group-append";
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn btn-outline-danger";
+    // Use a Material icon for the delete button.
+    removeBtn.innerHTML = '<span class="material-icons">delete</span>';
+    removeBtn.addEventListener("click", () => {
+        row.remove();
+    });
+    removeBtnWrapper.appendChild(removeBtn);
+
+    row.appendChild(catInput);
+    row.appendChild(keyInput);
+    row.appendChild(removeBtnWrapper);
+    container.appendChild(row);
+}
+
 const openEditIssueModal = (category) => {
     const issue = workspaces[currentWorkspace][category];
     document.getElementById("issue-category").value = category;
     document.getElementById("issue-description-input").value = issue.description || "";
     document.getElementById("issue-context").value = issue.context || "";
-    document.getElementById("issue-keywords").value = JSON.stringify(issue.keywords, null, 2);
+
+    // Initialize the dynamic keywords UI with existing keywords.
+    initKeywordsSection(issue.keywords);
+
     document.getElementById("issue-conditions").value = issue.conditions || "";
     document.getElementById("issue-resolution").value = issue.resolution || "";
 
@@ -621,22 +684,26 @@ const handleSubmitIssue = (event) => {
     const newCategory = document.getElementById("issue-category").value.trim();
     const description = document.getElementById("issue-description-input").value.trim();
     const context = document.getElementById("issue-context").value.trim();
-    const keywordsStr = document.getElementById("issue-keywords").value.trim();
     const conditions = document.getElementById("issue-conditions").value.trim();
     const resolution = document.getElementById("issue-resolution").value.trim();
 
-    let keywords;
-    try {
-        keywords = JSON.parse(keywordsStr);
-    } catch (error) {
-        alert("Invalid JSON for keywords. Please check your format.");
-        return;
-    }
+    // Gather keywords from the dynamic UI.
+    const keywords = {};
+    const rows = document.querySelectorAll("#keywords-container .keyword-row");
+    rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const key = inputs[0].value.trim();
+        const keysStr = inputs[1].value.trim();
+        if (key && keysStr) {
+            // Split comma-separated keywords and filter out empty entries.
+            keywords[key] = keysStr.split(",").map(s => s.trim()).filter(Boolean);
+        }
+    });
 
     const issueObj = {
         description,
         context,
-        keywords,
+        keywords,  // use the built object
         conditions: conditions || null,
         resolution: resolution || null
     };

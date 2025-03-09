@@ -158,12 +158,13 @@
                           <textarea id="issue-context" class="form-control" rows="3"
                             placeholder="Additional context or background" required></textarea>
                         </div>
-                        <!-- Keywords Input (in JSON format) -->
+                        <!-- Keywords Input (Dynamic) -->
                         <div class="mb-3">
-                          <label for="issue-keywords" class="form-label">Keywords (JSON format)</label>
-                          <textarea id="issue-keywords" class="form-control" rows="3"
-                            placeholder='e.g. {"media": ["CMediaTrackMgr::GetTrack", "No Track!"], "video": ["vid=1"], "session": ["MediaSession"]}'
-                            required></textarea>
+                          <label class="form-label">Keywords</label>
+                          <div id="keywords-container"></div>
+                          <button type="button" id="add-keyword-category" class="btn btn-sm btn-outline-primary mt-2">
+                            Add Keyword Category
+                          </button>
                         </div>
                         <!-- Conditions (optional) -->
                         <div class="mb-3">
