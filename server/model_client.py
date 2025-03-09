@@ -39,8 +39,10 @@ class OfflineModelClient(ModelClient):
         )
 
     async def chat_completion(self, prompt: str) -> str:
-        output = self.model(prompt, max_tokens=1024)
-        print(output)
+        output = self.model.create_chat_completion(
+            messages=[{"role": "system", "content": prompt}]
+        )
+        print("Output:", output)
         if isinstance(output, Iterator):
-            return next(output)["choices"][0]["text"]
-        return output["choices"][0]["text"]
+            return "" # FIXME: Handle streaming responses.
+        return output["choices"][0]["message"]["content"] or ""

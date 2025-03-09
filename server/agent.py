@@ -1,5 +1,5 @@
 import json
-from utils import load_logs, get_log_level_counts, compute_stats, clean_response_content
+from utils import load_logs, get_log_level_counts, compute_stats, get_simple_stats
 from model_client import ModelClient
 
 
@@ -36,7 +36,7 @@ Do not include any extra text.
         print("Response:", response)
         if response:
             try:
-                cleaned = clean_response_content(response).strip()
+                cleaned = response.strip()
                 if ":" in cleaned:
                     decision_part, explanation = cleaned.split(":", 1)
                     return decision_part.strip().lower() == "yes", explanation.strip()
@@ -46,9 +46,9 @@ Do not include any extra text.
                 print("Error decoding decision:", e)
         return False, ""
 
-    async def generate_summary(self, message: str) -> str:
+    async def generate_summary(self, message: str) -> tuple[str, dict]:
+        logs = load_logs()
         if self.stats is None:
-            logs = load_logs()
             level_counts = get_log_level_counts(logs)
             self.stats = compute_stats(level_counts)
         stats_str = json.dumps(self.stats, default=str, indent=2)
@@ -60,7 +60,8 @@ Log Statistics:
 User Query: {message}
 
 Generate a summary of the log statistics. Respond with just the explanation:"""
-        return await self.model.chat_completion(prompt)
+        summary = await self.model.chat_completion(prompt)
+        return summary, get_simple_stats(logs)
 
     async def evaluate_decision(self, message: str) -> tuple[bool, str]:
         prompt = f"""{self.base_prompt}
@@ -78,7 +79,7 @@ no: [brief explanation]
         if response:
             try:
                 # Clean the response (e.g. remove any stray formatting) and split by colon.
-                cleaned = clean_response_content(response).strip()
+                cleaned = response.strip()
                 if ":" in cleaned:
                     decision_part, explanation = cleaned.split(":", 1)
                     decision = decision_part.strip().lower() == "yes"

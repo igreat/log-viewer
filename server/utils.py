@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 import json
+from typing import Any
 
 
 def load_logs():
@@ -64,6 +65,22 @@ def extract_top_rows(logs, keywords, top_n=5):
                     if count >= top_n:
                         break
     return extracted
+
+def get_simple_stats(logs):
+    # this will simply compute stats like most log level counts, most common keywords, etc.
+    # COMPUTE LEVEL COUNTS (not per interval, just overall)
+    stats: dict[str, Any] = {"Debug": 0, "Info": 0, "Warn": 0, "Error": 0}
+    for log in logs:
+        stats[log["level"]] += 1
+    # COMPUTE MOST COMMON KEYWORDS
+    keywords = defaultdict(int)
+    for log in logs:
+        for message in log["messages"]:
+            for word in message.split():
+                keywords[word] += 1
+    most_common = sorted(keywords.items(), key=lambda x: x[1], reverse=True)[:5]
+    stats["Most Common Keywords"] = map(lambda x: x[0], most_common)
+    return stats
 
 
 def clean_response_content(response_content: str) -> str:
