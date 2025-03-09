@@ -179,7 +179,6 @@ def push_to_elastic_search(logs, idx):
     es = Elasticsearch(
         [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
     )
-
     if not es.ping():
         raise Exception("Could not connect to Elasticsearch")
 
@@ -187,17 +186,24 @@ def push_to_elastic_search(logs, idx):
 
     if es.indices.exists(index=index_name):
         print(f"Index '{index_name}' exists. Replacing records instead of deleting.")
-
         query = {"query": {"match_all": {}}}
         es.delete_by_query(index=index_name, body=query, wait_for_completion=True)
     else:
-        es.indices.create(index=index_name)
+        # Create the index with default metadata
+        es.indices.create(
+            index=index_name,
+            body={
+                "mappings": {
+                    "_meta": {"title": "TITLE", "description": "DESCRIPTION"},
+                    "properties": {}, # if needed, i can add properties here
+                }
+            },
+        )
 
-    # Use bulk indexing for better performance
+    # Use bulk indexing for better performance.
     actions = [
         {"_index": index_name, "_id": i, "_source": log} for i, log in enumerate(logs)
     ]
-
     bulk(es, actions)
 
     return {
@@ -210,9 +216,6 @@ def push_to_elastic_search(logs, idx):
 async def upload_file(id: str, request: Request):
     try:
         log_data = await request.json()
-
-        # print(f"Received data type: {type(log_data)}")
-        # print(f"log id: {id}")
         if not isinstance(log_data, list):
             raise HTTPException(status_code=400, detail="Expected a JSON array")
 
@@ -245,13 +248,18 @@ def list_log_indices():
         if not es.ping():
             raise Exception("Could not connect to Elasticsearch")
 
-        # Get all indices; this returns a dict of index names as keys.
+        # Get all indices (aliases) as a dict.
         all_indices = es.indices.get_alias(index="*")
-
-        # Filter out system indices (those starting with a dot) or any indices that shouldn't be treated as logs.
-        log_ids = [index for index in all_indices.keys() if not index.startswith(".")]
-
-        return log_ids
+        log_files = []
+        for index in all_indices.keys():
+            if index.startswith("."):
+                continue
+            mapping = es.indices.get_mapping(index=index)
+            meta = mapping[index]["mappings"].get("_meta", {})
+            title = meta.get("title", "TITLE")
+            description = meta.get("description", "DESCRIPTION")
+            log_files.append({"id": index, "title": title, "description": description})
+        return log_files
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

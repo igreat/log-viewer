@@ -1,6 +1,5 @@
 import './styles.scss';
 import {
-    loadLogs,
     handleFileUpload,
     ROWS_PER_PAGE,
     setupLogFileDropdown,
@@ -104,9 +103,6 @@ const initializeApp = () => {
 
     setupLogFileDropdown();
     populateLogFileDropdown();
-
-    // Load logs from the JSON file.
-    loadLogs();
 }
 
 document.addEventListener("DOMContentLoaded", initializeApp);

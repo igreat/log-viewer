@@ -43,7 +43,7 @@ export const populateLogFileDropdown = () => {
     const dropdownMenu = document.getElementById("dropdown-logfiles");
     dropdownMenu.innerHTML = '';
 
-    // Fetch the list of log IDs from the server.
+    // Fetch the list of log indices with metadata from the server.
     fetch('http://localhost:8000/table')
         .then((response) => {
             if (!response.ok) {
@@ -52,8 +52,8 @@ export const populateLogFileDropdown = () => {
             return response.json();
         })
         .then((data) => {
-            // Assume that the response is an array of log IDs.
-            data.forEach((id) => {
+            // Data is now an array of objects with id, title, and description.
+            data.forEach((logFile) => {
                 // Create container for each log item and delete button.
                 let itemContainer = document.createElement("div");
                 itemContainer.classList.add("dropdown-item-container", "d-flex", "justify-content-between", "align-items-center");
@@ -61,14 +61,21 @@ export const populateLogFileDropdown = () => {
                 // Create log item.
                 let option = document.createElement("a");
                 option.classList.add("dropdown-item", "flex-grow-1");
-                option.innerHTML = "LOG: " + id;
-                option.id = id;
+                // Display log id along with its title and description.
+                option.innerHTML = `LOG: ${logFile.id} – ${logFile.title} (${logFile.description})`;
+                option.id = logFile.id;
+
+                // Add click event listener directly here.
+                option.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    handleFileLoad(logFile.id);
+                });
 
                 // Create delete button.
                 let deleteButton = document.createElement("button");
                 deleteButton.classList.add("btn", "btn-sm", "btn-danger", "ml-2");
                 deleteButton.innerHTML = "×";
-                deleteButton.dataset.logId = id;
+                deleteButton.dataset.logId = logFile.id;
                 deleteButton.addEventListener("click", (e) => {
                     e.stopPropagation(); // Prevent dropdown item from being clicked
                     deleteLogFile(e.target.dataset.logId);
@@ -256,7 +263,6 @@ export const handleFileUpload = (event) => {
                     console.log("Elastic Search response:", data);
                     // Refresh the dropdown after a successful upload.
                     populateLogFileDropdown();
-                    loadLogs();
                 })
                 .catch((error) => {
                     console.error("Upload failed:", error);
@@ -296,15 +302,4 @@ export const handleFileLoad = (id) => {
             console.error("Failed to load logs:", err);
             document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Failed to load logs: ${err.message}</p>`;
         });
-};
-
-export const loadLogs = () => {
-    const dropdownFiles = document.getElementById("dropdown-logfiles");
-    const options = dropdownFiles.querySelectorAll("a");
-    options.forEach((item) => {
-        item.addEventListener("click", function (event) {
-            event.preventDefault();
-            handleFileLoad(this.id);
-        });
-    });
 };
