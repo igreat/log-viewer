@@ -2,7 +2,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
-from typing import List 
+from typing import List
 from elasticsearch.helpers import bulk
 
 # Initialize the FastAPI app
@@ -17,6 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/table/{id}")
 def get_from_elasticsearch(id: str):
     try:
@@ -29,7 +30,7 @@ def get_from_elasticsearch(id: str):
             index=str(id),
             body={"query": {"match_all": {}}},
             scroll="2m",  # Keep the search context alive for 2 minutes
-            size=1000  # Fetch 1000 documents per batch
+            size=1000,  # Fetch 1000 documents per batch
         )
 
         # Extract the initial results
@@ -56,7 +57,9 @@ def get_from_elasticsearch(id: str):
 
 
 def push_to_elastic_search(logs, idx):
-    es = Elasticsearch([{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False)
+    es = Elasticsearch(
+        [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
+    )
 
     if not es.ping():
         raise Exception("Could not connect to Elasticsearch")
@@ -73,55 +76,49 @@ def push_to_elastic_search(logs, idx):
 
     # Use bulk indexing for better performance
     actions = [
-        {
-            "_index": index_name,
-            "_id": i,  
-            "_source": log
-        }
-        for i, log in enumerate(logs)
+        {"_index": index_name, "_id": i, "_source": log} for i, log in enumerate(logs)
     ]
 
     bulk(es, actions)
 
-    return {"message": "Logs successfully uploaded and indexed.", "total_logs": len(logs)}
+    return {
+        "message": "Logs successfully uploaded and indexed.",
+        "total_logs": len(logs),
+    }
 
 
 @app.post("/table/{id}")
-async def upload_file(id:str, request: Request):
+async def upload_file(id: str, request: Request):
     try:
         log_data = await request.json()
 
         # print(f"Received data type: {type(log_data)}")
-        # print(f"log id: {id}") 
+        # print(f"log id: {id}")
         if not isinstance(log_data, list):
             raise HTTPException(status_code=400, detail="Expected a JSON array")
-            
+
         response = push_to_elastic_search(log_data, id)
         return response
     except Exception as e:
         print(f"Error processing request: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.delete("/table/{id}")
-async def delete_file(id:int):
-    es = Elasticsearch([{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False)
+async def delete_file(id: int):
+    es = Elasticsearch(
+        [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
+    )
     try:
-        if (es.indices.exists(str(id))):
+        if es.indices.exists(str(id)):
             es.indices.delete(str(id))
-            return {
-                "status": "success",
-                "message": "log table deleted successfully"
-            }
+            return {"status": "success", "message": "log table deleted successfully"}
         else:
-            return {
-                "status":"error",
-                "message": f"log file with id: {id} not found"
-            }
+            return {"status": "error", "message": f"log file with id: {id} not found"}
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e) 
-        }
+        return {"status": "error", "message": str(e)}
+
+
 # Run the app with uvicorn
 if __name__ == "__main__":
     import uvicorn
