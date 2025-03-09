@@ -35,6 +35,15 @@
                   <label for="log-file-input" class="form-label">Upload Log File</label>
                   <input type="file" id="log-file-input" class="form-control" accept=".json">
                 </div>
+                <div class="big-d">
+                  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdown-log-file-options"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Dropdown button
+                  </button>
+                  <div class="dropdown-menu-2" aria-labelledby="dropdown-log-file-options" id="dropdown-logfiles">
+
+                  </div>
+                </div>
               </div>
 
               <!-- Filters bar -->
@@ -123,6 +132,21 @@
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Modal for Adding Custom Time Filter -->
+
+              <div id="timeFilter" class="d-flex align-items-center gap-2 mb-3">
+                <div id="fromTime">
+                  <input type="text" id="from-timestamp" placeholder="From" style="width: 210px; height: 35px;">
+                </div>
+                <div id="toTime">
+                  <input type="text" id="to-timestamp" placeholder="To" style="width: 210px; height: 35px;">
+                </div>
+                <button id="apply-date-btn" class="btn btn-primary btn-sm">Apply</button>
+                <button id="clear-date-btn" class="btn btn-danger btn-sm">Clear</button>
+                <input type="checkbox" name="apply-date-chkbox" id="apply-date-chkbox" checked>
+                <label for="apply-date-chkbox">Use Date</label>
               </div>
 
               <!-- Modal for Adding Issue Category -->
@@ -239,64 +263,65 @@
           </div>
         </div>
       </div>
-
-      <!-- Chatbot Column -->
-      <div id="chatbot-container" class="col-md-4 d-none">
-        <div id="chatbot-header" class="text-white d-flex justify-content-between align-items-center">
-          <span>AI Assistant</span>
-          <div class="dropdown-wrapper ml-auto" style="max-width: 200px;">
-            <select id="chatbot-workspace-select" class="minimal-dropdown">
-              <!-- Options will be populated via JavaScript -->
-            </select>
-            <span class="dropdown-arrow">▼</span>
-          </div>
-        </div>
-
-        <div id="chatbot-body" class="p-2" style="height: calc(100vh - 150px); overflow-y: auto;">
-          <div id="chatbot-messages">
-            <p class="chat-message bot">Hi there! Ask me anything.</p>
-          </div>
-
-          <!-- Keep chatbot-form for JavaScript compatibility -->
-          <form id="chatbot-form" class="input-group mt-2">
-            <!-- Outer rounded input box -->
-            <div class="chatbot-input-container">
-              <!-- Seamless input -->
-              <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Ask anything">
-
-              <!-- Options inside input box -->
-              <div class="bottom-options">
-                <div class="chatbot-options">
-                  <button id="add-category-btn" type="button" class="chatbot-option">
-                    <span class="material-symbols-outlined">
-                      add_circle
-                    </span>
-                    Add Category
-                  </button>
-                  <button id="search-categories-btn" type="button" class="chatbot-option">
-                    <span class="material-symbols-outlined">
-                      explore
-                    </span>
-                    Search Categories</button>
-                </div>
-                <div>
-                  <button type="submit" id="chatbot-send-btn" class="chatbot-send-btn">️
-                    <span class="material-symbols-outlined">
-                      arrow_upward
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="./src/index.js"></script>
+    <!-- Chatbot Column -->
+    <div id="chatbot-container" class="col-md-4 d-none">
+      <div id="chatbot-header" class="text-white d-flex justify-content-between align-items-center">
+        <span>AI Assistant</span>
+        <div class="dropdown-wrapper ml-auto" style="max-width: 200px;">
+          <select id="chatbot-workspace-select" class="minimal-dropdown">
+            <!-- Options will be populated via JavaScript -->
+          </select>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+      </div>
+
+      <div id="chatbot-body" class="p-2" style="height: calc(100vh - 150px); overflow-y: auto;">
+        <div id="chatbot-messages">
+          <p class="chat-message bot">Hi there! Ask me anything.</p>
+        </div>
+
+        <!-- Keep chatbot-form for JavaScript compatibility -->
+        <form id="chatbot-form" class="input-group mt-2">
+          <!-- Outer rounded input box -->
+          <div class="chatbot-input-container">
+            <!-- Seamless input -->
+            <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Ask anything">
+
+            <!-- Options inside input box -->
+            <div class="bottom-options">
+              <div class="chatbot-options">
+                <button id="add-category-btn" type="button" class="chatbot-option">
+                  <span class="material-symbols-outlined">
+                    add_circle
+                  </span>
+                  Add Category
+                </button>
+                <button id="search-categories-btn" type="button" class="chatbot-option">
+                  <span class="material-symbols-outlined">
+                    explore
+                  </span>
+                  Search Categories</button>
+              </div>
+              <div>
+                <button type="submit" id="chatbot-send-btn" class="chatbot-send-btn">️
+                  <span class="material-symbols-outlined">
+                    arrow_upward
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="./src/index.js"></script>
 </body>
 
 </html>

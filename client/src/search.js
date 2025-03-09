@@ -105,7 +105,57 @@ const buildTrie = (node, trieJSON) => {
     return node;
 }
 
+export const isValidDate = (dateString) => {
+    if (dateString[dateString.length - 1] != 'Z') {
+        return false;
+    }
+    dateString = dateString.substring(0, dateString.length - 1);
+    const DateTimeSplit = dateString.split("T");
+    const Date = DateTimeSplit[0].split("-");
+    const Time = DateTimeSplit[1].split(":");
+
+    if (Date.length != 3 || Time.length != 3) {
+        return false;
+    }
+    if (!(("0000" <= Date[0] && Date[0] <= "9999") &&
+        ("00" <= Date[1] && Date[1] <= "11") &&
+        ("00" <= Date[2] && Date[2] <= "31"))) {
+        return false;
+    }
+    if (!(("00" <= Time[0] && Time[0] <= "59") &&
+        ("00" <= Time[1] && Time[1] <= "59"))) {
+        return false;
+    }
+    const SecondsSplit = Time[2].split(".");
+    if (!(("00" <= SecondsSplit[0] && SecondsSplit[0] <= "59") &&
+        ("000" <= SecondsSplit[1] && SecondsSplit[1] <= "999"))) {
+        return false;
+    }
+    return true;
+}
+
+export const isWithinDate = (log) => {
+    if (!document.getElementById("apply-date-chkbox").checked) {
+        return true;
+    }
+    const fromTimeStamp = document.getElementById("from-timestamp").value;
+    const toTimeStamp = document.getElementById("to-timestamp").value;
+    if (fromTimeStamp == "" || toTimeStamp == "") {
+        return true;
+    }
+    if (!isValidDate(fromTimeStamp) || !isValidDate(toTimeStamp)) {
+        console.log("INVALID TIMESTAMPS")
+        return false;
+    }
+    const logTimeStamp = log["timestamp"];
+    if (fromTimeStamp <= logTimeStamp && logTimeStamp <= toTimeStamp) {
+        return true;
+    }
+    return false;
+}
+
 export const initSearch = () => {
+    // -- Loading From Local Storage
     if (!window.localStorage.getItem('suggestionTrie')) {
         window.localStorage.setItem("suggestionTrie", JSON.stringify(trieToJSON(suggestionTrie)));
     } else {
@@ -113,6 +163,27 @@ export const initSearch = () => {
         suggestionTrie = trieFromJSON(trieJSON);
     }
 
+    if (!window.localStorage.getItem("fromDate")) {
+        window.localStorage.setItem("fromDate", "");
+    } else {
+        document.getElementById("from-timestamp").value = window.localStorage.getItem("fromDate");
+    }
+
+    if (!window.localStorage.getItem("toDate")) {
+        window.localStorage.setItem("toDate", "");
+    } else {
+        document.getElementById("to-timestamp").value = window.localStorage.getItem("toDate");
+    }
+
+    if (!window.localStorage.getItem("useDate")) {
+        window.localStorage.setItem("useDate", "true");
+    } else if (window.localStorage.getItem("useDate") == "false") {
+        document.getElementById("apply-date-chkbox").checked = false;
+    } else {
+        document.getElementById("apply-date-chkbox").checked = true;
+    }
+
+    // -- Text Filter
     document.getElementById("log-search").addEventListener("keydown", (e) => {
         if (e.key == "Enter") {
             updateTextFilter();
@@ -122,4 +193,24 @@ export const initSearch = () => {
     document.getElementById("log-search").addEventListener("input", updateSearchSuggestions);
     document.getElementById("use-regex").addEventListener("change", updateTextFilter);
     document.getElementById("case-sensitive").addEventListener("change", updateTextFilter);
+
+    // -- Date Filter
+    document.getElementById("apply-date-btn").addEventListener("click", () => {
+        applyFilters(currentFilters);
+        console.log(document.getElementById("from-timestamp").value)
+        window.localStorage.setItem("fromDate", document.getElementById("from-timestamp").value);
+        window.localStorage.setItem("toDate", document.getElementById("to-timestamp").value);
+        if (document.getElementById("apply-date-chkbox").checked) {
+            window.localStorage.setItem("useDate", "true");
+        } else {
+            window.localStorage.setItem("useDate", "false");
+        }
+    })
+
+    document.getElementById("clear-date-btn").addEventListener("click", () => {
+        document.getElementById("from-timestamp").value = "";
+        document.getElementById("to-timestamp").value = "";
+        window.localStorage.setItem("fromDate", "");
+        window.localStorage.setItem("toDate", "");
+    })
 }

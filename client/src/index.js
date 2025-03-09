@@ -2,7 +2,9 @@ import './styles.scss';
 import {
     loadLogs,
     handleFileUpload,
-    ROWS_PER_PAGE
+    ROWS_PER_PAGE,
+    setupLogFileDropdown,
+    populateLogFileDropdown
 } from './logService.js';
 import {
     populateFilterGroups,
@@ -11,7 +13,6 @@ import {
     saveFilterGroup,
     initFilterGroups
 } from './filterGroup.js';
-import { initChatbot } from './agent.js';
 import { initSearch } from './search.js';
 
 const initializeApp = () => {
@@ -99,6 +100,9 @@ const initializeApp = () => {
     // Set up dropdown behavior for filter groups and then populate them.
     setupDropdown();
     populateFilterGroups();
+
+    setupLogFileDropdown();
+    populateLogFileDropdown();
 
     // Load logs from the JSON file.
     loadLogs();

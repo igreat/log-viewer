@@ -28,6 +28,10 @@ body {
   }
 }
 
+#timeFilterModal .modal-dialog {
+  max-width: 95%;
+}
+
 #filter-title-description {
   display: flex;
   flex-direction: column;
@@ -159,33 +163,40 @@ button .svg-icon {
   background-color: #ffffc5 !important;
 }
 
+#timeFilter {
+  display: flex;
+  align-items: center; /* vertically centers the items */
+  gap: 10px; /* optional spacing between elements */
+  margin-bottom: 20px;
+}
+
 // Remove the margins and paddings from the container and row
 .container {
   margin: 0 auto; /* Center the container */
-  padding: 0;
+  padding: 0; /* Remove padding */
   max-width: 95%; /* Use the full width of the viewport */
 }
 
 .row {
-  margin-left: 0;
-  margin-right: 0;
-  padding: 0;
+  margin-left: 0; /* Remove left margin */
+  margin-right: 0; /* Remove right margin */
+  padding: 0; /* Remove any padding */
 }
 
 // Adjust the column width to make the table expand fully
 .col-md-10 {
-  max-width: 100%;
-  flex: 1 0 auto;
-  padding: 0;
+  max-width: 100%; /* Allow it to take the full width */
+  flex: 1 0 auto; /* Let it grow and shrink as needed */
+  padding: 0; /* Remove padding inside the column */
 }
 
 // Ensure the table container spans the entire width
 #all-logs,
 #filtered-logs {
-  width: 100%;
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
+  width: 100%; /* Use full width */
+  padding: 0; /* Remove internal padding */
+  margin: 0; /* Remove external margins */
+  box-sizing: border-box; /* Include padding and border in width calculation */
 }
 
 // Remove the left padding or margin for the search bar container
@@ -196,13 +207,13 @@ button .svg-icon {
 
 // Ensure the input group aligns to the left
 .input-group {
-  margin-left: 0;
-  padding-left: 0;
+  margin-left: 0; /* Remove extra margin */
+  padding-left: 0; /* Ensure no padding on the left */
 }
 
 .form-group {
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0 !important; /* Remove any margins */
+  padding: 0 !important; /* Remove any padding (optional) */
 }
 
 // Remove extra margin from the "Use Regex" label
