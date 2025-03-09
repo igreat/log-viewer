@@ -24,7 +24,7 @@ export class Pair {
   }
 }
 
-export default class Trie {
+export class Trie {
   root;
   matches;
 
