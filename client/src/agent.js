@@ -652,9 +652,15 @@ const loadCategoriesModal = () => {
                                     <input type="checkbox" class="form-check-input" id="category-switch-${category}" checked>
                                     <label class="form-check-label" for="category-switch-${category}"></label>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary edit-category-btn btn-circle">
-                                    <span class="material-symbols-outlined">edit</span>
-                                </button>
+                                <div class="mt-auto d-flex justify-content-end align-items-center" style="gap: 5px;">
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-category-btn btn-circle" data-category="${category}" 
+                                            style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #ff4d4d; color: #ff4d4d;">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary edit-category-btn btn-circle" style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -674,6 +680,18 @@ const loadCategoriesModal = () => {
             editFromCategories = true;
             $('#categoriesModal').modal('hide');
             openEditIssueModal(categoryName);
+        });
+    });
+
+    document.querySelectorAll(".delete-category-btn").forEach(btn => {
+        btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const categoryToDelete = btn.dataset.category;
+            if (confirm(`Are you sure you want to delete the category "${categoryToDelete}"?`)) {
+                delete workspaces[currentWorkspace][categoryToDelete];
+                localStorage.setItem("workspaces", JSON.stringify(workspaces));
+                loadCategoriesModal();
+            }
         });
     });
 
