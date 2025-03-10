@@ -228,13 +228,10 @@ export const handleFileUploadLocal = (event) => {
                 alert("Invalid file format: JSON must be an array of logs.");
                 return;
             }
-            countLogs(data);
             allLogs = getLogsWithIds(data);
             renderTable(allLogs, "all-logs");
             renderTable(allLogs, "filtered-logs");
             console.log("File loaded locally.");
-            document.getElementById('log-count').textContent = allLogs.length;
-            document.getElementById('filtered-log-count').textContent = allLogs.length;
         } catch (error) {
             alert("Error parsing the JSON file. Please upload a valid JSON file.");
         }
