@@ -119,17 +119,6 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     }
 };
 
-function countLogs(theLogs) {
-  const logCount = theLogs.length;
-  document.getElementById('log-count').textContent = logCount;
-  document.getElementById('filtered-log-count').textContent = logCount;
-}
-
-function countFilteredLogs(theFilteredLogs) {
-  const filteredLogs = theFilteredLogs.length;
-  document.getElementById('filtered-log-count').textContent = filteredLogs;
-}
-
 export const applyFilters = (filters) => {
     const filteredLogs = allLogs.filter((log) => {
         if (!isWithinDate(log)) return false;
@@ -150,8 +139,6 @@ export const applyFilters = (filters) => {
 
     renderTable(allLogs, "all-logs", filters);
     renderTable(filteredLogs, "filtered-logs", filters);
-    document.getElementById('log-count').textContent = allLogs.length;
-    document.getElementById('filtered-log-count').textContent = allLogs.length;
 };
 
 export const loadLogFilesModal = () => {
@@ -294,12 +281,9 @@ export const handleFileLoad = (id) => {
                 document.getElementById("filtered-logs").innerHTML = `<p class="text-danger">Invalid log format. Expected array but got ${typeof logs}.</p>`;
                 return;
             }
-            countLogs(data);
             allLogs = getLogsWithIds(logs);
             renderTable(allLogs, "all-logs");
             renderTable(allLogs, "filtered-logs");
-            document.getElementById('log-count').textContent = allLogs.length;
-            document.getElementById('filtered-log-count').textContent = allLogs.length;
         })
         .catch(err => {
             console.error("Failed to load logs:", err);
