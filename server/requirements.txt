@@ -1,3 +1,4 @@
 fastapi==0.115.11
 uvicorn[standard]==0.33.0
 elasticsearch==8.13.0 # download elastic search from google too. If you are on mac then follow steps to override permissions
+llama-cpp-python==0.3.4

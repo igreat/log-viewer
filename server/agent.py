@@ -1,5 +1,5 @@
 import json
-from utils import load_logs, get_log_level_counts, compute_stats, get_simple_stats
+from utils import load_logs, get_log_level_counts, compute_stats, get_simple_stats, clean_response_content
 from model_client import ModelClient
 
 
@@ -22,7 +22,7 @@ Log Statistics:
 User Query: {message}
 
 Should a summary be generated?
-- If generating a summary is not relevant, respond with: no: <brief explanation>
+- If generating a summary is not relevant or the query is specific (e.g. "filter for debug logs"), respond with: no: <brief explanation>.
 - If additional context is needed and a summary would be helpful, respond with: yes: <brief explanation>
 
 Respond with exactly one line in the following format:
@@ -69,7 +69,7 @@ User Query: {message}
 
 Should I look for known issues in the logs?
 - If the user query is specific (e.g. "generate me a summary", "filter for debug logs") and does not mention problems or issues, then respond with: no: [brief explanation].
-- Only respond with yes if the query is vague or indicates that issues might be present.
+- Only respond with yes if the query is asking for detecting issues or problems in the logs.
 Respond in exactly one line in the following format (without any markdown or extra text):
 yes: [brief explanation]
 or
@@ -107,7 +107,9 @@ If yes, respond in the following format:
 <ISSUE SUMMARY>
 **Resolution**:
 <RESOLUTION>
-Else, respond with an empty string."""
+Else, respond with an empty string.
+Note: if the details json does not have a logs field or the logs field is empty, respond with an empty string.
+"""
         return await self.model.chat_completion(prompt)
 
         # New method to decide if a filter should be added.
@@ -175,7 +177,7 @@ Make sure to follow these guidelines:
 The filter group should capture the intent of the user's request in terms of log filtering. Do not include any extra text.
 """
         response = await self.model.chat_completion(prompt)
-        cleaned = response.strip() if response else ""
+        cleaned = clean_response_content(response.strip()) if response else ""
         try:
             filter_group = json.loads(cleaned)
             return filter_group

@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 from fastapi.responses import StreamingResponse
 from agent import ChatAgent
-from utils import extract_top_rows, load_logs
+from utils import extract_top_rows
 
 # Load environment variables
 load_dotenv()
@@ -26,7 +26,7 @@ app.add_middleware(
 
 # Initialize models and client
 models: dict[str, ModelClient] = {
-    "gpt-4o": OpenAIModelClient(os.getenv("OPENAI_API_KEY") or "", "gpt-4o-mini"),
+    "gpt-4o": OpenAIModelClient(os.getenv("OPENAI_API_KEY") or "", "gpt-4o"),
     # "granite-3.2-2b": OfflineModelClient(
     #     "models/granite/granite-3.2-2b-instruct-Q6_K.gguf",
     #     context_window=3072,
@@ -47,7 +47,7 @@ class ChatRequest(BaseModel):
     message: str
     known_issues: dict[str, Any] | None = None
     model: str = "gpt-4o"
-    log_id: str | None
+    logs: list[dict[str, Any]] | None = None
 
 
 class Action(BaseModel):
@@ -73,14 +73,10 @@ async def chat_stream(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Message is required")
 
     chat_agent = ChatAgent(models[request.model], base_prompt)
-    if request.log_id:
-        logs = get_from_elasticsearch(request.log_id)
-        print(f"Logs retrieved from Elasticsearch: {len(logs)}")
+    if request.logs:
+        logs = request.logs
     else:
-        raise HTTPException(
-            status_code=400,
-            detail="Log ID is required, please upload logs to Elasticsearch first",
-        )
+        raise HTTPException(status_code=400, detail="Logs are required")
 
     async def event_generator():
         # Step 1: Decide on summary generation.
@@ -119,7 +115,6 @@ async def chat_stream(request: ChatRequest):
         if evaluate_issues:
             known_issues = request.known_issues if request.known_issues else {}
             issue_context: dict[str, Any] = {}
-            logs = load_logs()
             for issue, details in known_issues.items():
                 extracted_logs = extract_top_rows(logs, details["keywords"])
                 issue_context[issue] = {
@@ -130,6 +125,7 @@ async def chat_stream(request: ChatRequest):
                     "resolution": details["resolution"],
                     "logs": extracted_logs,
                 }
+            print("Issue Context:", issue_context)
 
             for issue, details in issue_context.items():
                 issue_text = await chat_agent.evaluate_issue(
@@ -153,7 +149,7 @@ async def chat_stream(request: ChatRequest):
                 "explanation": filter_explanation,
             },
         )
-        yield f"data: {action.json()}\n\n"
+        yield f"data: {action.model_dump_json()}\n\n"
         print(
             f"Filter Decision: {should_add_filter}, Explanation: {filter_explanation}"
         )

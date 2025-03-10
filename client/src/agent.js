@@ -1,6 +1,6 @@
 import { extendFilterGroups } from "./filterGroup";
 import { marked } from "marked";
-import { currentLogId } from "./logService";
+import { allLogs } from "./logService";
 
 const AGENT_ENDPOINT = 'http://localhost:8000/chat_stream';
 
@@ -11,7 +11,6 @@ const DEFAULT_ISSUES = {
         "keywords": {
             "media": ["CMediaTrackMgr::GetTrack", "No Track!"],
             "video": ["vid=1"],
-            "session": ["MediaSession"],
         },
         "conditions": "This error typically occurs during call setup or renegotiation and may be accompanied by other signaling errors or warnings in the logs.",
         "resolution": "Investigate preceding log entries for errors in media negotiation or track creation. Ensure that the media engine is properly initialized and that network conditions support the required media streams. Verify configuration settings for media track management.",
@@ -94,7 +93,7 @@ export const initChatbot = () => {
                     message: userInput,
                     known_issues: workspaces[currentWorkspace],
                     model: currentModel,
-                    log_id: currentLogId
+                    logs: allLogs
                 })
             });
 
