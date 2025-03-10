@@ -231,8 +231,6 @@ export const handleFileUploadLocal = (event) => {
             allLogs = getLogsWithIds(data);
             renderTable(allLogs, "all-logs");
             renderTable(allLogs, "filtered-logs");
-            document.getElementById('log-count').textContent = allLogs.length;
-            document.getElementById('filtered-log-count').textContent = allLogs.length;
             console.log("File loaded locally.");
         } catch (error) {
             alert("Error parsing the JSON file. Please upload a valid JSON file.");
