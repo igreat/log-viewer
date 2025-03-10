@@ -148,7 +148,6 @@ export const applyFilters = (filters) => {
 };
 
 export const loadLogFilesModal = () => {
-    // Fetch log file metadata from the backend.
     fetch('http://localhost:8000/table')
         .then((response) => {
             if (!response.ok) {
@@ -164,16 +163,16 @@ export const loadLogFilesModal = () => {
             data.forEach((logFile) => {
                 const cardHtml = `
                     <div class="col-sm-6 col-md-4 mb-3">
-                        <div class="card logfile-card h-100" style="cursor: pointer;">
+                        <div class="card logfile-card h-100">
                             <div class="card-body d-flex flex-column">
-                                <div class="logfile-info mb-3">
-                                    <h5 class="card-title mb-1">${logFile.title}</h5>
+                                <div class="logfile-info mb-3 text-center">
+                                    <h5 class="card-title mb-1" style="font-weight: 600;">${logFile.title}</h5>
                                     <p class="card-text small text-muted">${logFile.description}</p>
                                     <p class="card-text"><small>ID: ${logFile.id}</small></p>
                                 </div>
-                                <div class="mt-auto d-flex justify-content-between align-items-center">
-                                    <button type="button" class="btn btn-sm btn-outline-danger delete-log-btn" data-log-id="${logFile.id}">
-                                        <span class="material-symbols-outlined">delete</span>
+                                <div class="mt-auto d-flex justify-content-center align-items-center">
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-log-btn" data-log-id="${logFile.id}" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
                                     </button>
                                 </div>
                             </div>
@@ -183,10 +182,8 @@ export const loadLogFilesModal = () => {
                 logFilesRow.insertAdjacentHTML('beforeend', cardHtml);
             });
 
-            // Attach click event listeners to each card and delete button.
             document.querySelectorAll(".logfile-card").forEach(card => {
                 card.addEventListener("click", function (e) {
-                    // Avoid card click if delete button was pressed.
                     if (e.target.closest(".delete-log-btn")) return;
                     const id = card.querySelector("p.card-text small").textContent.replace("ID: ", "").trim();
                     handleFileLoad(id);
@@ -201,7 +198,6 @@ export const loadLogFilesModal = () => {
                 });
             });
 
-            // Finally, show the modal.
             $('#logFilesModal').modal('show');
         })
         .catch((err) => {
