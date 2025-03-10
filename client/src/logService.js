@@ -149,6 +149,8 @@ export const applyFilters = (filters) => {
 
     renderTable(allLogs, "all-logs", filters);
     renderTable(filteredLogs, "filtered-logs", filters);
+    document.getElementById('log-count').textContent = allLogs.length;
+    document.getElementById('filtered-log-count').textContent = allLogs.length;
 };
 
 export const loadLogFilesModal = () => {
@@ -186,6 +188,7 @@ export const loadLogFilesModal = () => {
                 `;
                 logFilesRow.insertAdjacentHTML('beforeend', cardHtml);
             });
+            countLogs(data);
 
             // Attach click event listeners to each card and delete button.
             document.querySelectorAll(".logfile-card").forEach(card => {
@@ -230,6 +233,8 @@ export const handleFileUploadLocal = (event) => {
             renderTable(allLogs, "all-logs");
             renderTable(allLogs, "filtered-logs");
             console.log("File loaded locally.");
+            document.getElementById('log-count').textContent = allLogs.length;
+            document.getElementById('filtered-log-count').textContent = allLogs.length;
         } catch (error) {
             alert("Error parsing the JSON file. Please upload a valid JSON file.");
         }
