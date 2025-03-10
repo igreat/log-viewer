@@ -253,7 +253,8 @@ export const deleteFilterGroup = (index) => {
 
 export const setupDropdown = () => {
     const dropdownButton = document.getElementById("premade-filters-dropdown");
-    const dropdownMenu = dropdownButton.nextElementSibling.nextElementSibling;
+    const dropdownMenu = dropdownButton.nextElementSibling;
+    console.log(dropdownMenu);
 
     dropdownButton.addEventListener("click", (event) => {
         const isExpanded = dropdownButton.getAttribute("aria-expanded") === "true";

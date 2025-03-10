@@ -9,6 +9,8 @@ export let allLogs = [];
 export const getLogsWithIds = (logs) =>
     logs.map((log, index) => ({ id: index + 1, ...log }));
 
+export let currentLogId = null;
+
 // Function to handle log deletion.
 const deleteLogFile = (id) => {
     console.log(`Deleting log file with ID: ${id}`);
@@ -38,7 +40,7 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
         paginationContainer.innerHTML = "";
         return;
     }
-    
+
     // MAIN TABLE
     const headers = Object.keys(logs[0]);
     const headerHTML = id === "all-logs" ? `
@@ -259,6 +261,7 @@ export const uploadLogsToDatabase = () => {
         })
         .then((data) => {
             console.log("Elastic Search response:", data);
+            currentLogId = id;
         })
         .catch((error) => {
             console.error("Upload failed:", error);
@@ -275,6 +278,7 @@ export const handleFileLoad = (id) => {
             return response.json();
         })
         .then(data => {
+            currentLogId = id;
             console.log("Full response data:", data);
             if (!data) {
                 throw new Error("No data received from server");

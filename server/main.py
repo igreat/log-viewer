@@ -47,6 +47,7 @@ class ChatRequest(BaseModel):
     message: str
     known_issues: dict[str, Any] | None = None
     model: str = "gpt-4o"
+    log_id: str | None
 
 
 class Action(BaseModel):
@@ -72,6 +73,15 @@ async def chat_stream(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Message is required")
 
     chat_agent = ChatAgent(models[request.model], base_prompt)
+    if request.log_id:
+        logs = get_from_elasticsearch(request.log_id)
+        print(f"Logs retrieved from Elasticsearch: {len(logs)}")
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Log ID is required, please upload logs to Elasticsearch first",
+        )
+
     async def event_generator():
         # Step 1: Decide on summary generation.
         print(f"Message: {request.message}")
