@@ -109,3 +109,76 @@ If yes, respond in the following format:
 <RESOLUTION>
 Else, respond with an empty string."""
         return await self.model.chat_completion(prompt)
+
+        # New method to decide if a filter should be added.
+
+    async def decide_filter(self, message: str) -> tuple[bool, str]:
+        prompt = f"""{self.base_prompt}
+User Query: {message}
+
+Should I add a filter to refine the log output?
+- If the query implies filtering (e.g. "show only errors", "filter out debug logs") or mentions keywords/regex, respond with: yes: [brief explanation].
+- Otherwise, respond with: no: [brief explanation].
+Respond in exactly one line in the following format:
+yes: [brief explanation]
+or
+no: [brief explanation]
+Do not include any extra text.
+"""
+        response = await self.model.chat_completion(prompt)
+        if response:
+            try:
+                cleaned = response.strip()
+                if ":" in cleaned:
+                    decision_part, explanation = cleaned.split(":", 1)
+                    decision = decision_part.strip().lower() == "yes"
+                    return decision, explanation.strip()
+                else:
+                    return False, cleaned
+            except Exception as e:
+                print("Error decoding filter decision:", e)
+        return False, ""
+
+    # New method to generate a filter group.
+    async def generate_filter_group(self, message: str) -> dict:
+        prompt = f"""{self.base_prompt}
+User Query: {message}
+
+Generate a filter group in JSON format with the following structure:
+{{
+  "title": string,
+  "description": string,
+  "filters": [
+    {{
+      "text": string,
+      "regex": boolean,
+      "caseSensitive": boolean,
+      "color": string,
+      "description": string
+    }}
+    // You may include additional filters if needed.
+  ]
+}}
+
+Make sure to follow these guidelines:
+- The title should be a short, descriptive name for the filter group.
+- The description should be a brief explanation of the filter group.
+- Each filter should have a text field with the keyword or regex pattern to match.
+- The regex field should be true if the text is a regex pattern, false otherwise.
+- The caseSensitive field should be true if the filter should be case-sensitive, false otherwise.
+    - In most cases, it should be false to match case-insensitively.
+- The color field should be a hex color code.
+    - Keep in mind it will be in a light gray background on black text, so choose a highlight color that is appropriate.
+    - Mostly go for a light color that is easy on the eyes.
+- The description field should be a brief explanation of the filter, like a comment.
+
+The filter group should capture the intent of the user's request in terms of log filtering. Do not include any extra text.
+"""
+        response = await self.model.chat_completion(prompt)
+        cleaned = response.strip() if response else ""
+        try:
+            filter_group = json.loads(cleaned)
+            return filter_group
+        except Exception as e:
+            print("Error decoding filter group:", e)
+            return {}

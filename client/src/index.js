@@ -3,7 +3,8 @@ import {
     handleFileUploadLocal,
     uploadLogsToDatabase,
     ROWS_PER_PAGE,
-    loadLogFilesModal
+    loadLogFilesModal,
+    renderTable,
 } from './logService.js';
 import {
     populateFilterGroups,
@@ -14,6 +15,7 @@ import {
 } from './filterGroup.js';
 import { initSearch } from './search.js';
 import { initChatbot } from './agent.js';
+import Split from 'split.js';
 
 const initializeApp = () => {
     // --- Initialize Local Storage State for Filter Groups ---
@@ -30,6 +32,40 @@ const initializeApp = () => {
 
     // --- Search Input Listeners ---
     initSearch();
+
+    // --- Initialize Split Pane ---
+    // Initialize the vertical split-pane with Split.js.
+    Split(['#all-logs-pane', '#filtered-logs-pane'], {
+        direction: 'vertical',
+        sizes: [50, 50],
+        gutterSize: 5, // visible thickness remains 5px
+        minSize: 100,
+        gutter: (index, direction) => {
+            const gutter = document.createElement('div');
+            gutter.className = `gutter gutter-${direction}`;
+            // Increase the actual height for a larger click area
+            gutter.style.height = '10px';
+            gutter.style.cursor = 'row-resize';
+            gutter.style.position = 'relative';
+
+            // Create a child element to show only a 5px line centered vertically
+            const line = document.createElement('div');
+            line.style.position = 'absolute';
+            line.style.top = '50%';
+            line.style.left = '0';
+            line.style.right = '0';
+            line.style.height = '5px';
+            line.style.backgroundColor = '#ccc';
+            line.style.transform = 'translateY(-50%)';
+
+            gutter.appendChild(line);
+            return gutter;
+        }
+    });
+
+    // -- Render Table ---
+    renderTable([], "all-logs");
+    renderTable([], "filtered-logs");
 
     // --- Add Filter Group Modal Setup ---
     const addFilterGroupBtn = document.getElementById("add-filter-group-btn");

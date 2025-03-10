@@ -9,6 +9,8 @@ export let allLogs = [];
 export const getLogsWithIds = (logs) =>
     logs.map((log, index) => ({ id: index + 1, ...log }));
 
+export let currentLogId = null;
+
 // Function to handle log deletion.
 const deleteLogFile = (id) => {
     console.log(`Deleting log file with ID: ${id}`);
@@ -33,30 +35,35 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     const paginationContainer = document.getElementById(id + "-pagination");
 
     if (logs.length === 0) {
-        tableContainer.innerHTML = `<p class="text-muted">No logs match your search criteria.</p>`;
+        console.log("No logs to render.");
+        tableContainer.innerHTML = `<div class="empty-placeholder">No logs match your search criteria.</div>`;
         paginationContainer.innerHTML = "";
         return;
     }
 
     // MAIN TABLE
     const headers = Object.keys(logs[0]);
-    tableContainer.innerHTML = `
-        <table class="table table-striped table-bordered text-nowrap small" id="${id}-table">
+    const headerHTML = id === "all-logs" ? `
         <thead class="table-dark">
             <tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr>
         </thead>
-        <tbody>
-            ${logs.map(log => `
-            <tr id="log-${log.id}">
-                ${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}
-            </tr>
-            `).join('')}
-        </tbody>
+    ` : "";
+
+    tableContainer.innerHTML = `
+        <table class="table table-striped table-bordered text-nowrap small" id="${id}-table">
+            ${headerHTML}
+            <tbody>
+                ${logs.map(log => `
+                    <tr id="log-${log.id}">
+                        ${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}
+                    </tr>
+                `).join('')}
+            </tbody>
         </table>
-        <div id="pagination-${id}" class="pagination-container mt-2"></div>
+        <div id="pagination-${id}" class="pagination-container m-2"></div>
     `;
 
-    // TABLE PAGINATION
+    // TABLE PAGINATION (unchanged)
     const rowsPerPage = ROWS_PER_PAGE;
     const $rows = $(`#${id}-table tbody tr`);
     const totalRows = $rows.length;
@@ -70,12 +77,32 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
             $rows.hide().slice(page * rowsPerPage, (page + 1) * rowsPerPage).show();
 
             const navhtml = `
-                <div class="pagination-controls text-center">
-                <button class="btn btn-secondary prev-page" ${page === 0 ? "disabled" : ""}>Previous</button>
-                <input type="number" class="page-input" value="${page + 1}" min="1" max="${numPages}" 
-                        style="width: 60px; text-align: center; margin: 0 10px;">
-                <span>of ${numPages}</span>
-                <button class="btn btn-secondary next-page" ${page === numPages - 1 ? "disabled" : ""}>Next</button>
+                <div class="pagination-controls d-flex align-items-center justify-content-center">
+                    <button 
+                        class="btn btn-sm btn-secondary prev-page rounded-pill px-3 me-2"
+                        ${page === 0 ? "disabled" : ""}
+                    >
+                        Previous
+                    </button>
+                    
+                    <div class="page-indicator mx-2 d-flex align-items-center">
+                        <input 
+                            type="number" 
+                            class="page-input form-control form-control-sm" 
+                            value="${page + 1}" 
+                            min="1" 
+                            max="${numPages}" 
+                            style="width: 50px; text-align: center; -moz-appearance: textfield; appearance: textfield;"
+                        >
+                        <span class="ms-2">/ ${numPages}</span>
+                    </div>
+                    
+                    <button 
+                        class="btn btn-sm btn-secondary next-page rounded-pill px-3 ms-2"
+                        ${page === numPages - 1 ? "disabled" : ""}
+                    >
+                        Next
+                    </button>
                 </div>
             `;
 
@@ -142,7 +169,6 @@ export const applyFilters = (filters) => {
 };
 
 export const loadLogFilesModal = () => {
-    // Fetch log file metadata from the backend.
     fetch('http://localhost:8000/table')
         .then((response) => {
             if (!response.ok) {
@@ -158,16 +184,16 @@ export const loadLogFilesModal = () => {
             data.forEach((logFile) => {
                 const cardHtml = `
                     <div class="col-sm-6 col-md-4 mb-3">
-                        <div class="card logfile-card h-100" style="cursor: pointer;">
+                        <div class="card logfile-card h-100">
                             <div class="card-body d-flex flex-column">
-                                <div class="logfile-info mb-3">
-                                    <h5 class="card-title mb-1">${logFile.title}</h5>
+                                <div class="logfile-info mb-3 text-center">
+                                    <h5 class="card-title mb-1" style="font-weight: 600;">${logFile.title}</h5>
                                     <p class="card-text small text-muted">${logFile.description}</p>
                                     <p class="card-text"><small>ID: ${logFile.id}</small></p>
                                 </div>
-                                <div class="mt-auto d-flex justify-content-between align-items-center">
-                                    <button type="button" class="btn btn-sm btn-outline-danger delete-log-btn" data-log-id="${logFile.id}">
-                                        <span class="material-symbols-outlined">delete</span>
+                                <div class="mt-auto d-flex justify-content-center align-items-center">
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-log-btn" data-log-id="${logFile.id}" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
                                     </button>
                                 </div>
                             </div>
@@ -177,10 +203,8 @@ export const loadLogFilesModal = () => {
                 logFilesRow.insertAdjacentHTML('beforeend', cardHtml);
             });
 
-            // Attach click event listeners to each card and delete button.
             document.querySelectorAll(".logfile-card").forEach(card => {
                 card.addEventListener("click", function (e) {
-                    // Avoid card click if delete button was pressed.
                     if (e.target.closest(".delete-log-btn")) return;
                     const id = card.querySelector("p.card-text small").textContent.replace("ID: ", "").trim();
                     handleFileLoad(id);
@@ -195,7 +219,6 @@ export const loadLogFilesModal = () => {
                 });
             });
 
-            // Finally, show the modal.
             $('#logFilesModal').modal('show');
         })
         .catch((err) => {
@@ -255,6 +278,7 @@ export const uploadLogsToDatabase = () => {
         })
         .then((data) => {
             console.log("Elastic Search response:", data);
+            currentLogId = id;
         })
         .catch((error) => {
             console.error("Upload failed:", error);
@@ -271,6 +295,7 @@ export const handleFileLoad = (id) => {
             return response.json();
         })
         .then(data => {
+            currentLogId = id;
             console.log("Full response data:", data);
             if (!data) {
                 throw new Error("No data received from server");

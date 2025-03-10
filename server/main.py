@@ -46,6 +46,8 @@ models: dict[str, ModelClient] = {
 class ChatRequest(BaseModel):
     message: str
     known_issues: dict[str, Any] | None = None
+    model: str = "gpt-4o"
+    log_id: str | None
 
 
 class Action(BaseModel):
@@ -60,7 +62,7 @@ base_prompt = (
     "Do not include any additional text."
 )
 # chat_agent = ChatAgent(models["granite-3.2-2b"], base_prompt)
-chat_agent = ChatAgent(models["gpt-4o"], base_prompt)
+# chat_agent = ChatAgent(models["gpt-4o"], base_prompt)
 # chat_agent = ChatAgent(models["llama-3.2-3b"], base_prompt)
 # chat_agent = ChatAgent(models["granite-3.2-8b"], base_prompt)
 
@@ -69,6 +71,16 @@ chat_agent = ChatAgent(models["gpt-4o"], base_prompt)
 async def chat_stream(request: ChatRequest):
     if not request.message:
         raise HTTPException(status_code=400, detail="Message is required")
+
+    chat_agent = ChatAgent(models[request.model], base_prompt)
+    if request.log_id:
+        logs = get_from_elasticsearch(request.log_id)
+        print(f"Logs retrieved from Elasticsearch: {len(logs)}")
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Log ID is required, please upload logs to Elasticsearch first",
+        )
 
     async def event_generator():
         # Step 1: Decide on summary generation.
@@ -80,7 +92,7 @@ async def chat_stream(request: ChatRequest):
             body={"generate_summary": generate_summary, "explanation": explanation},
         )
         # SSE requires events to be prefixed with "data: " and double newline-delimited.
-        yield f"data: {action.json()}\n\n"
+        yield f"data: {action.model_dump_json()}\n\n"
 
         # Step 2: If summary is needed, generate it.
         if generate_summary:
@@ -89,7 +101,7 @@ async def chat_stream(request: ChatRequest):
                 type="generate_summary",
                 body={"summary": summary_text, "stats": stats},
             )
-            yield f"data: {action.json()}\n\n"
+            yield f"data: {action.model_dump_json()}\n\n"
             print(f"Summary: {summary_text}")
 
         # Step 3: Decide on known issue evaluation.
@@ -100,7 +112,7 @@ async def chat_stream(request: ChatRequest):
             type="issue_decision",
             body={"evaluate_issues": evaluate_issues, "explanation": explanation},
         )
-        yield f"data: {action.json()}\n\n"
+        yield f"data: {action.model_dump_json()}\n\n"
         print(f"Evaluate Issues: {evaluate_issues}, Explanation: {explanation}")
 
         # Step 4: Evaluate each known issue.
@@ -129,6 +141,31 @@ async def chat_stream(request: ChatRequest):
                         body={"issue": issue, "summary": issue_text},
                     )
                     yield f"data: {action.model_dump_json()}\n\n"
+
+        # Step 5: Decide if a filter should be added.
+        should_add_filter, filter_explanation = await chat_agent.decide_filter(
+            request.message
+        )
+        action = Action(
+            type="filter_decision",
+            body={
+                "should_add_filter": should_add_filter,
+                "explanation": filter_explanation,
+            },
+        )
+        yield f"data: {action.json()}\n\n"
+        print(
+            f"Filter Decision: {should_add_filter}, Explanation: {filter_explanation}"
+        )
+
+        # Step 6: If filter is needed, generate a filter group.
+        if should_add_filter:
+            filter_group = await chat_agent.generate_filter_group(request.message)
+            action = Action(
+                type="add_filter",
+                body={"filter_group": filter_group},
+            )
+            yield f"data: {action.model_dump_json()}\n\n"
 
         # Yield a final event to indicate that streaming is complete.
         yield "data: [DONE]\n\n"

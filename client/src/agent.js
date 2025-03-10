@@ -1,5 +1,6 @@
 import { extendFilterGroups } from "./filterGroup";
 import { marked } from "marked";
+import { currentLogId } from "./logService";
 
 const AGENT_ENDPOINT = 'http://localhost:8000/chat_stream';
 
@@ -14,7 +15,7 @@ const DEFAULT_ISSUES = {
         },
         "conditions": "This error typically occurs during call setup or renegotiation and may be accompanied by other signaling errors or warnings in the logs.",
         "resolution": "Investigate preceding log entries for errors in media negotiation or track creation. Ensure that the media engine is properly initialized and that network conditions support the required media streams. Verify configuration settings for media track management.",
-    }
+    },
 };
 
 const DEFAULT_WORKSPACES = {
@@ -23,6 +24,7 @@ const DEFAULT_WORKSPACES = {
 
 let workspaces = {};
 let currentWorkspace = "Default Workspace";
+let currentModel = "gpt-4o";
 
 export const initChatbot = () => {
     // Attach event listener for toggling the chatbot panel
@@ -90,7 +92,9 @@ export const initChatbot = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     message: userInput,
-                    known_issues: workspaces[currentWorkspace]
+                    known_issues: workspaces[currentWorkspace],
+                    model: currentModel,
+                    log_id: currentLogId
                 })
             });
 
@@ -138,6 +142,7 @@ export const initChatbot = () => {
     populateWorkspaceDropdown();
     populateChatbotWorkspaceDropdown();
     attachWorkspaceSelectListener();
+    populateChatbotModelDropdown();
 };
 
 // Helper to process streaming response using SSE format.
@@ -216,7 +221,6 @@ const freezeDecisionIndicators = () => {
     }
 };
 
-// Process each action received from the stream.
 const processAction = (action, messagesContainer) => {
     if (action.type === "summary_decision") {
         let decisionEl = document.getElementById("decision-message");
@@ -224,7 +228,6 @@ const processAction = (action, messagesContainer) => {
             decisionEl = document.createElement("div");
             decisionEl.id = "decision-message";
             decisionEl.className = "chat-message bot thinking";
-            // Modern styling:
             decisionEl.style.fontSize = "0.8rem";
             decisionEl.style.padding = "5px 10px";
             decisionEl.style.margin = "8px 0";
@@ -233,14 +236,12 @@ const processAction = (action, messagesContainer) => {
             decisionEl.style.borderRadius = "12px";
             decisionEl.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.1)";
 
-            // Create header with title and animated ellipsis.
             const header = document.createElement("div");
             header.className = "thinking-header";
             header.style.cursor = "pointer";
             header.style.display = "flex";
             header.style.justifyContent = "space-between";
             header.style.alignItems = "center";
-            // Removed border-bottom for a cleaner look.
 
             const titleSpan = document.createElement("span");
             titleSpan.innerHTML = "Agent thinking";
@@ -251,7 +252,6 @@ const processAction = (action, messagesContainer) => {
             header.appendChild(ellipsisSpan);
             startEllipsisAnimation(ellipsisSpan);
 
-            // Create details container with the explanation (hidden by default)
             const details = document.createElement("div");
             details.className = "thinking-details";
             details.style.display = "none";
@@ -260,7 +260,6 @@ const processAction = (action, messagesContainer) => {
             details.style.color = "#555";
             details.textContent = action.body.explanation;
 
-            // Toggle details on header click.
             header.addEventListener("click", () => {
                 details.style.display = details.style.display === "none" ? "block" : "none";
             });
@@ -274,9 +273,8 @@ const processAction = (action, messagesContainer) => {
                 details.textContent = action.body.explanation;
             }
         }
-        // If the decision is falsy, remove the decision element after 3 seconds.
+        // If the decision is false, remove the element after 3 seconds.
         if (!action.body.generate_summary) {
-            // Schedule removal only once using a data attribute.
             if (!decisionEl.dataset.removalScheduled) {
                 decisionEl.dataset.removalScheduled = "true";
                 setTimeout(() => {
@@ -307,7 +305,6 @@ const processAction = (action, messagesContainer) => {
             header.style.display = "flex";
             header.style.justifyContent = "space-between";
             header.style.alignItems = "center";
-            // Removed border-bottom for a cleaner look.
 
             const titleSpan = document.createElement("span");
             titleSpan.innerHTML = "Evaluating issues";
@@ -339,7 +336,6 @@ const processAction = (action, messagesContainer) => {
                 details.textContent = action.body.explanation;
             }
         }
-        // If the decision is falsy, remove the decision element after 3 seconds.
         if (!action.body.evaluate_issues) {
             if (!decisionEl.dataset.removalScheduled) {
                 decisionEl.dataset.removalScheduled = "true";
@@ -351,15 +347,95 @@ const processAction = (action, messagesContainer) => {
                 }, 3000);
             }
         }
+    } else if (action.type === "filter_decision") {
+        let decisionEl = document.getElementById("filter-decision-message");
+        if (!decisionEl) {
+            decisionEl = document.createElement("div");
+            decisionEl.id = "filter-decision-message";
+            decisionEl.className = "chat-message bot thinking";
+            decisionEl.style.fontSize = "0.8rem";
+            decisionEl.style.padding = "5px 10px";
+            decisionEl.style.margin = "8px 0";
+            decisionEl.style.backgroundColor = "#ffffff";
+            decisionEl.style.border = "1px solid #e0e0e0";
+            decisionEl.style.borderRadius = "12px";
+            decisionEl.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.1)";
+
+            const header = document.createElement("div");
+            header.className = "thinking-header";
+            header.style.cursor = "pointer";
+            header.style.display = "flex";
+            header.style.justifyContent = "space-between";
+            header.style.alignItems = "center";
+
+            const titleSpan = document.createElement("span");
+            titleSpan.innerHTML = "Filter Decision";
+            header.appendChild(titleSpan);
+
+            const ellipsisSpan = document.createElement("span");
+            ellipsisSpan.className = "animated-ellipsis";
+            header.appendChild(ellipsisSpan);
+            startEllipsisAnimation(ellipsisSpan);
+
+            const details = document.createElement("div");
+            details.className = "thinking-details";
+            details.style.display = "none";
+            details.style.marginTop = "8px";
+            details.style.fontSize = "0.75rem";
+            details.style.color = "#555";
+            details.textContent = action.body.explanation;
+
+            header.addEventListener("click", () => {
+                details.style.display = details.style.display === "none" ? "block" : "none";
+            });
+
+            decisionEl.appendChild(header);
+            decisionEl.appendChild(details);
+            messagesContainer.appendChild(decisionEl);
+        } else {
+            const details = decisionEl.querySelector(".thinking-details");
+            if (details) {
+                details.textContent = action.body.explanation;
+            }
+        }
+        // At this point, once the decision is set, stop the animated ellipsis.
+        const ellipsisSpan = decisionEl.querySelector(".animated-ellipsis");
+        if (ellipsisSpan) {
+            stopEllipsisAnimation(ellipsisSpan);
+        }
+        // If the filter decision is false, schedule removal.
+        if (!action.body.should_add_filter) {
+            if (!decisionEl.dataset.removalScheduled) {
+                decisionEl.dataset.removalScheduled = "true";
+                setTimeout(() => {
+                    const el = document.getElementById("filter-decision-message");
+                    if (el) {
+                        el.remove();
+                    }
+                }, 3000);
+            }
+        }
     } else if (action.type === "add_filter") {
         freezeDecisionIndicators();
-        extendFilterGroups(action.body.filter_groups);
-        const botMessage = document.createElement("div");
-        botMessage.className = "chat-message bot";
-        botMessage.innerHTML = marked.parse(
-            `Added filter groups **${action.body.filter_groups.map(group => group.title).join(", ")}**.`
-        );
-        messagesContainer.appendChild(botMessage);
+        if (action.body.filter_group) {
+            // Call the function to extend filter groups.
+            extendFilterGroups([action.body.filter_group]);
+            const filterGroup = action.body.filter_group;
+            // Build a markdown string to nicely display the filter group.
+            let markdownContent = `**Added Filter Group**\n: ${filterGroup.title}\n\n`;
+            markdownContent += `_${filterGroup.description}_\n\n`;
+            if (filterGroup.filters && filterGroup.filters.length > 0) {
+                markdownContent += `| Text | Description |\n`;
+                markdownContent += `| ---- | ----------- |\n`;
+                filterGroup.filters.forEach(filter => {
+                    markdownContent += `| <span style="background-color: ${filter.color}; padding: 2px 4px;">${filter.text}</span> | ${filter.description} |\n`;
+                });
+            }
+            const botMessage = document.createElement("div");
+            botMessage.className = "chat-message bot";
+            botMessage.innerHTML = marked.parse(markdownContent);
+            messagesContainer.appendChild(botMessage);
+        }
     } else if (action.type === "generate_summary") {
         freezeDecisionIndicators();
         const botMessage = document.createElement("div");
@@ -370,34 +446,24 @@ const processAction = (action, messagesContainer) => {
         messagesContainer.appendChild(botMessage);
     } else if (action.type === "flag_issue") {
         freezeDecisionIndicators();
-        const { issue, summary } = action.body;
+        const { issue, summary, resolution } = action.body;
         const botMessage = document.createElement("div");
         botMessage.className = "chat-message bot";
-        botMessage.style.margin = "8px 0";  // spacing
-
-        // Create a header container with flex styling to align items on one line.
+        botMessage.style.margin = "8px 0";
         const header = document.createElement("div");
         header.className = "flag-issue-header";
         header.style.cursor = "pointer";
         header.style.display = "flex";
         header.style.alignItems = "center";
-
-        // Create a container for the issue title.
         const issueTitleContainer = document.createElement("div");
-        // Use inline parsing to avoid extra paragraph tags.
         issueTitleContainer.innerHTML = marked.parseInline(`Detected issue: **${issue}**`);
-        // Set the text color to dark red for emphasis.
         issueTitleContainer.style.color = "#950606";
         header.appendChild(issueTitleContainer);
-
-        // Create an arrow indicator using Material Icons.
         const arrow = document.createElement("span");
         arrow.className = "material-icons";
-        arrow.textContent = "keyboard_arrow_down"; // initial icon (down arrow)
+        arrow.textContent = "keyboard_arrow_down";
         arrow.style.marginLeft = "auto";
         header.appendChild(arrow);
-
-        // Create a container for the detailed summary, hidden by default.
         const details = document.createElement("div");
         details.className = "flag-issue-details";
         details.style.display = "none";
@@ -405,24 +471,20 @@ const processAction = (action, messagesContainer) => {
         details.style.fontSize = "0.85rem";
         details.style.color = "#555";
         details.innerHTML = marked.parse(summary);
-
-        // Toggle details when header is clicked.
         header.addEventListener("click", () => {
             if (details.style.display === "none") {
                 details.style.display = "block";
-                arrow.textContent = "expand_less"; // up arrow
+                arrow.textContent = "expand_less";
             } else {
                 details.style.display = "none";
-                arrow.textContent = "expand_more"; // down arrow
+                arrow.textContent = "expand_more";
             }
         });
-
         botMessage.appendChild(header);
         botMessage.appendChild(details);
         messagesContainer.appendChild(botMessage);
     }
 
-    // Auto-scroll to the bottom after each update.
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
 
@@ -484,6 +546,24 @@ const populateWorkspaceDropdown = () => {
     addOption.value = "ADD_NEW_WORKSPACE";
     addOption.textContent = "Add New Workspace...";
     workspaceSelect.appendChild(addOption);
+};
+
+const populateChatbotModelDropdown = () => {
+    const modelSelect = document.getElementById("chatbot-model-select");
+    modelSelect.innerHTML = ""; // Clear existing options.
+
+    const models = ["gpt-4o", "granite-3.2-2b"];
+    for (const model of models) {
+        const option = document.createElement("option");
+        option.value = model;
+        option.textContent = model;
+        if (model === currentModel) option.selected = true;
+        modelSelect.appendChild(option);
+    }
+
+    modelSelect.addEventListener("change", (e) => {
+        currentModel = e.target.value;
+    });
 };
 
 const populateChatbotWorkspaceDropdown = () => {
@@ -572,9 +652,15 @@ const loadCategoriesModal = () => {
                                     <input type="checkbox" class="form-check-input" id="category-switch-${category}" checked>
                                     <label class="form-check-label" for="category-switch-${category}"></label>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary edit-category-btn btn-circle">
-                                    <span class="material-symbols-outlined">edit</span>
-                                </button>
+                                <div class="mt-auto d-flex justify-content-end align-items-center" style="gap: 5px;">
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-category-btn btn-circle" data-category="${category}" 
+                                            style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #ff4d4d; color: #ff4d4d;">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary edit-category-btn btn-circle" style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -594,6 +680,18 @@ const loadCategoriesModal = () => {
             editFromCategories = true;
             $('#categoriesModal').modal('hide');
             openEditIssueModal(categoryName);
+        });
+    });
+
+    document.querySelectorAll(".delete-category-btn").forEach(btn => {
+        btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const categoryToDelete = btn.dataset.category;
+            if (confirm(`Are you sure you want to delete the category "${categoryToDelete}"?`)) {
+                delete workspaces[currentWorkspace][categoryToDelete];
+                localStorage.setItem("workspaces", JSON.stringify(workspaces));
+                loadCategoriesModal();
+            }
         });
     });
 
@@ -619,36 +717,47 @@ function initKeywordsSection(existingKeywords) {
     }
 }
 
-// Create and add a new keyword row to the container using Bootstrap's input group.
 function addKeywordRow(category = "", keywordsArray = []) {
     const container = document.getElementById("keywords-container");
 
-    // Create a row container using Bootstrap input group.
+    // Create a row container with a maximum width for centering.
     const row = document.createElement("div");
     row.className = "input-group mb-2 keyword-row";
+    row.style.maxWidth = "500px"; // Limit the width for readability
+    row.style.margin = "0 auto";  // Center the row horizontally
 
-    // Category input.
+    // Category input: make it narrower.
     const catInput = document.createElement("input");
     catInput.type = "text";
-    catInput.className = "form-control";
-    catInput.placeholder = "Category (e.g. media)";
+    catInput.className = "form-control form-control-sm";
+    catInput.placeholder = "Group";
     catInput.value = category;
+    catInput.style.flex = "0 0 20%";
 
-    // Keywords input (comma separated).
+    // Keywords input: make it take up the rest
     const keyInput = document.createElement("input");
     keyInput.type = "text";
-    keyInput.className = "form-control";
+    keyInput.className = "form-control form-control-sm";
     keyInput.placeholder = "Keywords (comma separated)";
     keyInput.value = keywordsArray.join(", ");
+    keyInput.style.flex = "0 0 70%";
 
-    // Remove button with Material Icon.
+    // Remove button container: use flex to center the icon.
     const removeBtnWrapper = document.createElement("div");
     removeBtnWrapper.className = "input-group-append";
+    removeBtnWrapper.style.display = "flex";
+    removeBtnWrapper.style.alignItems = "center";
+    removeBtnWrapper.style.justifyContent = "center";
+    removeBtnWrapper.style.flex = "1"; // Allow extra space if needed
+
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
-    removeBtn.className = "btn btn-outline-danger";
-    // Use a Material icon for the delete button.
-    removeBtn.innerHTML = '<span class="material-icons">delete</span>';
+    removeBtn.className = "btn btn-outline-danger btn-sm";
+    // Center the icon in the button using flex.
+    removeBtn.style.display = "flex";
+    removeBtn.style.alignItems = "center";
+    removeBtn.style.justifyContent = "center";
+    removeBtn.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span>';
     removeBtn.addEventListener("click", () => {
         row.remove();
     });
