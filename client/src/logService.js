@@ -9,6 +9,16 @@ export let allLogs = [];
 export const getLogsWithIds = (logs) =>
     logs.map((log, index) => ({ id: index + 1, ...log }));
 
+function countLogs(theLogs) {
+  const logCount = theLogs.length;
+  document.getElementById('log-count').textContent = logCount;
+  document.getElementById('filtered-log-count').textContent = logCount;
+}
+function countFilteredLogs(theFilteredLogs) {
+  const filteredLogs = theFilteredLogs.length;
+  document.getElementById('filtered-log-count').textContent = filteredLogs;
+}
+
 // Function to handle log deletion.
 const deleteLogFile = (id) => {
     console.log(`Deleting log file with ID: ${id}`);
@@ -215,6 +225,7 @@ export const handleFileUploadLocal = (event) => {
                 alert("Invalid file format: JSON must be an array of logs.");
                 return;
             }
+            countLogs(data);
             allLogs = getLogsWithIds(data);
             renderTable(allLogs, "all-logs");
             renderTable(allLogs, "filtered-logs");
