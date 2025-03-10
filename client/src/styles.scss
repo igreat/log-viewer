@@ -576,3 +576,9 @@ footer {
     margin: 0;  
   }
 }
+@media (max-width: $breakpoint-sm) {
+  footer {
+    padding: 15px 0;
+    font-size: 12px;
+  }
+}
