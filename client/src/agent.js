@@ -699,36 +699,47 @@ function initKeywordsSection(existingKeywords) {
     }
 }
 
-// Create and add a new keyword row to the container using Bootstrap's input group.
 function addKeywordRow(category = "", keywordsArray = []) {
     const container = document.getElementById("keywords-container");
 
-    // Create a row container using Bootstrap input group.
+    // Create a row container with a maximum width for centering.
     const row = document.createElement("div");
     row.className = "input-group mb-2 keyword-row";
+    row.style.maxWidth = "500px"; // Limit the width for readability
+    row.style.margin = "0 auto";  // Center the row horizontally
 
-    // Category input.
+    // Category input: make it narrower.
     const catInput = document.createElement("input");
     catInput.type = "text";
-    catInput.className = "form-control";
-    catInput.placeholder = "Category (e.g. media)";
+    catInput.className = "form-control form-control-sm";
+    catInput.placeholder = "Group";
     catInput.value = category;
+    catInput.style.flex = "0 0 20%";
 
-    // Keywords input (comma separated).
+    // Keywords input: make it take up the rest
     const keyInput = document.createElement("input");
     keyInput.type = "text";
-    keyInput.className = "form-control";
+    keyInput.className = "form-control form-control-sm";
     keyInput.placeholder = "Keywords (comma separated)";
     keyInput.value = keywordsArray.join(", ");
+    keyInput.style.flex = "0 0 70%";
 
-    // Remove button with Material Icon.
+    // Remove button container: use flex to center the icon.
     const removeBtnWrapper = document.createElement("div");
     removeBtnWrapper.className = "input-group-append";
+    removeBtnWrapper.style.display = "flex";
+    removeBtnWrapper.style.alignItems = "center";
+    removeBtnWrapper.style.justifyContent = "center";
+    removeBtnWrapper.style.flex = "1"; // Allow extra space if needed
+
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
-    removeBtn.className = "btn btn-outline-danger";
-    // Use a Material icon for the delete button.
-    removeBtn.innerHTML = '<span class="material-icons">delete</span>';
+    removeBtn.className = "btn btn-outline-danger btn-sm";
+    // Center the icon in the button using flex.
+    removeBtn.style.display = "flex";
+    removeBtn.style.alignItems = "center";
+    removeBtn.style.justifyContent = "center";
+    removeBtn.innerHTML = '<span class="material-icons" style="font-size: 18px;">delete</span>';
     removeBtn.addEventListener("click", () => {
         row.remove();
     });
