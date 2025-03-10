@@ -561,3 +561,18 @@ label.form-check-label {
 .upload-section button {
   min-width: 120px;
 }
+
+/* Footer Section Styles */
+footer {
+  background-color: #f8f9fa;  
+  padding: 10px 0;  
+  text-align: center; 
+  font-size: 14px; 
+  color: #333;  
+  border-top: 1px solid #ddd; 
+  margin-top: 50px; 
+
+  p {
+    margin: 0;  
+  }
+}
