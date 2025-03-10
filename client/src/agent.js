@@ -15,7 +15,7 @@ const DEFAULT_ISSUES = {
         },
         "conditions": "This error typically occurs during call setup or renegotiation and may be accompanied by other signaling errors or warnings in the logs.",
         "resolution": "Investigate preceding log entries for errors in media negotiation or track creation. Ensure that the media engine is properly initialized and that network conditions support the required media streams. Verify configuration settings for media track management.",
-    }
+    },
 };
 
 const DEFAULT_WORKSPACES = {
