@@ -46,6 +46,7 @@ models: dict[str, ModelClient] = {
 class ChatRequest(BaseModel):
     message: str
     known_issues: dict[str, Any] | None = None
+    model: str = "gpt-4o"
 
 
 class Action(BaseModel):
@@ -60,7 +61,7 @@ base_prompt = (
     "Do not include any additional text."
 )
 # chat_agent = ChatAgent(models["granite-3.2-2b"], base_prompt)
-chat_agent = ChatAgent(models["gpt-4o"], base_prompt)
+# chat_agent = ChatAgent(models["gpt-4o"], base_prompt)
 # chat_agent = ChatAgent(models["llama-3.2-3b"], base_prompt)
 # chat_agent = ChatAgent(models["granite-3.2-8b"], base_prompt)
 
@@ -70,6 +71,7 @@ async def chat_stream(request: ChatRequest):
     if not request.message:
         raise HTTPException(status_code=400, detail="Message is required")
 
+    chat_agent = ChatAgent(models[request.model], base_prompt)
     async def event_generator():
         # Step 1: Decide on summary generation.
         print(f"Message: {request.message}")

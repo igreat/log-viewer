@@ -312,9 +312,18 @@
       <!-- Chatbot Column -->
       <div id="chatbot-container" class="col-md-4 d-none">
         <div id="chatbot-header" class="text-white d-flex justify-content-between align-items-center">
-          <span>AI Assistant</span>
+          <span class="material-symbols-outlined">
+            robot_2
+          </span>
           <div class="dropdown-wrapper ml-auto" style="max-width: 200px;">
             <select id="chatbot-workspace-select" class="minimal-dropdown">
+              <!-- Options will be populated via JavaScript -->
+            </select>
+            <span class="dropdown-arrow">▼</span>
+          </div>
+          <!-- model selection (such as gpt-4o, granite and so on) -->
+          <div class="dropdown-wrapper ml-2" style="max-width: 200px;">
+            <select id="chatbot-model-select" class="minimal-dropdown">
               <!-- Options will be populated via JavaScript -->
             </select>
             <span class="dropdown-arrow">▼</span>

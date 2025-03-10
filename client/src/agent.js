@@ -23,6 +23,7 @@ const DEFAULT_WORKSPACES = {
 
 let workspaces = {};
 let currentWorkspace = "Default Workspace";
+let currentModel = "gpt-4o";
 
 export const initChatbot = () => {
     // Attach event listener for toggling the chatbot panel
@@ -90,7 +91,8 @@ export const initChatbot = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     message: userInput,
-                    known_issues: workspaces[currentWorkspace]
+                    known_issues: workspaces[currentWorkspace],
+                    model: currentModel
                 })
             });
 
@@ -138,6 +140,7 @@ export const initChatbot = () => {
     populateWorkspaceDropdown();
     populateChatbotWorkspaceDropdown();
     attachWorkspaceSelectListener();
+    populateChatbotModelDropdown();
 };
 
 // Helper to process streaming response using SSE format.
@@ -541,6 +544,24 @@ const populateWorkspaceDropdown = () => {
     addOption.value = "ADD_NEW_WORKSPACE";
     addOption.textContent = "Add New Workspace...";
     workspaceSelect.appendChild(addOption);
+};
+
+const populateChatbotModelDropdown = () => {
+    const modelSelect = document.getElementById("chatbot-model-select");
+    modelSelect.innerHTML = ""; // Clear existing options.
+
+    const models = ["gpt-4o", "granite-3.2-2b"];
+    for (const model of models) {
+        const option = document.createElement("option");
+        option.value = model;
+        option.textContent = model;
+        if (model === currentModel) option.selected = true;
+        modelSelect.appendChild(option);
+    }
+
+    modelSelect.addEventListener("change", (e) => {
+        currentModel = e.target.value;
+    });
 };
 
 const populateChatbotWorkspaceDropdown = () => {
