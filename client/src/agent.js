@@ -216,7 +216,6 @@ const freezeDecisionIndicators = () => {
     }
 };
 
-// Process each action received from the stream.
 const processAction = (action, messagesContainer) => {
     if (action.type === "summary_decision") {
         let decisionEl = document.getElementById("decision-message");
@@ -224,7 +223,6 @@ const processAction = (action, messagesContainer) => {
             decisionEl = document.createElement("div");
             decisionEl.id = "decision-message";
             decisionEl.className = "chat-message bot thinking";
-            // Modern styling:
             decisionEl.style.fontSize = "0.8rem";
             decisionEl.style.padding = "5px 10px";
             decisionEl.style.margin = "8px 0";
@@ -233,14 +231,12 @@ const processAction = (action, messagesContainer) => {
             decisionEl.style.borderRadius = "12px";
             decisionEl.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.1)";
 
-            // Create header with title and animated ellipsis.
             const header = document.createElement("div");
             header.className = "thinking-header";
             header.style.cursor = "pointer";
             header.style.display = "flex";
             header.style.justifyContent = "space-between";
             header.style.alignItems = "center";
-            // Removed border-bottom for a cleaner look.
 
             const titleSpan = document.createElement("span");
             titleSpan.innerHTML = "Agent thinking";
@@ -251,7 +247,6 @@ const processAction = (action, messagesContainer) => {
             header.appendChild(ellipsisSpan);
             startEllipsisAnimation(ellipsisSpan);
 
-            // Create details container with the explanation (hidden by default)
             const details = document.createElement("div");
             details.className = "thinking-details";
             details.style.display = "none";
@@ -260,7 +255,6 @@ const processAction = (action, messagesContainer) => {
             details.style.color = "#555";
             details.textContent = action.body.explanation;
 
-            // Toggle details on header click.
             header.addEventListener("click", () => {
                 details.style.display = details.style.display === "none" ? "block" : "none";
             });
@@ -274,9 +268,8 @@ const processAction = (action, messagesContainer) => {
                 details.textContent = action.body.explanation;
             }
         }
-        // If the decision is falsy, remove the decision element after 3 seconds.
+        // If the decision is false, remove the element after 3 seconds.
         if (!action.body.generate_summary) {
-            // Schedule removal only once using a data attribute.
             if (!decisionEl.dataset.removalScheduled) {
                 decisionEl.dataset.removalScheduled = "true";
                 setTimeout(() => {
@@ -307,7 +300,6 @@ const processAction = (action, messagesContainer) => {
             header.style.display = "flex";
             header.style.justifyContent = "space-between";
             header.style.alignItems = "center";
-            // Removed border-bottom for a cleaner look.
 
             const titleSpan = document.createElement("span");
             titleSpan.innerHTML = "Evaluating issues";
@@ -339,7 +331,6 @@ const processAction = (action, messagesContainer) => {
                 details.textContent = action.body.explanation;
             }
         }
-        // If the decision is falsy, remove the decision element after 3 seconds.
         if (!action.body.evaluate_issues) {
             if (!decisionEl.dataset.removalScheduled) {
                 decisionEl.dataset.removalScheduled = "true";
@@ -351,15 +342,95 @@ const processAction = (action, messagesContainer) => {
                 }, 3000);
             }
         }
+    } else if (action.type === "filter_decision") {
+        let decisionEl = document.getElementById("filter-decision-message");
+        if (!decisionEl) {
+            decisionEl = document.createElement("div");
+            decisionEl.id = "filter-decision-message";
+            decisionEl.className = "chat-message bot thinking";
+            decisionEl.style.fontSize = "0.8rem";
+            decisionEl.style.padding = "5px 10px";
+            decisionEl.style.margin = "8px 0";
+            decisionEl.style.backgroundColor = "#ffffff";
+            decisionEl.style.border = "1px solid #e0e0e0";
+            decisionEl.style.borderRadius = "12px";
+            decisionEl.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.1)";
+
+            const header = document.createElement("div");
+            header.className = "thinking-header";
+            header.style.cursor = "pointer";
+            header.style.display = "flex";
+            header.style.justifyContent = "space-between";
+            header.style.alignItems = "center";
+
+            const titleSpan = document.createElement("span");
+            titleSpan.innerHTML = "Filter Decision";
+            header.appendChild(titleSpan);
+
+            const ellipsisSpan = document.createElement("span");
+            ellipsisSpan.className = "animated-ellipsis";
+            header.appendChild(ellipsisSpan);
+            startEllipsisAnimation(ellipsisSpan);
+
+            const details = document.createElement("div");
+            details.className = "thinking-details";
+            details.style.display = "none";
+            details.style.marginTop = "8px";
+            details.style.fontSize = "0.75rem";
+            details.style.color = "#555";
+            details.textContent = action.body.explanation;
+
+            header.addEventListener("click", () => {
+                details.style.display = details.style.display === "none" ? "block" : "none";
+            });
+
+            decisionEl.appendChild(header);
+            decisionEl.appendChild(details);
+            messagesContainer.appendChild(decisionEl);
+        } else {
+            const details = decisionEl.querySelector(".thinking-details");
+            if (details) {
+                details.textContent = action.body.explanation;
+            }
+        }
+        // At this point, once the decision is set, stop the animated ellipsis.
+        const ellipsisSpan = decisionEl.querySelector(".animated-ellipsis");
+        if (ellipsisSpan) {
+            stopEllipsisAnimation(ellipsisSpan);
+        }
+        // If the filter decision is false, schedule removal.
+        if (!action.body.should_add_filter) {
+            if (!decisionEl.dataset.removalScheduled) {
+                decisionEl.dataset.removalScheduled = "true";
+                setTimeout(() => {
+                    const el = document.getElementById("filter-decision-message");
+                    if (el) {
+                        el.remove();
+                    }
+                }, 3000);
+            }
+        }
     } else if (action.type === "add_filter") {
         freezeDecisionIndicators();
-        extendFilterGroups(action.body.filter_groups);
-        const botMessage = document.createElement("div");
-        botMessage.className = "chat-message bot";
-        botMessage.innerHTML = marked.parse(
-            `Added filter groups **${action.body.filter_groups.map(group => group.title).join(", ")}**.`
-        );
-        messagesContainer.appendChild(botMessage);
+        if (action.body.filter_group) {
+            // Call the function to extend filter groups.
+            extendFilterGroups([action.body.filter_group]);
+            const filterGroup = action.body.filter_group;
+            // Build a markdown string to nicely display the filter group.
+            let markdownContent = `**Added Filter Group**\n: ${filterGroup.title}\n\n`;
+            markdownContent += `_${filterGroup.description}_\n\n`;
+            if (filterGroup.filters && filterGroup.filters.length > 0) {
+                markdownContent += `| Text | Description |\n`;
+                markdownContent += `| ---- | ----------- |\n`;
+                filterGroup.filters.forEach(filter => {
+                    markdownContent += `| <span style="background-color: ${filter.color}; padding: 2px 4px;">${filter.text}</span> | ${filter.description} |\n`;
+                });
+            }
+            const botMessage = document.createElement("div");
+            botMessage.className = "chat-message bot";
+            botMessage.innerHTML = marked.parse(markdownContent);
+            messagesContainer.appendChild(botMessage);
+        }
     } else if (action.type === "generate_summary") {
         freezeDecisionIndicators();
         const botMessage = document.createElement("div");
@@ -370,34 +441,24 @@ const processAction = (action, messagesContainer) => {
         messagesContainer.appendChild(botMessage);
     } else if (action.type === "flag_issue") {
         freezeDecisionIndicators();
-        const { issue, summary } = action.body;
+        const { issue, summary, resolution } = action.body;
         const botMessage = document.createElement("div");
         botMessage.className = "chat-message bot";
-        botMessage.style.margin = "8px 0";  // spacing
-
-        // Create a header container with flex styling to align items on one line.
+        botMessage.style.margin = "8px 0";
         const header = document.createElement("div");
         header.className = "flag-issue-header";
         header.style.cursor = "pointer";
         header.style.display = "flex";
         header.style.alignItems = "center";
-
-        // Create a container for the issue title.
         const issueTitleContainer = document.createElement("div");
-        // Use inline parsing to avoid extra paragraph tags.
         issueTitleContainer.innerHTML = marked.parseInline(`Detected issue: **${issue}**`);
-        // Set the text color to dark red for emphasis.
         issueTitleContainer.style.color = "#950606";
         header.appendChild(issueTitleContainer);
-
-        // Create an arrow indicator using Material Icons.
         const arrow = document.createElement("span");
         arrow.className = "material-icons";
-        arrow.textContent = "keyboard_arrow_down"; // initial icon (down arrow)
+        arrow.textContent = "keyboard_arrow_down";
         arrow.style.marginLeft = "auto";
         header.appendChild(arrow);
-
-        // Create a container for the detailed summary, hidden by default.
         const details = document.createElement("div");
         details.className = "flag-issue-details";
         details.style.display = "none";
@@ -405,24 +466,20 @@ const processAction = (action, messagesContainer) => {
         details.style.fontSize = "0.85rem";
         details.style.color = "#555";
         details.innerHTML = marked.parse(summary);
-
-        // Toggle details when header is clicked.
         header.addEventListener("click", () => {
             if (details.style.display === "none") {
                 details.style.display = "block";
-                arrow.textContent = "expand_less"; // up arrow
+                arrow.textContent = "expand_less";
             } else {
                 details.style.display = "none";
-                arrow.textContent = "expand_more"; // down arrow
+                arrow.textContent = "expand_more";
             }
         });
-
         botMessage.appendChild(header);
         botMessage.appendChild(details);
         messagesContainer.appendChild(botMessage);
     }
 
-    // Auto-scroll to the bottom after each update.
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
 
