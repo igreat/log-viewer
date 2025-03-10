@@ -60,7 +60,7 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
                 `).join('')}
             </tbody>
         </table>
-        <div id="pagination-${id}" class="pagination-container mt-2"></div>
+        <div id="pagination-${id}" class="pagination-container m-2"></div>
     `;
 
     // TABLE PAGINATION (unchanged)
@@ -77,14 +77,35 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
             $rows.hide().slice(page * rowsPerPage, (page + 1) * rowsPerPage).show();
 
             const navhtml = `
-                <div class="pagination-controls text-center">
-                    <button class="btn btn-secondary prev-page" ${page === 0 ? "disabled" : ""}>Previous</button>
-                    <input type="number" class="page-input" value="${page + 1}" min="1" max="${numPages}" 
-                            style="width: 60px; text-align: center; margin: 0 10px;">
-                    <span>of ${numPages}</span>
-                    <button class="btn btn-secondary next-page" ${page === numPages - 1 ? "disabled" : ""}>Next</button>
+                <div class="pagination-controls d-flex align-items-center justify-content-center">
+                    <button 
+                        class="btn btn-sm btn-secondary prev-page rounded-pill px-3 me-2"
+                        ${page === 0 ? "disabled" : ""}
+                    >
+                        Previous
+                    </button>
+                    
+                    <div class="page-indicator mx-2 d-flex align-items-center">
+                        <input 
+                            type="number" 
+                            class="page-input form-control form-control-sm" 
+                            value="${page + 1}" 
+                            min="1" 
+                            max="${numPages}" 
+                            style="width: 50px; text-align: center; -moz-appearance: textfield; appearance: textfield;"
+                        >
+                        <span class="ms-2">/ ${numPages}</span>
+                    </div>
+                    
+                    <button 
+                        class="btn btn-sm btn-secondary next-page rounded-pill px-3 ms-2"
+                        ${page === numPages - 1 ? "disabled" : ""}
+                    >
+                        Next
+                    </button>
                 </div>
             `;
+
             $(paginationContainer).html(navhtml);
 
             $(paginationContainer).find(".prev-page").off("click").on("click", function (e) {
