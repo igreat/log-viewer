@@ -92,7 +92,7 @@ no: [brief explanation]
         return False, ""
 
     async def evaluate_issue(
-        self, issue: str, details: str | dict, message: str
+        self, issue: str, details: str | dict, message: str, log_id
     ) -> str:
         prompt = f"""{self.base_prompt}
 Known Issue: "{issue}"

@@ -1,6 +1,6 @@
 import { extendFilterGroups } from "./filterGroup";
 import { marked } from "marked";
-import { allLogs } from "./logService";
+import { allLogs, currentLogId } from "./logService";
 
 const AGENT_ENDPOINT = 'http://localhost:8000/chat_stream';
 
@@ -93,7 +93,8 @@ export const initChatbot = () => {
                     message: userInput,
                     known_issues: workspaces[currentWorkspace],
                     model: currentModel,
-                    logs: allLogs
+                    logs: allLogs,
+                    logId: currentLogId
                 })
             });
 

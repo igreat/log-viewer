@@ -5,11 +5,13 @@ from typing import Any
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from model_client import ModelClient, OpenAIModelClient, OfflineModelClient
+from sentence_transformers import SentenceTransformer
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 from fastapi.responses import StreamingResponse
 from agent import ChatAgent
 from utils import extract_top_rows
+import torch
 
 # Load environment variables
 load_dotenv()
@@ -22,6 +24,16 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+
+# Determine the device to use for models
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
 )
 
 # Initialize models and client
@@ -41,6 +53,11 @@ models: dict[str, ModelClient] = {
     # ),
 }
 
+emb_model = SentenceTransformer(
+    "sentence-transformers/msmarco-MiniLM-L12-cos-v5",
+    device=device,
+)
+
 
 # Define the request and response models
 class ChatRequest(BaseModel):
@@ -48,6 +65,7 @@ class ChatRequest(BaseModel):
     known_issues: dict[str, Any] | None = None
     model: str = "gpt-4o"
     logs: list[dict[str, Any]] | None = None
+    log_id: str | None = None
 
 
 class Action(BaseModel):
@@ -67,6 +85,211 @@ base_prompt = (
 # chat_agent = ChatAgent(models["granite-3.2-8b"], base_prompt)
 
 
+# -------------------------------------
+# Elasticsearch Similarity Search Setup
+# -------------------------------------
+def create_similarity_index(
+    es: Elasticsearch, index_name: str, title: str, description: str
+):
+    """
+    Creates an Elasticsearch index with a mapping for similarity search.
+    """
+    mapping = {
+        "mappings": {
+            "_meta": {"title": title, "description": description},
+            "properties": {
+                "message": {"type": "text"},
+                "embedding": {
+                    "type": "dense_vector",
+                    "dims": 384,
+                    "index": True,
+                    "similarity": "cosine",
+                },
+            },
+        }
+    }
+    if not es.indices.exists(index=index_name):
+        es.indices.create(index=index_name, body=mapping)
+    else:
+        print(f"Index '{index_name}' already exists.")
+
+
+def push_to_elastic_search(logs: list[dict], idx: str, title: str, description: str):
+    es = Elasticsearch([{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False)
+    if not es.ping():
+        raise Exception("Could not connect to Elasticsearch")
+    
+    index_name = str(idx)
+    if not es.indices.exists(index=index_name):
+        create_similarity_index(es, index_name, title, description)
+    else:
+        print(f"Index '{index_name}' exists. Replacing records instead of deleting.")
+        es.delete_by_query(index=index_name, body={"query": {"match_all": {}}}, wait_for_completion=True)
+    
+    # Collect texts from the "messages" field that need embeddings.
+    texts_to_embed = []
+    for log in logs:
+        # Check that the log has a non-empty "messages" field.
+        if "messages" in log and len(log["messages"]) > 0 and "embedding" not in log:
+            texts_to_embed.append(log["messages"])
+        else:
+            print(f"Log {log.get('timestamp', 'no timestamp')} missing a valid 'messages' field.")
+
+    print(f"Found {len(texts_to_embed)} logs needing embeddings.")
+    
+    if texts_to_embed:
+        computed_embeddings = compute_embeddings(texts_to_embed)
+        print(f"Computed {len(computed_embeddings)} embeddings.")
+        if len(computed_embeddings) != len(texts_to_embed):
+            raise Exception("Mismatch: Number of computed embeddings does not equal the number of texts.")
+        
+        embed_index = 0
+        for log in logs:
+            if "messages" in log and isinstance(log["messages"], list) and len(log["messages"]) > 0:
+                if "embedding" not in log:
+                    # Assign the computed embedding.
+                    log["embedding"] = computed_embeddings[embed_index]
+                    embed_index += 1
+
+    actions = [{"_index": index_name, "_id": i, "_source": log} for i, log in enumerate(logs)]
+    bulk(es, actions, raise_on_error=False)
+    return {"message": "Logs successfully uploaded and indexed.", "total_logs": len(logs)}
+
+
+@app.get("/table/{id}")
+def get_from_elasticsearch(id: str):
+    try:
+        es = Elasticsearch("http://localhost:9200", verify_certs=False)
+        if not es.ping():
+            raise Exception("Could not connect to Elasticsearch")
+        resp = es.search(
+            index=str(id),
+            body={"query": {"match_all": {}}},
+            scroll="2m",
+            size=1000,
+        )
+        scroll_id = resp.get("_scroll_id")
+        hits = resp["hits"]["hits"]
+        logs = [hit["_source"] for hit in hits]
+
+        while hits:
+            resp = es.scroll(scroll_id=scroll_id, scroll="2m")
+            scroll_id = resp.get("_scroll_id")
+            hits = resp["hits"]["hits"]
+            if hits:
+                logs.extend(hit["_source"] for hit in hits)
+
+        # Cleanup: clear scroll context
+        es.clear_scroll(scroll_id=scroll_id)
+
+        # Remove the "embedding" field from each log
+        for log in logs:
+            log.pop("embedding", None)
+
+        return logs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/table/{id}")
+async def upload_file(id: str, request: Request):
+    try:
+        data = await request.json()
+
+        # Expecting an object with a "logs" key containing an array.
+        const_logs = data.get("logs")
+        if not const_logs or not isinstance(const_logs, list):
+            raise HTTPException(
+                status_code=400, detail="Expected 'logs' to be a JSON array"
+            )
+
+        # Extract title and description, using default values if not provided.
+        title = data.get("title", str(id))
+        description = data.get("description", "")
+
+        response = push_to_elastic_search(const_logs, id, title, description)
+        return response
+    except Exception as e:
+        print(f"Error processing request: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/table/{id}")
+async def delete_file(id: str):
+    es = Elasticsearch(
+        [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
+    )
+    try:
+        if es.indices.exists(index=id):
+            es.indices.delete(index=id)
+            return {"status": "success", "message": "log table deleted successfully"}
+        else:
+            return {"status": "error", "message": f"log file with id: {id} not found"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/table")
+def list_log_indices():
+    try:
+        es = Elasticsearch(
+            [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
+        )
+        if not es.ping():
+            raise Exception("Could not connect to Elasticsearch")
+
+        # Get all indices (aliases) as a dict.
+        all_indices = es.indices.get_alias(index="*")
+        log_files = []
+        for index in all_indices.keys():
+            if index.startswith("."):
+                continue
+            mapping = es.indices.get_mapping(index=index)
+            meta = mapping[index]["mappings"].get("_meta", {})
+            title = meta.get("title", "TITLE")
+            description = meta.get("description", "DESCRIPTION")
+            log_files.append({"id": index, "title": title, "description": description})
+        return log_files
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def compute_embeddings(input_data: list[str]) -> list[list[float]]:
+    texts = [text[0] for text in input_data]
+    embeddings = emb_model.encode(
+        texts, batch_size=64, convert_to_tensor=True, show_progress_bar=False
+    )
+    return [embedding.tolist() for embedding in embeddings]
+
+
+def search_similar(q: str, index: str, k: int = 10) -> list[dict[str, Any]]:
+    """
+    Compute the embedding for the query text and perform a similarity search using Elasticsearch.
+    """
+    es = Elasticsearch(
+        [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
+    )
+    if not es.ping():
+        raise Exception("Could not connect to Elasticsearch")
+
+    # Compute the query embedding using the optimized compute_embedding function.
+    query_embedding = compute_embeddings([q])[0]
+
+    response = es.search(
+        index=index, 
+        knn={
+            "field": "embedding",
+            "query_vector": query_embedding,
+            "num_candidates": 50,
+            "k": k
+        },
+        size=k,
+    )
+    hits = response.get("hits", {}).get("hits", [])
+    results = [{"score": hit["_score"], "document": hit["_source"]} for hit in hits]
+    return results
+
+
 @app.post("/chat_stream")
 async def chat_stream(request: ChatRequest):
     if not request.message:
@@ -75,6 +298,7 @@ async def chat_stream(request: ChatRequest):
     chat_agent = ChatAgent(models[request.model], base_prompt)
     if request.logs:
         logs = request.logs
+        log_id = request.log_id
     else:
         raise HTTPException(status_code=400, detail="Logs are required")
 
@@ -129,7 +353,7 @@ async def chat_stream(request: ChatRequest):
 
             for issue, details in issue_context.items():
                 issue_text = await chat_agent.evaluate_issue(
-                    issue, details, request.message
+                    issue, details, request.message, log_id
                 )
                 if issue_text.strip():
                     action = Action(
@@ -168,142 +392,6 @@ async def chat_stream(request: ChatRequest):
 
     # Return a StreamingResponse with SSE media type.
     return StreamingResponse(event_generator(), media_type="text/event-stream")
-
-
-@app.get("/table/{id}")
-def get_from_elasticsearch(id: str):
-    try:
-        es = Elasticsearch("http://localhost:9200", verify_certs=False)
-        if not es.ping():
-            raise Exception("Could not connect to Elasticsearch")
-
-        # Initialize the scroll request
-        resp = es.search(
-            index=str(id),
-            body={"query": {"match_all": {}}},
-            scroll="2m",  # Keep the search context alive for 2 minutes
-            size=1000,  # Fetch 1000 documents per batch
-        )
-
-        # Extract the initial results
-        scroll_id = resp.get("_scroll_id")
-        hits = resp["hits"]["hits"]
-        logs = [hit["_source"] for hit in hits]
-
-        # Continue fetching until there are no more results
-        while hits:
-            resp = es.scroll(scroll_id=scroll_id, scroll="2m")
-            scroll_id = resp.get("_scroll_id")
-            hits = resp["hits"]["hits"]
-
-            if hits:
-                logs.extend(hit["_source"] for hit in hits)
-
-        # Cleanup: Clear scroll context to free up memory
-        es.clear_scroll(scroll_id=scroll_id)
-
-        return logs  # Return all retrieved logs
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-def push_to_elastic_search(logs, idx, title, description):
-    es = Elasticsearch(
-        [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
-    )
-    if not es.ping():
-        raise Exception("Could not connect to Elasticsearch")
-
-    index_name = str(idx)
-
-    if es.indices.exists(index=index_name):
-        print(f"Index '{index_name}' exists. Replacing records instead of deleting.")
-        query = {"query": {"match_all": {}}}
-        es.delete_by_query(index=index_name, body=query, wait_for_completion=True)
-    else:
-        # Create the index with provided metadata.
-        es.indices.create(
-            index=index_name,
-            body={
-                "mappings": {
-                    "_meta": {"title": title, "description": description},
-                    "properties": {},  # Define your properties here if needed.
-                }
-            },
-        )
-
-    # Use bulk indexing for better performance.
-    actions = [
-        {"_index": index_name, "_id": i, "_source": log} for i, log in enumerate(logs)
-    ]
-    bulk(es, actions)
-
-    return {
-        "message": "Logs successfully uploaded and indexed.",
-        "total_logs": len(logs),
-    }
-
-
-@app.post("/table/{id}")
-async def upload_file(id: str, request: Request):
-    try:
-        data = await request.json()
-
-        # Expecting an object with a "logs" key containing an array.
-        const_logs = data.get("logs")
-        if not const_logs or not isinstance(const_logs, list):
-            raise HTTPException(
-                status_code=400, detail="Expected 'logs' to be a JSON array"
-            )
-
-        # Extract title and description, using default values if not provided.
-        title = data.get("title", str(id))
-        description = data.get("description", "")
-
-        response = push_to_elastic_search(const_logs, id, title, description)
-        return response
-    except Exception as e:
-        print(f"Error processing request: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.delete("/table/{id}")
-async def delete_file(id: str):
-    es = Elasticsearch(
-        [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
-    )
-    try:
-        if es.indices.exists(index=id):
-            es.indices.delete(index=id)
-            return {"status": "success", "message": "log table deleted successfully"}
-        else:
-            return {"status": "error", "message": f"log file with id: {id} not found"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-
-@app.get("/table")
-def list_log_indices():
-    try:
-        es = Elasticsearch("http://localhost:9200", verify_certs=False)
-        if not es.ping():
-            raise Exception("Could not connect to Elasticsearch")
-
-        # Get all indices (aliases) as a dict.
-        all_indices = es.indices.get_alias(index="*")
-        log_files = []
-        for index in all_indices.keys():
-            if index.startswith("."):
-                continue
-            mapping = es.indices.get_mapping(index=index)
-            meta = mapping[index]["mappings"].get("_meta", {})
-            title = meta.get("title", "TITLE")
-            description = meta.get("description", "DESCRIPTION")
-            log_files.append({"id": index, "title": title, "description": description})
-        return log_files
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Run the app with uvicorn
