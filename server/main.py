@@ -113,6 +113,7 @@ def create_similarity_index(
     else:
         print(f"Index '{index_name}' already exists.")
 
+
 def retrieve_logs_from_elasticsearch(index: str) -> list[dict]:
     """
     Retrieve logs from Elasticsearch for the given index.
@@ -121,7 +122,7 @@ def retrieve_logs_from_elasticsearch(index: str) -> list[dict]:
     es = Elasticsearch("http://localhost:9200", verify_certs=False)
     if not es.ping():
         raise Exception("Could not connect to Elasticsearch")
-    
+
     resp = es.search(
         index=index,
         body={"query": {"match_all": {}}},
@@ -161,9 +162,7 @@ def push_to_elastic_search(logs: list[dict], idx: str, title: str, description: 
             wait_for_completion=True,
         )
 
-    actions = [
-        {"_index": idx, "_id": i, "_source": log} for i, log in enumerate(logs)
-    ]
+    actions = [{"_index": idx, "_id": i, "_source": log} for i, log in enumerate(logs)]
     bulk(es, actions, raise_on_error=True)
 
     # Force a refresh so the newly indexed documents become searchable immediately.
@@ -178,21 +177,25 @@ def update_embeddings_for_logs(idx: str):
     )
     if not es.ping():
         raise Exception("Could not connect to Elasticsearch")
-    
+
     logs = retrieve_logs_from_elasticsearch(idx)
-    
+
     # Collect texts from the "messages" field that need embeddings.
     texts_to_embed = [log["messages"] for log in logs]
     if texts_to_embed:
         computed_embeddings = compute_embeddings(texts_to_embed)
         print(f"Computed {len(computed_embeddings)} embeddings.")
         if len(computed_embeddings) != len(texts_to_embed):
-            raise Exception("Mismatch: Number of computed embeddings does not equal the number of texts.")
-        
+            raise Exception(
+                "Mismatch: Number of computed embeddings does not equal the number of texts."
+            )
+
         for i, log in enumerate(logs):
             log["embedding"] = computed_embeddings[i]
 
-        actions = [{"_index": idx, "_id": i, "_source": log} for i, log in enumerate(logs)]
+        actions = [
+            {"_index": idx, "_id": i, "_source": log} for i, log in enumerate(logs)
+        ]
         bulk(es, actions, raise_on_error=False)
         print("Embeddings updated for all logs.")
     else:
@@ -365,6 +368,7 @@ async def chat_stream(request: ChatRequest):
         print(f"Evaluate Issues: {evaluate_issues}, Explanation: {explanation}")
 
         # Step 4: Evaluate each known issue.
+        detected_issues = {}  # to be used for generating a filter group
         if evaluate_issues:
             known_issues = request.known_issues if request.known_issues else {}
             issue_context: dict[str, Any] = {}
@@ -391,11 +395,12 @@ async def chat_stream(request: ChatRequest):
                         type="flag_issue",
                         body={"issue": issue, "summary": issue_text},
                     )
+                    detected_issues[issue] = details
                     yield f"data: {action.model_dump_json()}\n\n"
 
         # Step 5: Decide if a filter should be added.
         should_add_filter, filter_explanation = await chat_agent.decide_filter(
-            request.message
+            request.message, detected_issues
         )
         action = Action(
             type="filter_decision",
@@ -411,7 +416,10 @@ async def chat_stream(request: ChatRequest):
 
         # Step 6: If filter is needed, generate a filter group.
         if should_add_filter:
-            filter_group = await chat_agent.generate_filter_group(request.message)
+            filter_group = await chat_agent.generate_filter_group(
+                request.message, detected_issues
+            )
+            print("Filter Group:", filter_group)
             action = Action(
                 type="add_filter",
                 body={"filter_group": filter_group},
