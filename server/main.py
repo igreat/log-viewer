@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Any
 from pydantic import BaseModel
@@ -113,75 +113,96 @@ def create_similarity_index(
     else:
         print(f"Index '{index_name}' already exists.")
 
-
-def push_to_elastic_search(logs: list[dict], idx: str, title: str, description: str):
-    es = Elasticsearch([{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False)
+def retrieve_logs_from_elasticsearch(index: str) -> list[dict]:
+    """
+    Retrieve logs from Elasticsearch for the given index.
+    This function returns the logs with the "embedding" field removed.
+    """
+    es = Elasticsearch("http://localhost:9200", verify_certs=False)
     if not es.ping():
         raise Exception("Could not connect to Elasticsearch")
     
-    index_name = str(idx)
-    if not es.indices.exists(index=index_name):
-        create_similarity_index(es, index_name, title, description)
+    resp = es.search(
+        index=index,
+        body={"query": {"match_all": {}}},
+        scroll="2m",
+        size=1000,
+    )
+    scroll_id = resp.get("_scroll_id")
+    hits = resp["hits"]["hits"]
+    logs = [hit["_source"] for hit in hits]
+
+    while hits:
+        resp = es.scroll(scroll_id=scroll_id, scroll="2m")
+        scroll_id = resp.get("_scroll_id")
+        hits = resp["hits"]["hits"]
+        if hits:
+            logs.extend(hit["_source"] for hit in hits)
+
+    es.clear_scroll(scroll_id=scroll_id)
+
+    return logs
+
+
+def push_to_elastic_search(logs: list[dict], idx: str, title: str, description: str):
+    es = Elasticsearch(
+        [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
+    )
+    if not es.ping():
+        raise Exception("Could not connect to Elasticsearch")
+
+    if not es.indices.exists(index=idx):
+        create_similarity_index(es, idx, title, description)
     else:
-        print(f"Index '{index_name}' exists. Replacing records instead of deleting.")
-        es.delete_by_query(index=index_name, body={"query": {"match_all": {}}}, wait_for_completion=True)
+        print(f"Index '{idx}' exists. Clearing existing records.")
+        es.delete_by_query(
+            index=idx,
+            body={"query": {"match_all": {}}},
+            wait_for_completion=True,
+        )
+
+    actions = [
+        {"_index": idx, "_id": i, "_source": log} for i, log in enumerate(logs)
+    ]
+    bulk(es, actions, raise_on_error=True)
+
+    # Force a refresh so the newly indexed documents become searchable immediately.
+    es.indices.refresh(index=idx)
+
+    return {"message": "Logs successfully uploaded.", "total_logs": len(logs)}
+
+
+def update_embeddings_for_logs(idx: str):
+    es = Elasticsearch(
+        [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
+    )
+    if not es.ping():
+        raise Exception("Could not connect to Elasticsearch")
+    
+    logs = retrieve_logs_from_elasticsearch(idx)
     
     # Collect texts from the "messages" field that need embeddings.
-    texts_to_embed = []
-    for log in logs:
-        # Check that the log has a non-empty "messages" field.
-        if "messages" in log and len(log["messages"]) > 0 and "embedding" not in log:
-            texts_to_embed.append(log["messages"])
-        else:
-            print(f"Log {log.get('timestamp', 'no timestamp')} missing a valid 'messages' field.")
-
-    print(f"Found {len(texts_to_embed)} logs needing embeddings.")
-    
+    texts_to_embed = [log["messages"] for log in logs]
     if texts_to_embed:
         computed_embeddings = compute_embeddings(texts_to_embed)
         print(f"Computed {len(computed_embeddings)} embeddings.")
         if len(computed_embeddings) != len(texts_to_embed):
             raise Exception("Mismatch: Number of computed embeddings does not equal the number of texts.")
         
-        embed_index = 0
-        for log in logs:
-            if "messages" in log and isinstance(log["messages"], list) and len(log["messages"]) > 0:
-                if "embedding" not in log:
-                    # Assign the computed embedding.
-                    log["embedding"] = computed_embeddings[embed_index]
-                    embed_index += 1
+        for i, log in enumerate(logs):
+            log["embedding"] = computed_embeddings[i]
 
-    actions = [{"_index": index_name, "_id": i, "_source": log} for i, log in enumerate(logs)]
-    bulk(es, actions, raise_on_error=False)
-    return {"message": "Logs successfully uploaded and indexed.", "total_logs": len(logs)}
+        actions = [{"_index": idx, "_id": i, "_source": log} for i, log in enumerate(logs)]
+        bulk(es, actions, raise_on_error=False)
+        print("Embeddings updated for all logs.")
+    else:
+        print("No logs found that need embeddings.")
 
 
 @app.get("/table/{id}")
 def get_from_elasticsearch(id: str):
     try:
-        es = Elasticsearch("http://localhost:9200", verify_certs=False)
-        if not es.ping():
-            raise Exception("Could not connect to Elasticsearch")
-        resp = es.search(
-            index=str(id),
-            body={"query": {"match_all": {}}},
-            scroll="2m",
-            size=1000,
-        )
-        scroll_id = resp.get("_scroll_id")
-        hits = resp["hits"]["hits"]
-        logs = [hit["_source"] for hit in hits]
-
-        while hits:
-            resp = es.scroll(scroll_id=scroll_id, scroll="2m")
-            scroll_id = resp.get("_scroll_id")
-            hits = resp["hits"]["hits"]
-            if hits:
-                logs.extend(hit["_source"] for hit in hits)
-
-        # Cleanup: clear scroll context
-        es.clear_scroll(scroll_id=scroll_id)
-
+        logs = retrieve_logs_from_elasticsearch(str(id))
         # Remove the "embedding" field from each log
         for log in logs:
             log.pop("embedding", None)
@@ -192,22 +213,25 @@ def get_from_elasticsearch(id: str):
 
 
 @app.post("/table/{id}")
-async def upload_file(id: str, request: Request):
+async def upload_file(id: str, request: Request, background_tasks: BackgroundTasks):
     try:
         data = await request.json()
-
-        # Expecting an object with a "logs" key containing an array.
         const_logs = data.get("logs")
         if not const_logs or not isinstance(const_logs, list):
             raise HTTPException(
                 status_code=400, detail="Expected 'logs' to be a JSON array"
             )
 
-        # Extract title and description, using default values if not provided.
         title = data.get("title", str(id))
         description = data.get("description", "")
 
+        # Push logs without waiting for embedding computation.
         response = push_to_elastic_search(const_logs, id, title, description)
+        # update_embeddings_for_logs(id)
+
+        # Schedule background embedding computation and update.
+        background_tasks.add_task(update_embeddings_for_logs, id)
+
         return response
     except Exception as e:
         print(f"Error processing request: {str(e)}")
@@ -264,7 +288,8 @@ def compute_embeddings(input_data: list[str]) -> list[list[float]]:
 
 def search_similar(q: str, index: str, k: int = 10) -> list[dict[str, Any]]:
     """
-    Compute the embedding for the query text and perform a similarity search using Elasticsearch.
+    Compute the embedding for the query text and perform a similarity search using Elasticsearch,
+    returning only the log documents.
     """
     es = Elasticsearch(
         [{"host": "localhost", "port": 9200, "scheme": "http"}], verify_certs=False
@@ -272,22 +297,26 @@ def search_similar(q: str, index: str, k: int = 10) -> list[dict[str, Any]]:
     if not es.ping():
         raise Exception("Could not connect to Elasticsearch")
 
-    # Compute the query embedding using the optimized compute_embedding function.
+    # Compute the query embedding using the optimized compute_embeddings function.
+    # compute_embeddings expects a list of texts, so we wrap q in a list.
     query_embedding = compute_embeddings([q])[0]
 
+    # Use Elasticsearch's knn query
     response = es.search(
-        index=index, 
+        index=index,
         knn={
             "field": "embedding",
             "query_vector": query_embedding,
             "num_candidates": 50,
-            "k": k
+            "k": k,
         },
         size=k,
     )
     hits = response.get("hits", {}).get("hits", [])
-    results = [{"score": hit["_score"], "document": hit["_source"]} for hit in hits]
-    return results
+    logs = [hit["_source"] for hit in hits]
+    for log in logs:
+        log.pop("embedding", None)
+    return logs
 
 
 @app.post("/chat_stream")
@@ -296,7 +325,7 @@ async def chat_stream(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Message is required")
 
     chat_agent = ChatAgent(models[request.model], base_prompt)
-    if request.logs:
+    if request.logs and request.log_id:
         logs = request.logs
         log_id = request.log_id
     else:
@@ -351,9 +380,11 @@ async def chat_stream(request: ChatRequest):
                 }
             print("Issue Context:", issue_context)
 
+            similar_logs = search_similar(request.message, log_id, k=5)
+
             for issue, details in issue_context.items():
                 issue_text = await chat_agent.evaluate_issue(
-                    issue, details, request.message, log_id
+                    issue, details, request.message, similar_logs
                 )
                 if issue_text.strip():
                     action = Action(

@@ -1,6 +1,13 @@
 import json
-from utils import load_logs, get_log_level_counts, compute_stats, get_simple_stats, clean_response_content
+from utils import (
+    load_logs,
+    get_log_level_counts,
+    compute_stats,
+    get_simple_stats,
+    clean_response_content,
+)
 from model_client import ModelClient
+from typing import Any
 
 
 class ChatAgent:
@@ -92,12 +99,15 @@ no: [brief explanation]
         return False, ""
 
     async def evaluate_issue(
-        self, issue: str, details: str | dict, message: str, log_id
+        self, issue: str, details: str | dict, message: str, similar_logs: list[dict[str, Any]]
     ) -> str:
         prompt = f"""{self.base_prompt}
 Known Issue: "{issue}"
 Issue Details:
 {json.dumps(details, indent=2)}
+
+Similar Logs (note that these are done through a simple semantic search, and is very prone to not being relevant):
+{json.dumps(similar_logs, indent=2)}
 
 User Query: {message}
 
@@ -110,6 +120,7 @@ If yes, respond in the following format:
 Else, respond with an empty string.
 Note: if the details json does not have a logs field or the logs field is empty, respond with an empty string.
 """
+        print("Prompt:", prompt)
         return await self.model.chat_completion(prompt)
 
         # New method to decide if a filter should be added.

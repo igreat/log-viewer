@@ -94,7 +94,7 @@ export const initChatbot = () => {
                     known_issues: workspaces[currentWorkspace],
                     model: currentModel,
                     logs: allLogs,
-                    logId: currentLogId
+                    log_id: currentLogId
                 })
             });
 
