@@ -1,6 +1,6 @@
 import { extendFilterGroups } from "./filterGroup";
 import { marked } from "marked";
-import { allLogs } from "./logService";
+import { allLogs, currentLogId } from "./logService";
 
 const AGENT_ENDPOINT = 'http://localhost:8000/chat_stream';
 
@@ -93,7 +93,8 @@ export const initChatbot = () => {
                     message: userInput,
                     known_issues: workspaces[currentWorkspace],
                     model: currentModel,
-                    logs: allLogs
+                    logs: allLogs,
+                    log_id: currentLogId
                 })
             });
 
@@ -423,16 +424,46 @@ const processAction = (action, messagesContainer) => {
             // Build a markdown string to nicely display the filter group.
             let markdownContent = `**Added Filter Group**\n: ${filterGroup.title}\n\n`;
             markdownContent += `_${filterGroup.description}_\n\n`;
+
+            let tableHtml = "";
             if (filterGroup.filters && filterGroup.filters.length > 0) {
-                markdownContent += `| Text | Description |\n`;
-                markdownContent += `| ---- | ----------- |\n`;
+                // Use an HTML table with fixed layout and text wrapping enabled.
+                tableHtml += `
+                    <table style="table-layout: fixed; width: 100%;">
+                        <thead>
+                            <tr>
+                            <th style="white-space: normal; word-break: break-all">Text</th>
+                            <th style="white-space: normal; word-break: break-all">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
                 filterGroup.filters.forEach(filter => {
-                    markdownContent += `| <span style="background-color: ${filter.color}; padding: 2px 4px;">${filter.text}</span> | ${filter.description} |\n`;
+                    tableHtml += `
+                                <tr>
+                                    <td style="white-space: normal; word-break: break-all">
+                                        <span style="background-color: ${filter.color}; padding: 2px 4px;">${filter.text}</span>
+                                    </td>
+                                    <td style="white-space: normal;">${filter.description}</td>
+                                </tr>`;
                 });
+
+                tableHtml += `
+                        </tbody>
+                    </table>
+                `;
             }
             const botMessage = document.createElement("div");
             botMessage.className = "chat-message bot";
-            botMessage.innerHTML = marked.parse(markdownContent);
+            const header = document.createElement("div");
+            header.innerHTML = marked.parse(markdownContent);
+            botMessage.appendChild(header);
+            // Add the table to the bot message if it exists
+            if (tableHtml) {
+                const tableDiv = document.createElement("div");
+                tableDiv.innerHTML = tableHtml;
+                botMessage.appendChild(tableDiv);
+            }
             messagesContainer.appendChild(botMessage);
         }
     } else if (action.type === "generate_summary") {

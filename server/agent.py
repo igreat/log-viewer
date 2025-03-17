@@ -1,6 +1,13 @@
 import json
-from utils import load_logs, get_log_level_counts, compute_stats, get_simple_stats, clean_response_content
+from utils import (
+    load_logs,
+    get_log_level_counts,
+    compute_stats,
+    get_simple_stats,
+    clean_response_content,
+)
 from model_client import ModelClient
+from typing import Any
 
 
 class ChatAgent:
@@ -92,12 +99,19 @@ no: [brief explanation]
         return False, ""
 
     async def evaluate_issue(
-        self, issue: str, details: str | dict, message: str
+        self,
+        issue: str,
+        details: str | dict,
+        message: str,
+        similar_logs: list[dict[str, Any]],
     ) -> str:
         prompt = f"""{self.base_prompt}
 Known Issue: "{issue}"
 Issue Details:
 {json.dumps(details, indent=2)}
+
+Similar Logs (note that these are done through a simple semantic search, and is very prone to not being relevant):
+{json.dumps(similar_logs, indent=2)}
 
 User Query: {message}
 
@@ -110,16 +124,23 @@ If yes, respond in the following format:
 Else, respond with an empty string.
 Note: if the details json does not have a logs field or the logs field is empty, respond with an empty string.
 """
+        print("Prompt:", prompt)
         return await self.model.chat_completion(prompt)
 
         # New method to decide if a filter should be added.
 
-    async def decide_filter(self, message: str) -> tuple[bool, str]:
+    async def decide_filter(
+        self, message: str, detected_issues: dict[str, Any]
+    ) -> tuple[bool, str]:
         prompt = f"""{self.base_prompt}
 User Query: {message}
 
+Issues Detected (with their keywords):
+{json.dumps(detected_issues, indent=2)}
+
 Should I add a filter to refine the log output?
 - If the query implies filtering (e.g. "show only errors", "filter out debug logs") or mentions keywords/regex, respond with: yes: [brief explanation].
+- Also, if there are detected issues, there is likely keywords there that can be used for filtering.
 - Otherwise, respond with: no: [brief explanation].
 Respond in exactly one line in the following format:
 yes: [brief explanation]
@@ -142,9 +163,12 @@ Do not include any extra text.
         return False, ""
 
     # New method to generate a filter group.
-    async def generate_filter_group(self, message: str) -> dict:
+    async def generate_filter_group(self, message: str, detected_issues: dict[str, Any]) -> dict:
         prompt = f"""{self.base_prompt}
 User Query: {message}
+
+Issues Detected (with their keywords):
+{json.dumps(detected_issues, indent=2)}
 
 Generate a filter group in JSON format with the following structure:
 {{
@@ -172,6 +196,7 @@ Make sure to follow these guidelines:
 - The color field should be a hex color code.
     - Keep in mind it will be in a light gray background on black text, so choose a highlight color that is appropriate.
     - Mostly go for a light color that is easy on the eyes.
+    - Make sure colors are varied enough to distinguish between different filters.
 - The description field should be a brief explanation of the filter, like a comment.
 
 The filter group should capture the intent of the user's request in terms of log filtering. Do not include any extra text.
