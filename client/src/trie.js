@@ -92,7 +92,6 @@ export class Trie {
     const pq = new PriorityQueue(numberOfMatches);
 
     matches.forEach((pair) => {
-      console.log(pair.word + " " + pair.freq);
       pq.insert(pair);
     })
     const result = pq.getTopResults();

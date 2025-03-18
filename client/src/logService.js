@@ -5,6 +5,9 @@ export const ROWS_PER_PAGE = 100; // TODO: make this user configurable
 
 export let allLogs = [];
 
+// Module-level variable to track ongoing rendering/filtering operations.
+let currentOperationToken = { "all-logs": 0, "filtered-logs": 0 };
+
 // Add unique IDs to logs locally for table rendering.
 export const getLogsWithIds = (logs) =>
     logs.map((log, index) => ({ id: index + 1, ...log }));
@@ -30,40 +33,36 @@ const deleteLogFile = (id) => {
         });
 };
 
-export const renderTable = (logs, id = "filtered-logs", filters = []) => {
+export const renderHeader = (id = "filtered-logs") => {
     const tableContainer = document.getElementById(id + "-table");
     const paginationContainer = document.getElementById(id + "-pagination");
 
-    if (logs.length === 0) {
+    if (allLogs.length === 0) {
         console.log("No logs to render.");
         tableContainer.innerHTML = `<div class="empty-placeholder">No logs match your search criteria.</div>`;
         paginationContainer.innerHTML = "";
         return;
     }
 
-    // MAIN TABLE
-    const headers = Object.keys(logs[0]);
-    const headerHTML = id === "all-logs" ? `
+    const headers = Object.keys(allLogs[0]);
+    // simply render the headers
+    const headerHTML = `
         <thead class="table-dark">
             <tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr>
         </thead>
-    ` : "";
+    `;
 
     tableContainer.innerHTML = `
         <table class="table table-striped table-bordered text-nowrap small" id="${id}-table">
             ${headerHTML}
-            <tbody>
-                ${logs.map(log => `
-                    <tr id="log-${log.id}">
-                        ${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}
-                    </tr>
-                `).join('')}
-            </tbody>
+            <tbody id="${id}-tbody"></tbody>
         </table>
         <div id="pagination-${id}" class="pagination-container m-2"></div>
     `;
+};
 
-    // TABLE PAGINATION (unchanged)
+export const renderPagination = (id = "filtered-logs") => {
+    const paginationContainer = document.getElementById(id + "-pagination");
     const rowsPerPage = ROWS_PER_PAGE;
     const $rows = $(`#${id}-table tbody tr`);
     const totalRows = $rows.length;
@@ -146,26 +145,154 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     }
 };
 
-export const applyFilters = (filters) => {
-    const filteredLogs = allLogs.filter((log) => {
-        if (!isWithinDate(log)) return false;
-        if (filters.length === 0) return true;
-        return filters.some(({ regex, caseSensitive, text }) => {
-            return Object.values(log).some((value) => {
-                const strValue = String(value);
-                if (regex) {
-                    const pattern = new RegExp(text, caseSensitive ? '' : 'i');
-                    return pattern.test(strValue);
-                }
-                return caseSensitive
-                    ? strValue.includes(text)
-                    : strValue.toLowerCase().includes(text.toLowerCase());
-            });
-        });
-    });
+const scheduleChunk = (callback) => {
+    if (window.requestIdleCallback) {
+        const id = requestIdleCallback(callback);
+    } else {
+        const id = setTimeout(callback, 0);
+    }
+};
 
-    renderTable(allLogs, "all-logs", filters);
-    renderTable(filteredLogs, "filtered-logs", filters);
+export const renderChunk = (logs, start, end, id = "filtered-logs", filters = []) => {
+    if (logs.length === 0) {
+        console.log("No logs to render.");
+        return;
+    }
+
+    const tbody = document.getElementById(`${id}-tbody`);
+    const headers = Object.keys(logs[0]);
+    const rows = [];
+    for (let i = start; i < end; i++) {
+        const log = logs[i];
+        rows.push(`
+            <tr id="log-${log.id}">
+                ${headers.map(header => `<td>${highlightText(String(log[header]), filters)}</td>`).join('')}
+            </tr>
+        `);
+    }
+    tbody.insertAdjacentHTML('beforeend', rows.join(''));
+
+    renderPagination(id);
+}
+
+export const renderTable = (logs, id = "filtered-logs", filters = []) => {
+    // Increment the token to cancel any ongoing operation.
+    const token = ++currentOperationToken[id];
+
+    const tableContainer = document.getElementById(id + "-table");
+    const paginationContainer = document.getElementById(id + "-pagination");
+
+    // Clear any existing content.
+    tableContainer.innerHTML = "";
+    paginationContainer.innerHTML = "";
+    renderHeader(id);
+
+    const rowsPerPage = ROWS_PER_PAGE;
+    const totalRows = logs.length;
+    const numChunks = Math.ceil(totalRows / rowsPerPage);
+    let chunk = 0;
+
+    function processNextChunk() {
+        // If this operation has been canceled, abort further processing.
+        console.log(token, currentOperationToken[id]);
+        if (token !== currentOperationToken[id]) return;
+
+        if (chunk < numChunks) {
+            const start = chunk * rowsPerPage;
+            const end = Math.min((chunk + 1) * rowsPerPage, totalRows);
+            renderChunk(logs, start, end, id, filters);
+            chunk++;
+            scheduleChunk(processNextChunk);
+        } else {
+            // Once all chunks are processed, render pagination if not canceled.
+            if (token === currentOperationToken[id]) {
+                renderPagination(id);
+            }
+        }
+    }
+
+    processNextChunk();
+};
+
+
+export const applyFilters = (filters) => {
+    // Increment token to cancel any ongoing operation.
+    const token = ++currentOperationToken["all-logs"];
+    currentOperationToken["filtered-logs"] = token;
+
+    // Clear tables and render headers.
+    document.getElementById("all-logs-table").innerHTML = "";
+    document.getElementById("filtered-logs-table").innerHTML = "";
+    renderHeader("all-logs");
+    renderHeader("filtered-logs");
+
+    const filteredLogs = [];
+    const chunkSize = ROWS_PER_PAGE; // adjust as needed
+    let lastFilteredRenderIndex = 0;
+    let i = 0;
+
+    function processChunk() {
+        // If a new operation has started, cancel this one.
+        if (
+            token !== currentOperationToken["all-logs"] ||
+            token !== currentOperationToken["filtered-logs"]
+        )
+            return;
+
+        const end = Math.min(i + chunkSize, allLogs.length);
+        for (; i < end; i++) {
+            const log = allLogs[i];
+            if (!isWithinDate(log)) continue;
+
+            // Check filters.
+            if (
+                filters.length === 0 ||
+                filters.some(({ regex, caseSensitive, text }) => {
+                    return Object.values(log).some((value) => {
+                        const strValue = String(value);
+                        if (regex) {
+                            const pattern = new RegExp(text, caseSensitive ? "" : "i");
+                            return pattern.test(strValue);
+                        }
+                        return caseSensitive
+                            ? strValue.includes(text)
+                            : strValue.toLowerCase().includes(text.toLowerCase());
+                    });
+                })
+            ) {
+                filteredLogs.push(log);
+            }
+
+            // Render chunk for all logs.
+            if (i !== 0 && i % ROWS_PER_PAGE === 0) {
+                renderChunk(allLogs, i - ROWS_PER_PAGE, i, "all-logs", filters);
+            }
+            if (filteredLogs.length >= lastFilteredRenderIndex + ROWS_PER_PAGE) {
+                renderChunk(
+                    filteredLogs,
+                    lastFilteredRenderIndex,
+                    filteredLogs.length,
+                    "filtered-logs",
+                    filters
+                );
+                lastFilteredRenderIndex = filteredLogs.length;
+            }
+        }
+
+        if (i < allLogs.length) {
+            scheduleChunk(processChunk);
+        } else {
+            // Process any remaining logs that don't fill a full page.
+            if (allLogs.length % ROWS_PER_PAGE !== 0) {
+                renderChunk(allLogs, allLogs.length - (allLogs.length % ROWS_PER_PAGE), allLogs.length, "all-logs", filters);
+            }
+            if (filteredLogs.length > lastFilteredRenderIndex) {
+                renderChunk(filteredLogs, lastFilteredRenderIndex, filteredLogs.length, "filtered-logs", filters);
+            }
+        }
+    }
+
+    processChunk();
 };
 
 export const loadLogFilesModal = () => {
