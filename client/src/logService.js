@@ -214,6 +214,21 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     processNextChunk();
 };
 
+export const checkMatch = (log, filters) => {
+    if (filters.length === 0) return true;
+    return filters.some(({ regex, caseSensitive, text }) => {
+        return Object.values(log).some((value) => {
+            const strValue = String(value);
+            if (regex) {
+                const pattern = new RegExp(text, caseSensitive ? "" : "i");
+                return pattern.test(strValue);
+            }
+            return caseSensitive
+                ? strValue.includes(text)
+                : strValue.toLowerCase().includes(text.toLowerCase());
+        });
+    })
+}
 
 export const applyFilters = (filters) => {
     // Increment token to cancel any ongoing operation.
@@ -245,21 +260,7 @@ export const applyFilters = (filters) => {
             if (!isWithinDate(log)) continue;
 
             // Check filters.
-            if (
-                filters.length === 0 ||
-                filters.some(({ regex, caseSensitive, text }) => {
-                    return Object.values(log).some((value) => {
-                        const strValue = String(value);
-                        if (regex) {
-                            const pattern = new RegExp(text, caseSensitive ? "" : "i");
-                            return pattern.test(strValue);
-                        }
-                        return caseSensitive
-                            ? strValue.includes(text)
-                            : strValue.toLowerCase().includes(text.toLowerCase());
-                    });
-                })
-            ) {
+            if (checkMatch(log, filters)) {
                 filteredLogs.push(log);
             }
 
