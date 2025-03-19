@@ -1,6 +1,5 @@
 import json
 from utils import (
-    load_logs,
     get_log_level_counts,
     compute_stats,
     get_simple_stats,
@@ -16,8 +15,9 @@ class ChatAgent:
         self.base_prompt = base_prompt
         self.stats = None
 
-    async def decide_summary(self, message: str) -> tuple[bool, str]:
-        logs = load_logs()
+    async def decide_summary(
+        self, message: str, logs: list[dict[str, Any]]
+    ) -> tuple[bool, str]:
         level_counts = get_log_level_counts(logs)
         self.stats = compute_stats(level_counts)
         stats_str = json.dumps(self.stats, default=str, indent=2)
@@ -53,8 +53,9 @@ Do not include any extra text.
                 print("Error decoding decision:", e)
         return False, ""
 
-    async def generate_summary(self, message: str) -> tuple[str, dict]:
-        logs = load_logs()
+    async def generate_summary(
+        self, message: str, logs: list[dict[str, Any]]
+    ) -> tuple[str, dict]:
         if self.stats is None:
             level_counts = get_log_level_counts(logs)
             self.stats = compute_stats(level_counts)
@@ -163,7 +164,9 @@ Do not include any extra text.
         return False, ""
 
     # New method to generate a filter group.
-    async def generate_filter_group(self, message: str, detected_issues: dict[str, Any]) -> dict:
+    async def generate_filter_group(
+        self, message: str, detected_issues: dict[str, Any]
+    ) -> dict:
         prompt = f"""{self.base_prompt}
 User Query: {message}
 
