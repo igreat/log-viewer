@@ -1,8 +1,4 @@
-// Trie.test.js
-import Trie from "../src/Trie";
-
-// We assume that your PriorityQueue (imported in Trie.js) is working as expected.
-// If needed, you can mock it using Jest's mocking functionality.
+import { Trie } from '../src/Trie.js';
 
 describe('Trie', () => {
   let t;
