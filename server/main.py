@@ -337,7 +337,7 @@ async def chat_stream(request: ChatRequest):
     async def event_generator():
         # Step 1: Decide on summary generation.
         print(f"Message: {request.message}")
-        generate_summary, explanation = await chat_agent.decide_summary(request.message)
+        generate_summary, explanation = await chat_agent.decide_summary(request.message, logs)
         print(f"Generate Summary: {generate_summary}, Explanation: {explanation}")
         action = Action(
             type="summary_decision",
@@ -348,7 +348,7 @@ async def chat_stream(request: ChatRequest):
 
         # Step 2: If summary is needed, generate it.
         if generate_summary:
-            summary_text, stats = await chat_agent.generate_summary(request.message)
+            summary_text, stats = await chat_agent.generate_summary(request.message, logs)
             action = Action(
                 type="generate_summary",
                 body={"summary": summary_text, "stats": stats},
