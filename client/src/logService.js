@@ -5,9 +5,6 @@ export const ROWS_PER_PAGE = 100; // TODO: make this user configurable
 
 export let allLogs = [];
 
-// Module-level variable to track ongoing rendering/filtering operations.
-let currentOperationToken = { "all-logs": 0, "filtered-logs": 0 };
-
 // Add unique IDs to logs locally for table rendering.
 export const getLogsWithIds = (logs) =>
     logs.map((log, index) => ({ id: index + 1, ...log }));
@@ -61,6 +58,9 @@ export const renderHeader = (id = "filtered-logs") => {
     `;
 };
 
+// Create a global object to store the current page per table.
+export const currentPages = {};
+
 export const renderPagination = (id = "filtered-logs") => {
     const paginationContainer = document.getElementById(id + "-pagination");
     const rowsPerPage = ROWS_PER_PAGE;
@@ -69,10 +69,17 @@ export const renderPagination = (id = "filtered-logs") => {
 
     if (totalRows > rowsPerPage) {
         const numPages = Math.ceil(totalRows / rowsPerPage);
-        let currentPage = 0;
+        // Get the stored current page, or default to 0.
+        let currentPage = (currentPages[id] !== undefined) ? currentPages[id] : 0;
+        // If the stored page is out of bounds, reset it.
+        if (currentPage >= numPages) {
+            currentPage = 0;
+            currentPages[id] = 0;
+        }
 
         function updatePageDisplay(page) {
             currentPage = page;
+            currentPages[id] = page; // Persist the current page globally.
             $rows.hide().slice(page * rowsPerPage, (page + 1) * rowsPerPage).show();
 
             const navhtml = `
@@ -109,15 +116,15 @@ export const renderPagination = (id = "filtered-logs") => {
 
             $(paginationContainer).find(".prev-page").off("click").on("click", function (e) {
                 e.preventDefault();
-                if (currentPage > 0) {
-                    updatePageDisplay(currentPage - 1);
+                if (page > 0) {
+                    updatePageDisplay(page - 1);
                 }
             });
 
             $(paginationContainer).find(".next-page").off("click").on("click", function (e) {
                 e.preventDefault();
-                if (currentPage < numPages - 1) {
-                    updatePageDisplay(currentPage + 1);
+                if (page < numPages - 1) {
+                    updatePageDisplay(page + 1);
                 }
             });
 
@@ -135,7 +142,8 @@ export const renderPagination = (id = "filtered-logs") => {
         if (id === "all-logs") {
             window.allLogsPageUpdater = updatePageDisplay;
         }
-        updatePageDisplay(0);
+        // Initialize display using the persisted current page.
+        updatePageDisplay(currentPage);
     } else {
         $(paginationContainer).html('');
         $rows.show();
@@ -145,13 +153,31 @@ export const renderPagination = (id = "filtered-logs") => {
     }
 };
 
-const scheduleChunk = (callback) => {
+const scheduledChunks = {
+    "all-logs": null,
+    "filtered-logs": null,
+    "filtering": null,
+};
+
+const scheduleChunkFor = (callback, id) => {
     if (window.requestIdleCallback) {
-        const id = requestIdleCallback(callback);
+        scheduledChunks[id] = requestIdleCallback(callback);
     } else {
-        const id = setTimeout(callback, 0);
+        scheduledChunks[id] = setTimeout(callback, 0);
     }
 };
+
+const cancelScheduledChunkFor = (id) => {
+    if (scheduledChunks[id] !== null) {
+        if (window.cancelIdleCallback) {
+            cancelIdleCallback(scheduledChunks[id]);
+        } else {
+            clearTimeout(scheduledChunks[id]);
+        }
+        scheduledChunks[id] = null;
+    }
+};
+
 
 export const renderChunk = (logs, start, end, id = "filtered-logs", filters = []) => {
     if (logs.length === 0) {
@@ -176,8 +202,7 @@ export const renderChunk = (logs, start, end, id = "filtered-logs", filters = []
 }
 
 export const renderTable = (logs, id = "filtered-logs", filters = []) => {
-    // Increment the token to cancel any ongoing operation.
-    const token = ++currentOperationToken[id];
+    cancelScheduledChunkFor(id);
 
     const tableContainer = document.getElementById(id + "-table");
     const paginationContainer = document.getElementById(id + "-pagination");
@@ -193,21 +218,14 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     let chunk = 0;
 
     function processNextChunk() {
-        // If this operation has been canceled, abort further processing.
-        console.log(token, currentOperationToken[id]);
-        if (token !== currentOperationToken[id]) return;
-
         if (chunk < numChunks) {
             const start = chunk * rowsPerPage;
             const end = Math.min((chunk + 1) * rowsPerPage, totalRows);
             renderChunk(logs, start, end, id, filters);
             chunk++;
-            scheduleChunk(processNextChunk);
+            scheduleChunkFor(processNextChunk, id);
         } else {
-            // Once all chunks are processed, render pagination if not canceled.
-            if (token === currentOperationToken[id]) {
-                renderPagination(id);
-            }
+            renderPagination(id);
         }
     }
 
@@ -231,9 +249,8 @@ export const checkMatch = (log, filters) => {
 }
 
 export const applyFilters = (filters) => {
-    // Increment token to cancel any ongoing operation.
-    const token = ++currentOperationToken["all-logs"];
-    currentOperationToken["filtered-logs"] = token;
+    cancelScheduledChunkFor("all-logs");
+    cancelScheduledChunkFor("filtered-logs");
 
     // Clear tables and render headers.
     document.getElementById("all-logs-table").innerHTML = "";
@@ -247,28 +264,47 @@ export const applyFilters = (filters) => {
     let i = 0;
 
     function processChunk() {
-        // If a new operation has started, cancel this one.
-        if (
-            token !== currentOperationToken["all-logs"] ||
-            token !== currentOperationToken["filtered-logs"]
-        )
-            return;
-
+        const chunkStart = i;
         const end = Math.min(i + chunkSize, allLogs.length);
         for (; i < end; i++) {
             const log = allLogs[i];
             if (!isWithinDate(log)) continue;
 
-            // Check filters.
+            // Check filters and add matching logs.
             if (checkMatch(log, filters)) {
                 filteredLogs.push(log);
             }
+        }
 
-            // Render chunk for all logs.
-            if (i !== 0 && i % ROWS_PER_PAGE === 0) {
-                renderChunk(allLogs, i - ROWS_PER_PAGE, i, "all-logs", filters);
+        // Always render the processed chunk for all logs.
+        renderChunk(allLogs, chunkStart, i, "all-logs", filters);
+
+        // Render any new filtered logs that have been added.
+        if (filteredLogs.length > lastFilteredRenderIndex) {
+            renderChunk(
+                filteredLogs,
+                lastFilteredRenderIndex,
+                filteredLogs.length,
+                "filtered-logs",
+                filters
+            );
+            lastFilteredRenderIndex = filteredLogs.length;
+        }
+
+        if (i < allLogs.length) {
+            scheduleChunkFor(processChunk, "all-logs");
+        } else {
+            // Render any remaining logs that don't fill a full page.
+            if (allLogs.length % ROWS_PER_PAGE !== 0) {
+                renderChunk(
+                    allLogs,
+                    allLogs.length - (allLogs.length % ROWS_PER_PAGE),
+                    allLogs.length,
+                    "all-logs",
+                    filters
+                );
             }
-            if (filteredLogs.length >= lastFilteredRenderIndex + ROWS_PER_PAGE) {
+            if (filteredLogs.length > lastFilteredRenderIndex) {
                 renderChunk(
                     filteredLogs,
                     lastFilteredRenderIndex,
@@ -276,19 +312,6 @@ export const applyFilters = (filters) => {
                     "filtered-logs",
                     filters
                 );
-                lastFilteredRenderIndex = filteredLogs.length;
-            }
-        }
-
-        if (i < allLogs.length) {
-            scheduleChunk(processChunk);
-        } else {
-            // Process any remaining logs that don't fill a full page.
-            if (allLogs.length % ROWS_PER_PAGE !== 0) {
-                renderChunk(allLogs, allLogs.length - (allLogs.length % ROWS_PER_PAGE), allLogs.length, "all-logs", filters);
-            }
-            if (filteredLogs.length > lastFilteredRenderIndex) {
-                renderChunk(filteredLogs, lastFilteredRenderIndex, filteredLogs.length, "filtered-logs", filters);
             }
         }
     }
