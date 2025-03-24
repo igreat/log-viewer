@@ -293,26 +293,6 @@ export const applyFilters = (filters) => {
 
         if (i < allLogs.length) {
             scheduleChunkFor(processChunk, "all-logs");
-        } else {
-            // Render any remaining logs that don't fill a full page.
-            if (allLogs.length % ROWS_PER_PAGE !== 0) {
-                renderChunk(
-                    allLogs,
-                    allLogs.length - (allLogs.length % ROWS_PER_PAGE),
-                    allLogs.length,
-                    "all-logs",
-                    filters
-                );
-            }
-            if (filteredLogs.length > lastFilteredRenderIndex) {
-                renderChunk(
-                    filteredLogs,
-                    lastFilteredRenderIndex,
-                    filteredLogs.length,
-                    "filtered-logs",
-                    filters
-                );
-            }
         }
     }
 
