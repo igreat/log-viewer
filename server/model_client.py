@@ -39,7 +39,8 @@ class OfflineModelClient(ModelClient):
         )
 
     async def chat_completion(self, prompt: str) -> str:
-        output = self.model.create_chat_completion(
+        output = await asyncio.to_thread(
+            self.model.create_chat_completion,
             messages=[{"role": "system", "content": prompt}]
         )
         print("Output:", output)
