@@ -39,10 +39,10 @@ device = (
 # Initialize models and client
 models: dict[str, ModelClient] = {
     "gpt-4o": OpenAIModelClient(os.getenv("OPENAI_API_KEY") or "", "gpt-4o"),
-    "granite-3.2-2b": OfflineModelClient(
-        "models/granite/granite-3.2-2b-instruct-Q6_K.gguf",
-        context_window=3072,
-    ),
+    # "granite-3.2-2b": OfflineModelClient(
+    #     "models/granite/granite-3.2-2b-instruct-Q6_K.gguf",
+    #     context_window=3072,
+    # ),
     # "llama-3.2-3b": OfflineModelClient(
     #     "models/llama/Llama-3.2-3B-Instruct-Q6_K.gguf",
     #     context_window=3072,
@@ -328,9 +328,8 @@ async def chat_stream(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Message is required")
 
     chat_agent = ChatAgent(models[request.model], base_prompt)
-    if request.logs and request.log_id:
+    if request.logs:
         logs = request.logs
-        log_id = request.log_id
     else:
         raise HTTPException(status_code=400, detail="Logs are required")
 
@@ -384,7 +383,9 @@ async def chat_stream(request: ChatRequest):
                 }
             print("Issue Context:", issue_context)
 
-            similar_logs = search_similar(request.message, log_id, k=5)
+            similar_logs = []
+            if request.log_id:
+                similar_logs = search_similar(request.message, request.log_id, k=5)
 
             for issue, details in issue_context.items():
                 issue_text = await chat_agent.evaluate_issue(
