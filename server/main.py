@@ -39,10 +39,10 @@ device = (
 # Initialize models and client
 models: dict[str, ModelClient] = {
     "gpt-4o": OpenAIModelClient(os.getenv("OPENAI_API_KEY") or "", "gpt-4o"),
-    # "granite-3.2-2b": OfflineModelClient(
-    #     "models/granite/granite-3.2-2b-instruct-Q6_K.gguf",
-    #     context_window=3072,
-    # ),
+    "granite-3.2-2b": OfflineModelClient(
+        "models/granite/granite-3.2-2b-instruct-Q6_K.gguf",
+        context_window=3072,
+    ),
     # "llama-3.2-3b": OfflineModelClient(
     #     "models/llama/Llama-3.2-3B-Instruct-Q6_K.gguf",
     #     context_window=3072,
