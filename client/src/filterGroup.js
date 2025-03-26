@@ -6,10 +6,17 @@ import {
 import { generalFilter, updateTextFilter } from './search.js';
 import { applyFilters } from './logService.js';
 
+/** @type {number} */
 let colorCounter = 0;
-let filterGroups = []
-export let currentFilters = []
+/** @type {Object[]} */
+let filterGroups = [];
+/** @type {Object[]} Current filters to be applied */
+export let currentFilters = [];
 
+/**
+ * Initialize filter groups from local storage or defaults,
+ * then populate the filter groups dropdown.
+ */
 export const initFilterGroups = () => {
     const storedGroups = window.localStorage.getItem('filterGroups');
     if (storedGroups) {
@@ -21,6 +28,13 @@ export const initFilterGroups = () => {
     populateFilterGroups();
 };
 
+/**
+ * Extend the current filter groups with new groups.
+ * Updates local storage, refreshes the dropdown,
+ * and applies the updated filters.
+ *
+ * @param {Object[]} newFilterGroups - New filter group objects.
+ */
 export const extendFilterGroups = (newFilterGroups) => {
     filterGroups = [...filterGroups, ...newFilterGroups];
 
@@ -47,6 +61,10 @@ export const extendFilterGroups = (newFilterGroups) => {
     updateTextFilter();
 }
 
+/**
+ * Append a new filter group input row to the UI.
+ * Cycles through COLORS for default color selection.
+ */
 export const addFilterGroup = () => {
     const filterList = document.getElementById("filter-list");
     const filterHTML = `
@@ -75,6 +93,11 @@ export const addFilterGroup = () => {
     filterList.insertAdjacentHTML('beforeend', filterHTML);
 }
 
+/**
+ * Open the filter group modal for editing an existing filter group.
+ *
+ * @param {number} index - Index of the filter group to edit.
+ */
 export const editFilterGroup = (index) => {
     const group = filterGroups[index];
 
@@ -142,6 +165,12 @@ export const editFilterGroup = (index) => {
     $('#filterGroupModal').modal('show');
 };
 
+/**
+ * Save the filter group.
+ * If index is null, adds a new group; otherwise, updates the existing group.
+ *
+ * @param {number|null} [index=null] - Index of the group to update, or null to add.
+ */
 export const saveFilterGroup = (index = null) => {
     const title = document.getElementById("filter-group-title").value.trim();
     const description = document.getElementById("filter-group-description").value.trim();
@@ -216,6 +245,11 @@ export const saveFilterGroup = (index = null) => {
     $('#filterGroupModal').modal('hide');
 };
 
+/**
+ * Delete a filter group by its index.
+ *
+ * @param {number} index - Index of the filter group to delete.
+ */
 export const deleteFilterGroup = (index) => {
     const confirmDelete = confirm("Are you sure you want to delete this filter group?");
     if (!confirmDelete) return;
@@ -251,6 +285,9 @@ export const deleteFilterGroup = (index) => {
     applyFilters(filtersToApply);
 };
 
+/**
+ * Setup the premade filters dropdown with toggle and closing behavior.
+ */
 export const setupDropdown = () => {
     const dropdownButton = document.getElementById("premade-filters-dropdown");
     const dropdownMenu = dropdownButton.nextElementSibling;
@@ -287,7 +324,9 @@ export const setupDropdown = () => {
     });
 };
 
-
+/**
+ * Populate the premade filters dropdown with current filter groups.
+ */
 export const populateFilterGroups = () => {
     const dropdownMenu = document.querySelector(".dropdown-menu");
     dropdownMenu.innerHTML = ''; // Clear existing items
