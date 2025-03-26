@@ -317,11 +317,20 @@ def search_similar(q: str, index: str, k: int = 10) -> list[dict[str, Any]]:
     return logs
 
 
+# API endpoint to get all the enabled models
+@app.get("/models")
+def get_models():
+    return list(models.keys())
+
+
 @app.post("/chat_stream")
 async def chat_stream(request: ChatRequest):
     if not request.message:
         raise HTTPException(status_code=400, detail="Message is required")
 
+    if not request.model:
+        raise HTTPException(status_code=400, detail="Model is required")
+    
     chat_agent = ChatAgent(models[request.model], base_prompt)
     if request.logs:
         logs = request.logs
