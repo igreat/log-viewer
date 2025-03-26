@@ -41,23 +41,23 @@ const initializeApp = () => {
     Split(['#all-logs-pane', '#filtered-logs-pane'], {
         direction: 'vertical',
         sizes: [50, 50],
-        gutterSize: 5, // visible thickness remains 5px
-        minSize: 100,
+        gutterSize: 15,
+        minSize: 0,
         gutter: (index, direction) => {
             const gutter = document.createElement('div');
             gutter.className = `gutter gutter-${direction}`;
             // Increase the actual height for a larger click area
-            gutter.style.height = '10px';
+            gutter.style.height = '15px';
             gutter.style.cursor = 'row-resize';
             gutter.style.position = 'relative';
 
-            // Create a child element to show only a 5px line centered vertically
+            // Create a child element to show only a 10px line centered vertically
             const line = document.createElement('div');
             line.style.position = 'absolute';
             line.style.top = '50%';
             line.style.left = '0';
             line.style.right = '0';
-            line.style.height = '5px';
+            line.style.height = '10px';
             line.style.backgroundColor = '#ccc';
             line.style.transform = 'translateY(-50%)';
 

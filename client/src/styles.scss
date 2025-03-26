@@ -580,14 +580,13 @@ label.form-check-label {
 
 .split-pane {
   overflow: auto;
-  min-height: 100px; /* Prevent panes from being too small */
 }
 
 /* Split.js will automatically create a gutter; style it if desired: */
 .gutter {
   background-color: #f0f0f0;
   cursor: row-resize;
-  height: 5px;
+  height: 10px;
 }
 
 .empty-placeholder {
