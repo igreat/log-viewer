@@ -5,7 +5,18 @@ from typing import Iterator
 
 
 class OfflineModelClient(ModelClient):
+    """
+    Offline model client using llama_cpp.
+    """
+
     def __init__(self, model_path: str, context_window: int = 1024):
+        """
+        Initialize the offline model.
+
+        Args:
+            model_path (str): Path to the model file.
+            context_window (int, optional): Context window size. Defaults to 1024.
+        """
         self.model = Llama(
             model_path=model_path,
             n_gpu_layers=-1,
@@ -13,11 +24,20 @@ class OfflineModelClient(ModelClient):
         )
 
     async def chat_completion(self, prompt: str) -> str:
+        """
+        Asynchronously generate a chat response using the offline model.
+
+        Args:
+            prompt (str): The input prompt.
+
+        Returns:
+            str: The generated response.
+        """
+        
         output = await asyncio.to_thread(
             self.model.create_chat_completion,
             messages=[{"role": "system", "content": prompt}],
         )
-        print("Output:", output)
         if isinstance(output, Iterator):
-            return ""  # FIXME: Handle streaming responses.
+            return ""
         return output["choices"][0]["message"]["content"] or ""

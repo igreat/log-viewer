@@ -4,12 +4,28 @@ import json
 from typing import Any
 
 
-def load_logs():
+def load_logs() -> list[dict]:
+    """
+    Load logs from the 'data/all-logs.json' file.
+
+    Used for testing purposes only.
+    """
     with open("data/all-logs.json") as f:
         return json.load(f)
 
 
 def get_log_level_counts(logs, interval=timedelta(seconds=1)):
+    """
+    Group log level counts into time intervals.
+
+    Args:
+        logs (list[dict]): List of log entries with 'timestamp' and 'level' fields.
+        interval (timedelta, optional): Time bucket interval. Defaults to 1 second.
+
+    Returns:
+        defaultdict: Mapping of time buckets to dictionaries with log level counts.
+    """
+
     summary = defaultdict(lambda: {"Debug": 0, "Info": 0, "Warn": 0, "Error": 0})
     if not logs:
         return summary
@@ -22,7 +38,16 @@ def get_log_level_counts(logs, interval=timedelta(seconds=1)):
 
 
 def compute_stats(level_counts: dict[str, dict]):
-    # TODO: I can add more stats here such as most common keywords and so on.
+    """
+    Compute summary statistics from log level counts.
+
+    Args:
+        level_counts (dict[str, dict]): Mapping of time buckets to log level counts.
+
+    Returns:
+        dict: Statistics including max counts per level, overall total, interval count, and average.
+    """
+
     stats = {
         "max_per_level": {},
         "max_total": {"bucket": None, "count": 0},
@@ -48,6 +73,18 @@ def compute_stats(level_counts: dict[str, dict]):
 
 
 def extract_top_rows(logs, keywords, top_n=5):
+    """
+    Extract up to 'top_n' log entries per category that match given keywords and are warnings or errors.
+
+    Args:
+        logs (list[dict]): List of log entries.
+        keywords (dict): Mapping of category to list of keywords.
+        top_n (int, optional): Maximum number of logs to extract per keyword. Defaults to 5.
+
+    Returns:
+        dict: Mapping of each category to a list of matching log entries.
+    """
+
     extracted = {}
     for category, kw_list in keywords.items():
         extracted[category] = []
@@ -66,7 +103,18 @@ def extract_top_rows(logs, keywords, top_n=5):
                         break
     return extracted
 
+
 def get_simple_stats(logs):
+    """
+    Compute overall log level counts and identify the most common keywords.
+
+    Args:
+        logs (list[dict]): List of log entries.
+
+    Returns:
+        dict: Dictionary with overall counts for each log level and top 5 common keywords.
+    """
+
     # this will simply compute stats like most log level counts, most common keywords, etc.
     # COMPUTE LEVEL COUNTS (not per interval, just overall)
     stats: dict[str, Any] = {"Debug": 0, "Info": 0, "Warn": 0, "Error": 0}
@@ -85,9 +133,15 @@ def get_simple_stats(logs):
 
 def clean_response_content(response_content: str) -> str:
     """
-    Removes markdown code block markers (e.g. ```json ... ```)
-    from the response content if present.
+    Remove markdown code block markers from the response content.
+
+    Args:
+        response_content (str): The raw response string.
+
+    Returns:
+        str: The cleaned response string.
     """
+
     content = response_content.strip()
     if content.startswith("```"):
         lines = content.splitlines()

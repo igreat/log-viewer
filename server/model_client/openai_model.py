@@ -4,14 +4,33 @@ from openai import OpenAI
 
 
 class OpenAIModelClient(ModelClient):
+    """
+    OpenAI model client that uses the OpenAI API for chat completions.
+    """
+
     def __init__(self, api_key: str, model: str):
-        # Import locally so that other clients need not require openai package.
+        """
+        Initialize the OpenAI model client.
+
+        Args:
+            api_key (str): API key for accessing OpenAI services.
+            model (str): Identifier of the OpenAI model to use.
+        """
 
         self.client = OpenAI(api_key=api_key)
         self.model = model
 
     async def chat_completion(self, prompt: str) -> str:
-        # Wrap the blocking API call in asyncio.to_thread.
+        """
+        Asynchronously generate a chat response using the OpenAI API.
+
+        Args:
+            prompt (str): The prompt for which to generate a response.
+
+        Returns:
+            str: The generated chat response.
+        """
+
         response = await asyncio.to_thread(
             self.client.chat.completions.create,
             model=self.model,

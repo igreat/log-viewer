@@ -1,17 +1,30 @@
 import { highlightText } from './utils.js';
 import { isWithinDate } from './search.js';
 
-export const ROWS_PER_PAGE = 100; // TODO: make this user configurable
+/** @constant {number} Number of rows per page */
+export const ROWS_PER_PAGE = 100;
 
+/** @type {Object[]} All logs loaded locally */
 export let allLogs = [];
 
-// Add unique IDs to logs locally for table rendering.
+/**
+ * Add unique IDs to logs for table rendering.
+ * @param {Object[]} logs - Array of log objects.
+ * @returns {Object[]} Logs with an added unique 'id' field.
+ */
 export const getLogsWithIds = (logs) =>
     logs.map((log, index) => ({ id: index + 1, ...log }));
 
+/** @type {string|null} Current log file ID */
 export let currentLogId = null;
 
-// Function to handle log deletion.
+/** @type {Object.<string, number>} Stores the current page for each table */
+export const currentPages = {};
+
+/**
+ * Delete a log file by its ID.
+ * @param {string|number} id - The ID of the log file to delete.
+ */
 const deleteLogFile = (id) => {
     console.log(`Deleting log file with ID: ${id}`);
     fetch(`http://localhost:8000/table/${id}`, {
@@ -30,6 +43,10 @@ const deleteLogFile = (id) => {
         });
 };
 
+/**
+ * Render the table header.
+ * @param {string} [id="filtered-logs"] - The table identifier.
+ */
 export const renderHeader = (id = "filtered-logs") => {
     const tableContainer = document.getElementById(id + "-table");
     const paginationContainer = document.getElementById(id + "-pagination");
@@ -58,9 +75,10 @@ export const renderHeader = (id = "filtered-logs") => {
     `;
 };
 
-// Create a global object to store the current page per table.
-export const currentPages = {};
-
+/**
+ * Render pagination controls for the table.
+ * @param {string} [id="filtered-logs"] - The table identifier.
+ */
 export const renderPagination = (id = "filtered-logs") => {
     const paginationContainer = document.getElementById(id + "-pagination");
     const rowsPerPage = ROWS_PER_PAGE;
@@ -153,12 +171,18 @@ export const renderPagination = (id = "filtered-logs") => {
     }
 };
 
+/** @type {Object.<string, number|null>} Scheduled chunk callbacks */
 const scheduledChunks = {
     "all-logs": null,
     "filtered-logs": null,
     "filtering": null,
 };
 
+/**
+ * Schedule a callback when idle.
+ * @param {Function} callback - The function to schedule.
+ * @param {string} id - Identifier for the scheduled chunk.
+ */
 const scheduleChunkFor = (callback, id) => {
     if (window.requestIdleCallback) {
         scheduledChunks[id] = requestIdleCallback(callback);
@@ -167,6 +191,10 @@ const scheduleChunkFor = (callback, id) => {
     }
 };
 
+/**
+ * Cancel a scheduled callback.
+ * @param {string} id - Identifier for the scheduled chunk.
+ */
 const cancelScheduledChunkFor = (id) => {
     if (scheduledChunks[id] !== null) {
         if (window.cancelIdleCallback) {
@@ -178,7 +206,14 @@ const cancelScheduledChunkFor = (id) => {
     }
 };
 
-
+/**
+ * Render a chunk of logs into the table.
+ * @param {Object[]} logs - Array of log objects.
+ * @param {number} start - Starting index.
+ * @param {number} end - Ending index.
+ * @param {string} [id="filtered-logs"] - Table identifier.
+ * @param {Object[]} [filters=[]] - Filters to apply on text.
+ */
 export const renderChunk = (logs, start, end, id = "filtered-logs", filters = []) => {
     if (logs.length === 0) {
         console.log("No logs to render.");
@@ -201,6 +236,12 @@ export const renderChunk = (logs, start, end, id = "filtered-logs", filters = []
     renderPagination(id);
 }
 
+/**
+ * Render the complete log table by processing chunks.
+ * @param {Object[]} logs - Array of log objects.
+ * @param {string} [id="filtered-logs"] - Table identifier.
+ * @param {Object[]} [filters=[]] - Filters to apply on text.
+ */
 export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     cancelScheduledChunkFor(id);
 
@@ -232,6 +273,12 @@ export const renderTable = (logs, id = "filtered-logs", filters = []) => {
     processNextChunk();
 };
 
+/**
+ * Check if a log matches any provided filters.
+ * @param {Object} log - A log object.
+ * @param {Object[]} filters - Array of filter objects.
+ * @returns {boolean} True if a match is found, else false.
+ */
 export const checkMatch = (log, filters) => {
     if (filters.length === 0) return true;
     return filters.some(({ regex, caseSensitive, text }) => {
@@ -248,6 +295,10 @@ export const checkMatch = (log, filters) => {
     })
 }
 
+/**
+ * Apply filters to logs and update the rendered tables.
+ * @param {Object[]} filters - Array of filter objects.
+ */
 export const applyFilters = (filters) => {
     cancelScheduledChunkFor("all-logs");
     cancelScheduledChunkFor("filtered-logs");
@@ -299,6 +350,9 @@ export const applyFilters = (filters) => {
     processChunk();
 };
 
+/**
+ * Load log files and display them in a modal.
+ */
 export const loadLogFilesModal = () => {
     fetch('http://localhost:8000/table')
         .then((response) => {
@@ -357,7 +411,10 @@ export const loadLogFilesModal = () => {
         });
 };
 
-// Reads file locally (parses, renders, and saves logs in 'allLogs').
+/**
+ * Handle local file upload: parse, render, and save logs.
+ * @param {Event} event - File input change event.
+ */
 export const handleFileUploadLocal = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -380,7 +437,9 @@ export const handleFileUploadLocal = (event) => {
     reader.readAsText(file);
 };
 
-// Uploads the logs (with title and description) to the backend.
+/**
+ * Upload logs to the backend.
+ */
 export const uploadLogsToDatabase = () => {
     if (!allLogs.length) {
         alert("No logs loaded locally. Please load a file first.");
@@ -416,6 +475,10 @@ export const uploadLogsToDatabase = () => {
         });
 };
 
+/**
+ * Load a log file by ID and render its content.
+ * @param {string|number} id - The ID of the log file to load.
+ */
 export const handleFileLoad = (id) => {
     console.log("Loading file with ID:", id);
     fetch(`http://localhost:8000/table/${id}`, {

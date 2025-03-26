@@ -10,7 +10,25 @@ from typing import Any
 
 
 class ChatAgent:
+    """
+    A chat agent that uses a ModelClient to process log-related queries,
+    generate summaries, evaluate decisions, and create filter groups based on logs.
+
+    Attributes:
+        model (ModelClient): The model client used for chat completions.
+        base_prompt (str): The base prompt string used as a template for generating prompts.
+        stats (Any): Statistics computed from log levels.
+    """
+
     def __init__(self, model: ModelClient, base_prompt: str):
+        """
+        Initialize the ChatAgent with a model and a base prompt.
+
+        Args:
+            model (ModelClient): An instance of ModelClient to handle chat completions.
+            base_prompt (str): The base prompt to be prepended to every generated prompt.
+        """
+
         self.model = model
         self.base_prompt = base_prompt
         self.stats = None
@@ -18,6 +36,22 @@ class ChatAgent:
     async def decide_summary(
         self, message: str, logs: list[dict[str, Any]]
     ) -> tuple[bool, str]:
+        """
+        Decide whether a summary should be generated for the given user message and logs.
+
+        The method computes log level statistics, incorporates them into a prompt,
+        and asks the model to decide if a summary is needed. The response must be in a specific
+        one-line format ("yes: explanation" or "no: explanation").
+
+        Args:
+            message (str): The user query message.
+            logs (list[dict[str, Any]]): A list of log entries.
+
+        Returns:
+            tuple[bool, str]: A tuple where the first element indicates if a summary should be generated
+                              (True for yes, False for no), and the second element contains the brief explanation.
+        """
+
         level_counts = get_log_level_counts(logs)
         self.stats = compute_stats(level_counts)
         stats_str = json.dumps(self.stats, default=str, indent=2)
@@ -56,6 +90,22 @@ Do not include any extra text.
     async def generate_summary(
         self, message: str, logs: list[dict[str, Any]]
     ) -> tuple[str, dict]:
+        """
+        Generate a summary of the log statistics based on the user query.
+
+        If the statistics haven't been computed yet, they are computed from the provided logs.
+        A prompt is built with the log statistics and the user query, and the model is asked to provide
+        a summary. Additionally, simple log statistics are returned.
+
+        Args:
+            message (str): The user query.
+            logs (list[dict[str, Any]]): A list of log entries.
+
+        Returns:
+            tuple[str, dict]: A tuple where the first element is the generated summary as a string,
+            and the second element is a dictionary containing simple log statistics.
+        """
+
         if self.stats is None:
             level_counts = get_log_level_counts(logs)
             self.stats = compute_stats(level_counts)
@@ -72,6 +122,20 @@ Generate a summary of the log statistics. Respond with just the explanation:"""
         return summary, get_simple_stats(logs)
 
     async def evaluate_decision(self, message: str) -> tuple[bool, str]:
+        """
+        Evaluate whether known issues should be looked for in the logs based on the user query.
+
+        Constructs a prompt with the user query and instructions on when to detect issues, and expects
+        a one-line response in the format "yes: <brief explanation>" or "no: <brief explanation>".
+
+        Args:
+            message (str): The user query.
+
+        Returns:
+            tuple[bool, str]: A tuple where the first element is a boolean indicating if known issues should be
+            searched for, and the second element is a brief explanation provided by the model.
+        """
+
         prompt = f"""{self.base_prompt}
 User Query: {message}
 
@@ -106,6 +170,24 @@ no: [brief explanation]
         message: str,
         similar_logs: list[dict[str, Any]],
     ) -> str:
+        """
+        Evaluate a known issue against the logs and user query to decide if it should be flagged.
+
+        Constructs a prompt that includes the issue, its details, a set of similar logs, and the user query.
+        The model should respond with either a detailed issue summary and resolution in the specified format,
+        or an empty string if the issue should not be flagged. Note that if the details JSON does not have a
+        'logs' field or it is empty, an empty string should be returned.
+
+        Args:
+            issue (str): The title or identifier of the known issue.
+            details (str | dict): Details about the issue, can be a JSON string or a dictionary.
+            message (str): The user query.
+            similar_logs (list[dict[str, Any]]): A list of log entries that are similar to the issue.
+
+        Returns:
+            str: A formatted string with the issue summary and resolution if flagged, or an empty string otherwise.
+        """
+
         prompt = f"""{self.base_prompt}
 Known Issue: "{issue}"
 Issue Details:
@@ -133,6 +215,22 @@ Note: if the details json does not have a logs field or the logs field is empty,
     async def decide_filter(
         self, message: str, detected_issues: dict[str, Any]
     ) -> tuple[bool, str]:
+        """
+        Decide whether a filter should be added to refine the log output based on the user query and detected issues.
+
+        The prompt instructs the model to analyze the user query and the detected issues (with their keywords),
+        and decide if a filter is appropriate. The expected response is a single line in the format:
+        "yes: <brief explanation>" or "no: <brief explanation>".
+
+        Args:
+            message (str): The user query.
+            detected_issues (dict[str, Any]): A dictionary of detected issues along with associated keywords.
+
+        Returns:
+            tuple[bool, str]: A tuple where the first element indicates if a filter should be added,
+            and the second element is the explanation provided by the model.
+        """
+
         prompt = f"""{self.base_prompt}
 User Query: {message}
 
@@ -167,6 +265,36 @@ Do not include any extra text.
     async def generate_filter_group(
         self, message: str, detected_issues: dict[str, Any]
     ) -> dict:
+        """
+        Generate a filter group in JSON format based on the user query and detected issues.
+
+        Constructs a prompt that includes the user query and a JSON representation of detected issues with their keywords.
+        The prompt instructs the model to generate a filter group following a specific JSON structure, which includes a title,
+        description, and a list of filters. The response is then cleaned and parsed into a dictionary.
+
+        Args:
+            message (str): The user query.
+            detected_issues (dict[str, Any]): A dictionary of detected issues along with associated keywords.
+
+        Returns:
+            dict: A dictionary representing the filter group in the following structure:
+                {
+                  "title": string,
+                  "description": string,
+                  "filters": [
+                    {
+                      "text": string,
+                      "regex": boolean,
+                      "caseSensitive": boolean,
+                      "color": string,
+                      "description": string
+                    }
+                    // Additional filters may be included.
+                  ]
+                }
+            Returns an empty dictionary if the filter group could not be decoded.
+        """
+
         prompt = f"""{self.base_prompt}
 User Query: {message}
 

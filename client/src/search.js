@@ -3,10 +3,16 @@ import { currentFilters } from "./filterGroup.js";
 import { TOP_K } from "./utils.js";
 import { Trie, Node } from "./Trie";
 
+/** @type {Trie} */
 let suggestionTrie = new Trie();
 
+/** @type {Object|null} General text filter */
 export let generalFilter = null;
 
+/**
+ * Update the general text filter based on the search input,
+ * combine it with current filters, and apply them.
+ */
 export const updateTextFilter = () => {
     const text = document.getElementById("log-search").value.trim();
     const regex = document.getElementById("use-regex").checked;
@@ -18,12 +24,20 @@ export const updateTextFilter = () => {
     applyFilters(filters);
 }
 
+/**
+ * Update the search suggestions by retrieving suggestions from the trie
+ * and populating the suggestions list.
+ */
 export const updateSearchSuggestions = () => {
     let searchSuggestions = getSearchSuggestions();
     searchSuggestions = searchSuggestions.map(p => p.word);
     populateSearchSuggestions(searchSuggestions);
 }
 
+/**
+ * Update the search suggestion trie with the current search input
+ * and store the updated trie in local storage.
+ */
 export const updateSearchSugggestionTrie = () => {
     const text = document.getElementById("log-search").value.trim();
     suggestionTrie.insertWord(text);
@@ -31,12 +45,20 @@ export const updateSearchSugggestionTrie = () => {
     window.localStorage.setItem('suggestionTrie', JSON.stringify(trieJSON));
 }
 
+/**
+ * Get search suggestions from the trie for the current search input.
+ * @returns {Object[]} Array of suggestion objects.
+ */
 export const getSearchSuggestions = () => {
     const text = document.getElementById("log-search").value.trim();
     let results = suggestionTrie.collect(text, TOP_K);
     return results;
 }
 
+/**
+ * Populate the search suggestions list in the UI.
+ * @param {string[]} results - Array of suggestion strings.
+ */
 export const populateSearchSuggestions = (results) => {
     const suggestionsBox = document.getElementById("search-suggestions");
     suggestionsBox.innerHTML = "";
@@ -58,11 +80,21 @@ export const populateSearchSuggestions = (results) => {
     suggestionsBox.style.display = "block";
 }
 
+/**
+ * Convert the current trie into a JSON object.
+ * @returns {Object} JSON representation of the trie.
+ */
 export const trieToJSON = () => {
     let trieJSON = buildTrieJSON(suggestionTrie.root, {});
     return trieJSON;
 }
 
+/**
+ * Recursively build a JSON object from a trie node.
+ * @param {Node|null} node - The trie node.
+ * @param {Object} trieJSON - The JSON object to populate.
+ * @returns {Object|null} The populated JSON or null.
+ */
 const buildTrieJSON = (node, trieJSON) => {
     if (node == null) {
         return null;
@@ -84,12 +116,23 @@ const buildTrieJSON = (node, trieJSON) => {
     return trieJSON;
 }
 
+/**
+ * Reconstruct a Trie from its JSON representation.
+ * @param {Object} trieJSON - JSON representation of a trie.
+ * @returns {Trie} The reconstructed trie.
+ */
 export const trieFromJSON = (trieJSON) => {
     let newTrie = new Trie();
     newTrie.root = buildTrie(newTrie.root, trieJSON);
     return newTrie;
 }
 
+/**
+ * Recursively build a Trie node from JSON.
+ * @param {Node|null} node - The current node (may be null).
+ * @param {Object|null} trieJSON - JSON data for the node.
+ * @returns {Node|null} The built node.
+ */
 const buildTrie = (node, trieJSON) => {
     if (trieJSON == null) {
         return null;
@@ -105,6 +148,11 @@ const buildTrie = (node, trieJSON) => {
     return node;
 }
 
+/**
+ * Check if a given date string is a valid ISO date ending with 'Z'.
+ * @param {string} dateString - The date string to validate.
+ * @returns {boolean} True if valid, else false.
+ */
 export const isValidDate = (dateString) => {
     if (dateString[dateString.length - 1] != 'Z') {
         return false;
@@ -134,6 +182,11 @@ export const isValidDate = (dateString) => {
     return true;
 }
 
+/**
+ * Determine if a log's timestamp falls within the specified date range.
+ * @param {Object} log - A log object with a "timestamp" field.
+ * @returns {boolean} True if within range or if date filtering is disabled.
+ */
 export const isWithinDate = (log) => {
     if (!document.getElementById("apply-date-chkbox").checked) {
         return true;
@@ -154,6 +207,10 @@ export const isWithinDate = (log) => {
     return false;
 }
 
+/**
+ * Initialize search functionality by loading stored data,
+ * setting up event listeners for text and date filters.
+ */
 export const initSearch = () => {
     // -- Loading From Local Storage
     if (!window.localStorage.getItem('suggestionTrie')) {
@@ -189,7 +246,11 @@ export const initSearch = () => {
             updateTextFilter();
             updateSearchSugggestionTrie();
         }
-    })
+    });
+    document.getElementById("enter-btn").addEventListener("click", () => {
+        updateTextFilter();
+        updateSearchSugggestionTrie();
+    });
     document.getElementById("log-search").addEventListener("input", updateSearchSuggestions);
     document.getElementById("use-regex").addEventListener("change", updateTextFilter);
     document.getElementById("case-sensitive").addEventListener("change", updateTextFilter);

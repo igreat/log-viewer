@@ -1,4 +1,13 @@
+/**
+ * Default highlight color used when no color is provided.
+ * @constant {string}
+ */
 export const DEFAULT_HIGHLIGHT_COLOR = "#ffbf00"; // Yellow
+
+/**
+ * Array of colors used for filter highlighting.
+ * @constant {string[]}
+ */
 export const COLORS = [
     "#FFFF99", // Light Yellow
     "#FFD580", // Pale Orange
@@ -10,6 +19,13 @@ export const COLORS = [
     "#FDE74C", // Maize
 ];
 
+/**
+ * Default filter groups available in the application.
+ * Each group includes a title, description, and an array of filters.
+ * Each filter has properties: regex (boolean), caseSensitive (boolean), text (string),
+ * and optionally color (string).
+ * @constant {Object[]}
+ */
 export const DEFAULT_FILTER_GROUPS = [
     {
         title: 'Error Logs',
@@ -28,8 +44,27 @@ export const DEFAULT_FILTER_GROUPS = [
     }
 ]
 
+/**
+ * Maximum number of top results to return in search suggestions.
+ * @constant {number}
+ */
 export const TOP_K = 5;
 
+/**
+ * Highlights occurrences of filter texts within the given text.
+ *
+ * Filters are sorted by descending length to avoid overlapping highlights.
+ * If a filter's regex flag is true, its text is used as a regex pattern; otherwise,
+ * the text is escaped for a literal match.
+ *
+ * @param {string} text - The text to process.
+ * @param {Object[]} filters - Array of filter objects.
+ * @param {string} filters[].text - The filter text.
+ * @param {boolean} filters[].regex - Whether to treat the filter text as a regex.
+ * @param {boolean} filters[].caseSensitive - Whether matching is case sensitive.
+ * @param {string} [filters[].color] - Optional color for highlighting; defaults to DEFAULT_HIGHLIGHT_COLOR.
+ * @returns {string} The HTML string with highlighted segments.
+ */
 export const highlightText = (text, filters) => {
     let highlighted = text;
 
