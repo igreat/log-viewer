@@ -11,21 +11,35 @@ const MODELS_ENDPOINT = `${API_ENDPOINT}/models`;
 
 /** @constant {Object} Default issues with descriptions, keywords, and resolutions */
 const DEFAULT_ISSUES = {
-    "Missing Media Track Error": {
-        "description": "A media track could not be retrieved by the Media Track Manager, resulting in a 'No Track!' error. This may indicate a failure in creating or negotiating the required media track for a video call.",
-        "context": "This error is logged when the system attempts to retrieve a video track (vid=1) during a media session and finds that no track exists. This might be due to signaling failures, media engine initialization issues, or network problems that prevented proper track creation.",
+    "Virtual Background Detection Issue": {
+        "description": "The virtual background feature fails to detect the user correctly, resulting in the entire captured video appearing blurry. Instead of only applying the background filter where needed, the filter covers the entire video.",
+        "context": "This issue occurs when the wmlhost.exe process fails to launch. Logs indicate a failure in WseMLHostAgent::start with error code 1260, which maps to MediaProcessFailedToLaunchByPolicy. According to Microsoft documentation, error 1260 is due to a group policy or software restriction that blocks the process from running.",
         "keywords": {
-            "media": ["CMediaTrackMgr::GetTrack", "No Track!"],
-            "video": ["vid=1"],
+            "virtual_background": ["virtual background", "blurry video"],
+            "wmlhost": ["wmlhost.exe", "failed to launch"],
+            "error": ["1260", "MediaProcessFailedToLaunchByPolicy"],
+            "policy": ["group policy", "software restriction"]
         },
-        "conditions": "This error typically occurs during call setup or renegotiation and may be accompanied by other signaling errors or warnings in the logs.",
-        "resolution": "Investigate preceding log entries for errors in media negotiation or track creation. Ensure that the media engine is properly initialized and that network conditions support the required media streams. Verify configuration settings for media track management.",
+        "conditions": "This issue typically arises during call setup when the system's software restriction policies block the media process required for virtual background functionality. It may be accompanied by warnings in the log regarding the failure to launch the media process.",
+        "resolution": "To resolve this issue, review the group policy settings to allow wmlhost.exe to run. Open the Group Policy Editor (Win+R, type gpedit.msc) and navigate to Computer Configuration > Windows Settings > Security Settings > Software Restriction Policies. Check the Additional Rules for any entries blocking wmlhost.exe and adjust them accordingly. Additionally, review Event Viewer logs to identify and confirm the policy restrictions."
     },
+    "Virtual Background Hardware Requirements Not Met": {
+        "description": "Users may be unable to use virtual backgrounds because the system hardware does not meet the minimum performance requirements. Enabling virtual background is computationally expensive, and lower‑end systems might fail to support it without special feature toggles.",
+        "context": "A common BEMS case involves users being unable to use virtual backgrounds due to insufficient hardware performance. Logs may show entries from 'CMediaPerformanceStaticControl::QueryPerformance' which report system hardware details, and from 'CMediaPerformanceStaticControl::CheckMlSupported' indicating whether machine learning support (required for VBG) is enabled. Additionally, logs from 'ConnectionBase::initializeVideoBlurEffect' indicate that virtual background is not supported on the current hardware. Some organizations may enable toggles such as 'MC Client - EnableLowEndDeviceVBG' or 'UCF Client - desktop-low-end-device-virtual-background-enabled-ga' to lower the hardware requirements, although certain cases (e.g. GX AMD processors below 3GHz) remain unsupported.",
+        "keywords": {
+            "performance": ["CMediaPerformanceStaticControl::QueryPerformance"],
+            "ml_support": ["CMediaPerformanceStaticControl::CheckMlSupported"],
+            "virtual_background": ["ConnectionBase::initializeVideoBlurEffect"],
+            "feature_toggle": ["EnableLowEndDeviceVBG", "desktop-low-end-device-virtual-background-enabled-ga"]
+        },
+        "conditions": "Occurs when the system's CPU/hardware does not meet the minimum requirements for virtual background processing, or when required feature toggles are not enabled. Special cases exist for certain processors (e.g. GX AMD below 3GHz).",
+        "resolution": "Verify the hardware against the documented minimum requirements (see: https://help.webex.com/en-us/article/80jduab/Use-virtual-backgrounds-in-Webex-Meetings-and-Webex-Webinars#id_138414). If the hardware is borderline, consider enabling the low‑end device toggle. Otherwise, advise upgrading the hardware or adjusting virtual background expectations."
+    }
 };
 
 /** @constant {Object} Default workspaces mapping workspace name to issues */
 const DEFAULT_WORKSPACES = {
-    "Default Workspace": DEFAULT_ISSUES
+    "Video Virtual Background (VBG)": DEFAULT_ISSUES
 };
 
 let workspaces = {};
