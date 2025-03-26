@@ -40,7 +40,7 @@ const initializeApp = () => {
     // Initialize the vertical split-pane with Split.js.
     Split(['#all-logs-pane', '#filtered-logs-pane'], {
         direction: 'vertical',
-        sizes: [50, 50],
+        sizes: [33, 67],
         gutterSize: 15,
         minSize: 0,
         gutter: (index, direction) => {

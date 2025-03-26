@@ -26,7 +26,6 @@ The Log Viewer Tool is built to help engineers quickly identify issues in large 
 - Uploading and displaying logs in a responsive table format.
 - Providing real‑time filtering using basic text search, regex, and predefined or custom filter groups.
 - Enabling an AI agent to analyze logs, generate summaries, detect known issues, and suggest filtering options.
-- Organizing issues and filters into workspaces for better categorization and management.
 
 ## Setup
 
@@ -58,7 +57,7 @@ npm run build
 npm run preview
 ```
 
-<!-- important note -->
+You can find test log files in the test-logs directory inside the root directory.
 
 > **⚠️ Important Note:**
 > Once you set up the server (backend) and it is fully running, you may need to refresh the client page to ensure we receive the available AI `models` from the server. This is because `models` are completely handled on the server side.
@@ -67,6 +66,8 @@ npm run preview
 
 > **⚠️ Important Note:**
 > The server requires Python 3.12 or higher to run (we recommend the latest). Make sure you have the correct version installed and set as your environment's default Python interpreter.
+
+The following are instructions to set up the backend. However, the frontend will fully work without the backend and will have all of the features except for the AI agent and the database. So if you only want to test the frontend, you can skip this section.
 
 #### macOS Setup
 
