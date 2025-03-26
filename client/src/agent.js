@@ -2,7 +2,9 @@ import { extendFilterGroups } from "./filterGroup";
 import { marked } from "marked";
 import { allLogs, currentLogId } from "./logService";
 
-const AGENT_ENDPOINT = 'http://localhost:8000/chat_stream';
+const API_ENDPOINT = "http://localhost:8000";
+const AGENT_ENDPOINT = `${API_ENDPOINT}/chat_stream`;
+const MODELS_ENDPOINT = `${API_ENDPOINT}/models`;
 
 const DEFAULT_ISSUES = {
     "Missing Media Track Error": {
@@ -578,11 +580,12 @@ const populateWorkspaceDropdown = () => {
     workspaceSelect.appendChild(addOption);
 };
 
-const populateChatbotModelDropdown = () => {
+const populateChatbotModelDropdown = async () => {
     const modelSelect = document.getElementById("chatbot-model-select");
     modelSelect.innerHTML = ""; // Clear existing options.
+    const response = await fetch(MODELS_ENDPOINT);
+    const models = await response.json();
 
-    const models = ["gpt-4o", "granite-3.2-2b"];
     for (const model of models) {
         const option = document.createElement("option");
         option.value = model;
