@@ -246,7 +246,11 @@ export const initSearch = () => {
             updateTextFilter();
             updateSearchSugggestionTrie();
         }
-    })
+    });
+    document.getElementById("enter-btn").addEventListener("click", () => {
+        updateTextFilter();
+        updateSearchSugggestionTrie();
+    });
     document.getElementById("log-search").addEventListener("input", updateSearchSuggestions);
     document.getElementById("use-regex").addEventListener("change", updateTextFilter);
     document.getElementById("case-sensitive").addEventListener("change", updateTextFilter);
