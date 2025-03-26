@@ -4,7 +4,7 @@ import { Pair } from "./Trie.js";
  * A min-heap-based priority queue that stores Pair objects.
  * It maintains only the top results (highest frequency) up to a specified maxSize.
  */
-export class PriorityQueue {
+export default class PriorityQueue {
     /** @type {Pair[]} */
     heap;
     /** @type {number} Maximum number of elements to retain */

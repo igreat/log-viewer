@@ -1,4 +1,4 @@
-import { PriorityQueue } from "./priority-queue.js";
+import PriorityQueue from "./PriorityQueue.js";
 
 /**
  * Represents a node in the trie.
