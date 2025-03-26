@@ -10,7 +10,7 @@ TEST_MODEL = "gpt-4o"
 
 @pytest.fixture
 def chat_agent():
-    # Get your API key from an environment variable
+    # Get the API key from an environment variable
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         pytest.skip("CHATGPT_API_KEY not set; skipping integration tests.")
