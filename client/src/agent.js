@@ -2,10 +2,14 @@ import { extendFilterGroups } from "./filterGroup";
 import { marked } from "marked";
 import { allLogs, currentLogId } from "./logService";
 
+/** @constant {string} API endpoint base URL */
 const API_ENDPOINT = "http://localhost:8000";
+/** @constant {string} Chat agent streaming endpoint */
 const AGENT_ENDPOINT = `${API_ENDPOINT}/chat_stream`;
+/** @constant {string} Models endpoint */
 const MODELS_ENDPOINT = `${API_ENDPOINT}/models`;
 
+/** @constant {Object} Default issues with descriptions, keywords, and resolutions */
 const DEFAULT_ISSUES = {
     "Missing Media Track Error": {
         "description": "A media track could not be retrieved by the Media Track Manager, resulting in a 'No Track!' error. This may indicate a failure in creating or negotiating the required media track for a video call.",
@@ -19,6 +23,7 @@ const DEFAULT_ISSUES = {
     },
 };
 
+/** @constant {Object} Default workspaces mapping workspace name to issues */
 const DEFAULT_WORKSPACES = {
     "Default Workspace": DEFAULT_ISSUES
 };
@@ -27,6 +32,9 @@ let workspaces = {};
 let currentWorkspace = "Default Workspace";
 let currentModel = "gpt-4o";
 
+/**
+ * Initialize the chatbot UI and attach event listeners.
+ */
 export const initChatbot = () => {
     // Attach event listener for toggling the chatbot panel
     const toggleBtn = document.getElementById("chatbot-toggle-btn");
@@ -147,7 +155,12 @@ export const initChatbot = () => {
     populateChatbotModelDropdown();
 };
 
-// Helper to process streaming response using SSE format.
+/**
+ * Process the streaming response (SSE) from the agent.
+ * @param {ReadableStream} stream - The response stream.
+ * @param {HTMLElement} messagesContainer - Container for messages.
+ * @param {HTMLElement} loadingMessage - The loading message element.
+ */
 const processStream = async (stream, messagesContainer, loadingMessage) => {
     const decoder = new TextDecoder("utf-8");
     const reader = stream.getReader();
@@ -167,6 +180,7 @@ const processStream = async (stream, messagesContainer, loadingMessage) => {
                 const dataStr = part.substring(6).trim();
                 if (dataStr === "[DONE]") {
                     // Final event received; stop processing.
+                    processAction({ type: "done" }, messagesContainer);
                     doneProcessing = true;
                     break;
                 }
@@ -185,7 +199,10 @@ const processStream = async (stream, messagesContainer, loadingMessage) => {
     }
 };
 
-// Helper to start an animated ellipsis on an element.
+/**
+ * Start an animated ellipsis on an element.
+ * @param {HTMLElement} element - The element to animate.
+ */
 const startEllipsisAnimation = (element) => {
     let dots = 0;
     const intervalId = setInterval(() => {
@@ -196,7 +213,11 @@ const startEllipsisAnimation = (element) => {
     element.dataset.intervalId = intervalId;
 };
 
-// Helper to stop the ellipsis animation.
+
+/**
+ * Stop the animated ellipsis on an element.
+ * @param {HTMLElement} element - The element with the animation.
+ */
 const stopEllipsisAnimation = (element) => {
     if (element.dataset.intervalId) {
         clearInterval(parseInt(element.dataset.intervalId));
@@ -205,7 +226,9 @@ const stopEllipsisAnimation = (element) => {
     }
 };
 
-// Helper to freeze (stop animation on) decision indicators without removing them.
+/**
+ * Freeze decision indicator animations.
+ */
 const freezeDecisionIndicators = () => {
     const summaryDecisionEl = document.getElementById("decision-message");
     if (summaryDecisionEl) {
@@ -221,215 +244,139 @@ const freezeDecisionIndicators = () => {
             stopEllipsisAnimation(ellipsisSpan);
         }
     }
-};
 
-const processAction = (action, messagesContainer) => {
-    if (action.type === "summary_decision") {
-        let decisionEl = document.getElementById("decision-message");
-        if (!decisionEl) {
-            decisionEl = document.createElement("div");
-            decisionEl.id = "decision-message";
-            decisionEl.className = "chat-message bot thinking";
-            decisionEl.style.fontSize = "0.8rem";
-            decisionEl.style.padding = "5px 10px";
-            decisionEl.style.margin = "8px 0";
-            decisionEl.style.backgroundColor = "#ffffff";
-            decisionEl.style.border = "1px solid #e0e0e0";
-            decisionEl.style.borderRadius = "12px";
-            decisionEl.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.1)";
-
-            const header = document.createElement("div");
-            header.className = "thinking-header";
-            header.style.cursor = "pointer";
-            header.style.display = "flex";
-            header.style.justifyContent = "space-between";
-            header.style.alignItems = "center";
-
-            const titleSpan = document.createElement("span");
-            titleSpan.innerHTML = "Agent thinking";
-            header.appendChild(titleSpan);
-
-            const ellipsisSpan = document.createElement("span");
-            ellipsisSpan.className = "animated-ellipsis";
-            header.appendChild(ellipsisSpan);
-            startEllipsisAnimation(ellipsisSpan);
-
-            const details = document.createElement("div");
-            details.className = "thinking-details";
-            details.style.display = "none";
-            details.style.marginTop = "8px";
-            details.style.fontSize = "0.75rem";
-            details.style.color = "#555";
-            details.textContent = action.body.explanation;
-
-            header.addEventListener("click", () => {
-                details.style.display = details.style.display === "none" ? "block" : "none";
-            });
-
-            decisionEl.appendChild(header);
-            decisionEl.appendChild(details);
-            messagesContainer.appendChild(decisionEl);
-        } else {
-            const details = decisionEl.querySelector(".thinking-details");
-            if (details) {
-                details.textContent = action.body.explanation;
-            }
-        }
-        // If the decision is false, remove the element after 3 seconds.
-        if (!action.body.generate_summary) {
-            if (!decisionEl.dataset.removalScheduled) {
-                decisionEl.dataset.removalScheduled = "true";
-                setTimeout(() => {
-                    const el = document.getElementById("decision-message");
-                    if (el) {
-                        el.remove();
-                    }
-                }, 3000);
-            }
-        }
-    } else if (action.type === "issue_decision") {
-        let decisionEl = document.getElementById("issue-decision-message");
-        if (!decisionEl) {
-            decisionEl = document.createElement("div");
-            decisionEl.id = "issue-decision-message";
-            decisionEl.className = "chat-message bot thinking";
-            decisionEl.style.fontSize = "0.8rem";
-            decisionEl.style.padding = "5px 10px";
-            decisionEl.style.margin = "8px 0";
-            decisionEl.style.backgroundColor = "#ffffff";
-            decisionEl.style.border = "1px solid #e0e0e0";
-            decisionEl.style.borderRadius = "12px";
-            decisionEl.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.1)";
-
-            const header = document.createElement("div");
-            header.className = "thinking-header";
-            header.style.cursor = "pointer";
-            header.style.display = "flex";
-            header.style.justifyContent = "space-between";
-            header.style.alignItems = "center";
-
-            const titleSpan = document.createElement("span");
-            titleSpan.innerHTML = "Evaluating issues";
-            header.appendChild(titleSpan);
-
-            const ellipsisSpan = document.createElement("span");
-            ellipsisSpan.className = "animated-ellipsis";
-            header.appendChild(ellipsisSpan);
-            startEllipsisAnimation(ellipsisSpan);
-
-            const details = document.createElement("div");
-            details.className = "thinking-details";
-            details.style.display = "none";
-            details.style.marginTop = "8px";
-            details.style.fontSize = "0.75rem";
-            details.style.color = "#555";
-            details.textContent = action.body.explanation;
-
-            header.addEventListener("click", () => {
-                details.style.display = details.style.display === "none" ? "block" : "none";
-            });
-
-            decisionEl.appendChild(header);
-            decisionEl.appendChild(details);
-            messagesContainer.appendChild(decisionEl);
-        } else {
-            const details = decisionEl.querySelector(".thinking-details");
-            if (details) {
-                details.textContent = action.body.explanation;
-            }
-        }
-        if (!action.body.evaluate_issues) {
-            if (!decisionEl.dataset.removalScheduled) {
-                decisionEl.dataset.removalScheduled = "true";
-                setTimeout(() => {
-                    const el = document.getElementById("issue-decision-message");
-                    if (el) {
-                        el.remove();
-                    }
-                }, 3000);
-            }
-        }
-    } else if (action.type === "filter_decision") {
-        let decisionEl = document.getElementById("filter-decision-message");
-        if (!decisionEl) {
-            decisionEl = document.createElement("div");
-            decisionEl.id = "filter-decision-message";
-            decisionEl.className = "chat-message bot thinking";
-            decisionEl.style.fontSize = "0.8rem";
-            decisionEl.style.padding = "5px 10px";
-            decisionEl.style.margin = "8px 0";
-            decisionEl.style.backgroundColor = "#ffffff";
-            decisionEl.style.border = "1px solid #e0e0e0";
-            decisionEl.style.borderRadius = "12px";
-            decisionEl.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.1)";
-
-            const header = document.createElement("div");
-            header.className = "thinking-header";
-            header.style.cursor = "pointer";
-            header.style.display = "flex";
-            header.style.justifyContent = "space-between";
-            header.style.alignItems = "center";
-
-            const titleSpan = document.createElement("span");
-            titleSpan.innerHTML = "Filter Decision";
-            header.appendChild(titleSpan);
-
-            const ellipsisSpan = document.createElement("span");
-            ellipsisSpan.className = "animated-ellipsis";
-            header.appendChild(ellipsisSpan);
-            startEllipsisAnimation(ellipsisSpan);
-
-            const details = document.createElement("div");
-            details.className = "thinking-details";
-            details.style.display = "none";
-            details.style.marginTop = "8px";
-            details.style.fontSize = "0.75rem";
-            details.style.color = "#555";
-            details.textContent = action.body.explanation;
-
-            header.addEventListener("click", () => {
-                details.style.display = details.style.display === "none" ? "block" : "none";
-            });
-
-            decisionEl.appendChild(header);
-            decisionEl.appendChild(details);
-            messagesContainer.appendChild(decisionEl);
-        } else {
-            const details = decisionEl.querySelector(".thinking-details");
-            if (details) {
-                details.textContent = action.body.explanation;
-            }
-        }
-        // At this point, once the decision is set, stop the animated ellipsis.
-        const ellipsisSpan = decisionEl.querySelector(".animated-ellipsis");
+    const filterDecisionEl = document.getElementById("filter-decision-message");
+    if (filterDecisionEl) {
+        const ellipsisSpan = filterDecisionEl.querySelector(".animated-ellipsis");
         if (ellipsisSpan) {
             stopEllipsisAnimation(ellipsisSpan);
         }
-        // If the filter decision is false, schedule removal.
-        if (!action.body.should_add_filter) {
-            if (!decisionEl.dataset.removalScheduled) {
-                decisionEl.dataset.removalScheduled = "true";
-                setTimeout(() => {
-                    const el = document.getElementById("filter-decision-message");
-                    if (el) {
-                        el.remove();
-                    }
-                }, 3000);
-            }
-        }
+    }
+};
+
+/**
+ * Create a styled "thinking" message element.
+ * @param {string} id - Element ID.
+ * @param {string} title - Header title.
+ * @param {string} explanation - Explanation text.
+ * @returns {HTMLElement} The new element.
+ */
+function createThinkingElement(id, title, explanation) {
+    const elem = document.createElement("div");
+    elem.id = id;
+    elem.className = "chat-message bot thinking";
+    Object.assign(elem.style, {
+        fontSize: "0.8rem",
+        padding: "5px 10px",
+        margin: "8px 0",
+        backgroundColor: "#ffffff",
+        border: "1px solid #e0e0e0",
+        borderRadius: "12px",
+        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+    });
+
+    const header = document.createElement("div");
+    header.className = "thinking-header";
+    header.style.cursor = "pointer";
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "center";
+
+    const titleSpan = document.createElement("span");
+    titleSpan.innerHTML = title;
+    header.appendChild(titleSpan);
+
+    const ellipsisSpan = document.createElement("span");
+    ellipsisSpan.className = "animated-ellipsis";
+    header.appendChild(ellipsisSpan);
+    startEllipsisAnimation(ellipsisSpan);
+
+    const details = document.createElement("div");
+    details.className = "thinking-details";
+    Object.assign(details.style, {
+        display: "none",
+        marginTop: "8px",
+        fontSize: "0.75rem",
+        color: "#555",
+    });
+    details.textContent = explanation;
+
+    header.addEventListener("click", () => {
+        details.style.display = details.style.display === "none" ? "block" : "none";
+    });
+
+    elem.appendChild(header);
+    elem.appendChild(details);
+    return elem;
+}
+
+/**
+ * Update (or create) a thinking element for a given action.
+ * @param {Object} config - Configuration object.
+ * @param {string} config.id - The element ID.
+ * @param {string} config.title - The header title.
+ * @param {boolean} config.removalCondition - When true, schedule removal.
+ * @param {string} explanation - The explanation text.
+ * @param {HTMLElement} container - Parent container to append the element.
+ */
+function updateThinkingElement(config, explanation, container) {
+    let elem = document.getElementById(config.id);
+    if (!elem) {
+        elem = createThinkingElement(config.id, config.title, explanation);
+        container.appendChild(elem);
+    } else {
+        const details = elem.querySelector(".thinking-details");
+        if (details) details.textContent = explanation;
+    }
+    if (config.removalCondition && !elem.dataset.removalScheduled) {
+        elem.dataset.removalScheduled = "true";
+        setTimeout(() => {
+            const el = document.getElementById(config.id);
+            if (el) el.remove();
+        }, 3000);
+    }
+}
+
+/**
+ * Process an action from the agent and update the UI.
+ * @param {Object} action - The action object from the agent.
+ * @param {HTMLElement} messagesContainer - The container for chat messages.
+ */
+const processAction = (action, messagesContainer) => {
+    // Handle "done" type to stop any animations.
+    if (action.type === "done") {
+        freezeDecisionIndicators();
+        return;
+    }
+
+    const thinkingConfigs = {
+        summary_decision: {
+            id: "decision-message",
+            title: "Agent thinking",
+            removalCondition: !action.body.generate_summary,
+        },
+        issue_decision: {
+            id: "issue-decision-message",
+            title: "Evaluating issues",
+            removalCondition: !action.body.evaluate_issues,
+        },
+        filter_decision: {
+            id: "filter-decision-message",
+            title: "Filter Decision",
+            removalCondition: !action.body.should_add_filter,
+        },
+    };
+
+    if (thinkingConfigs[action.type]) {
+        updateThinkingElement(thinkingConfigs[action.type], action.body.explanation, messagesContainer);
     } else if (action.type === "add_filter") {
         freezeDecisionIndicators();
         if (action.body.filter_group) {
-            // Call the function to extend filter groups.
             extendFilterGroups([action.body.filter_group]);
             const filterGroup = action.body.filter_group;
-            // Build a markdown string to nicely display the filter group.
-            let markdownContent = `**Added Filter Group**\n: ${filterGroup.title}\n\n`;
-            markdownContent += `_${filterGroup.description}_\n\n`;
-
+            let markdownContent = `**Added Filter Group**\n: ${filterGroup.title}\n\n_${filterGroup.description}_\n\n`;
             let tableHtml = "";
             if (filterGroup.filters && filterGroup.filters.length > 0) {
-                // Use an HTML table with fixed layout and text wrapping enabled.
                 tableHtml += `
                     <table style="table-layout: fixed; width: 100%;">
                         <thead>
@@ -438,29 +385,27 @@ const processAction = (action, messagesContainer) => {
                             <th style="white-space: normal; word-break: break-all">Description</th>
                             </tr>
                         </thead>
-                        <tbody>`;
-
+                        <tbody>
+                `;
                 filterGroup.filters.forEach(filter => {
                     tableHtml += `
-                                <tr>
-                                    <td style="white-space: normal; word-break: break-all">
-                                        <span style="background-color: ${filter.color}; padding: 2px 4px;">${filter.text}</span>
-                                    </td>
-                                    <td style="white-space: normal;">${filter.description}</td>
-                                </tr>`;
+                        <tr>
+                            <td style="white-space: normal; word-break: break-all">
+                                <span style="background-color: ${filter.color}; padding: 2px 4px;">${filter.text}</span>
+                            </td>
+                            <td style="white-space: normal;">${filter.description}</td>
+                        </tr>`;
                 });
-
                 tableHtml += `
-                        </tbody>
-                    </table>
-                `;
+                    </tbody>
+                </table>`;
             }
+
             const botMessage = document.createElement("div");
             botMessage.className = "chat-message bot";
             const header = document.createElement("div");
             header.innerHTML = marked.parse(markdownContent);
             botMessage.appendChild(header);
-            // Add the table to the bot message if it exists
             if (tableHtml) {
                 const tableDiv = document.createElement("div");
                 tableDiv.innerHTML = tableHtml;
@@ -478,7 +423,7 @@ const processAction = (action, messagesContainer) => {
         messagesContainer.appendChild(botMessage);
     } else if (action.type === "flag_issue") {
         freezeDecisionIndicators();
-        const { issue, summary, resolution } = action.body;
+        const { issue, summary } = action.body;
         const botMessage = document.createElement("div");
         botMessage.className = "chat-message bot";
         botMessage.style.margin = "8px 0";
@@ -498,28 +443,27 @@ const processAction = (action, messagesContainer) => {
         header.appendChild(arrow);
         const details = document.createElement("div");
         details.className = "flag-issue-details";
-        details.style.display = "none";
-        details.style.marginTop = "5px";
-        details.style.fontSize = "0.85rem";
-        details.style.color = "#555";
+        Object.assign(details.style, {
+            display: "none",
+            marginTop: "5px",
+            fontSize: "0.85rem",
+            color: "#555",
+        });
         details.innerHTML = marked.parse(summary);
         header.addEventListener("click", () => {
-            if (details.style.display === "none") {
-                details.style.display = "block";
-                arrow.textContent = "expand_less";
-            } else {
-                details.style.display = "none";
-                arrow.textContent = "expand_more";
-            }
+            details.style.display = details.style.display === "none" ? "block" : "none";
+            arrow.textContent = details.style.display === "none" ? "keyboard_arrow_down" : "expand_less";
         });
         botMessage.appendChild(header);
         botMessage.appendChild(details);
         messagesContainer.appendChild(botMessage);
     }
-
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
 
+/**
+ * Initialize sample questions above the chatbot input.
+ */
 const initSampleQuestions = () => {
     const sampleQuestions = [
         "Can you generate a summary of the logs for me?",
@@ -560,6 +504,9 @@ const initSampleQuestions = () => {
     chatbotForm.parentNode.insertBefore(sampleContainer, chatbotForm);
 };
 
+/**
+ * Populate the workspace dropdown with available workspaces.
+ */
 const populateWorkspaceDropdown = () => {
     const workspaceSelect = document.getElementById("workspace-select");
     workspaceSelect.innerHTML = ""; // Clear existing options.
@@ -580,6 +527,9 @@ const populateWorkspaceDropdown = () => {
     workspaceSelect.appendChild(addOption);
 };
 
+/**
+ * Populate the chatbot model dropdown with models from the server.
+ */
 const populateChatbotModelDropdown = async () => {
     const modelSelect = document.getElementById("chatbot-model-select");
     modelSelect.innerHTML = ""; // Clear existing options.
@@ -599,6 +549,9 @@ const populateChatbotModelDropdown = async () => {
     });
 };
 
+/**
+ * Populate the chatbot workspace dropdown.
+ */
 const populateChatbotWorkspaceDropdown = () => {
     const workspaceSelect = document.getElementById("chatbot-workspace-select");
     workspaceSelect.innerHTML = ""; // Clear existing options.
@@ -637,6 +590,9 @@ const populateChatbotWorkspaceDropdown = () => {
     });
 };
 
+/**
+ * Attach listener to the workspace select dropdown.
+ */
 const attachWorkspaceSelectListener = () => {
     const workspaceSelect = document.getElementById("workspace-select");
     workspaceSelect.addEventListener("change", (e) => {
@@ -661,6 +617,9 @@ const attachWorkspaceSelectListener = () => {
     });
 };
 
+/**
+ * Load categories modal with current workspace issues.
+ */
 const loadCategoriesModal = () => {
     populateWorkspaceDropdown();
 
@@ -737,7 +696,10 @@ const loadCategoriesModal = () => {
     });
 };
 
-// Initialize the keywords section. Pass an object if editing an existing category.
+/**
+ * Initialize keywords section in the issue modal.
+ * @param {Object} [existingKeywords] - Existing keywords mapping.
+ */
 function initKeywordsSection(existingKeywords) {
     const container = document.getElementById("keywords-container");
     container.innerHTML = ""; // clear previous content
@@ -750,6 +712,11 @@ function initKeywordsSection(existingKeywords) {
     }
 }
 
+/**
+ * Add a keyword row to the keywords section.
+ * @param {string} [category=""] - The category name.
+ * @param {string[]} [keywordsArray=[]] - Array of keywords.
+ */
 function addKeywordRow(category = "", keywordsArray = []) {
     const container = document.getElementById("keywords-container");
 
@@ -802,6 +769,10 @@ function addKeywordRow(category = "", keywordsArray = []) {
     container.appendChild(row);
 }
 
+/**
+ * Open the issue modal for editing a category.
+ * @param {string} category - The category to edit.
+ */
 const openEditIssueModal = (category) => {
     const issue = workspaces[currentWorkspace][category];
     document.getElementById("issue-category").value = category;
@@ -819,6 +790,10 @@ const openEditIssueModal = (category) => {
     $('#issueModal').modal('show');
 };
 
+/**
+ * Handle submission of the issue form.
+ * @param {Event} event - Form submission event.
+ */
 const handleSubmitIssue = (event) => {
     event.preventDefault();
 
@@ -868,7 +843,11 @@ const handleSubmitIssue = (event) => {
     console.log("Updated Workspaces:", workspaces);
 };
 
-// Helper function to convert stats dictionary to markdown table
+/**
+ * Convert a stats object to a markdown table.
+ * @param {Object} stats - Statistics object.
+ * @returns {string} Markdown formatted table.
+ */
 const createMarkdownTable = (stats) => {
     let table = "| Stat | Value |\n";
     table += "| --- | --- |\n";

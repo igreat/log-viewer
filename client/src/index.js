@@ -17,6 +17,9 @@ import { initSearch } from './search.js';
 import { initChatbot } from './agent.js';
 import Split from 'split.js';
 
+/**
+ * Initializes the application by setting up event listeners and rendering the initial table.
+ */
 const initializeApp = () => {
     // --- Initialize Local Storage State for Filter Groups ---
     initFilterGroups();
@@ -146,4 +149,5 @@ const initializeApp = () => {
     populateFilterGroups();
 }
 
+// Initialize the application when the DOM is fully loaded.
 document.addEventListener("DOMContentLoaded", initializeApp);

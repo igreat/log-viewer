@@ -162,10 +162,12 @@ async def chat_stream(request: ChatRequest):
                 similar_logs = search_similar(request.message, request.log_id, k=5)
 
             for issue, details in issue_context.items():
-                issue_text = await chat_agent.evaluate_issue(
-                    issue, details, request.message, similar_logs
-                )
-                if issue_text.strip():
+                issue_text = (
+                    await chat_agent.evaluate_issue(
+                        issue, details, request.message, similar_logs
+                    )
+                ).strip()
+                if issue_text and issue_text != "" and issue_text != '""':
                     action = Action(
                         type="flag_issue",
                         body={"issue": issue, "summary": issue_text},
