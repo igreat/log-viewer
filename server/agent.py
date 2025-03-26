@@ -5,7 +5,7 @@ from utils import (
     get_simple_stats,
     clean_response_content,
 )
-from model_client import ModelClient
+from model_client.model_client import ModelClient
 from typing import Any
 
 
