@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Any
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from model_client import ModelClient, OpenAIModelClient, OfflineModelClient
+from model_client.model_client import ModelClient
+from model_client.openai_model import OpenAIModelClient
 from sentence_transformers import SentenceTransformer
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
@@ -12,6 +13,7 @@ from fastapi.responses import StreamingResponse
 from agent import ChatAgent
 from utils import extract_top_rows
 import torch
+# from model_client.offline_model import OfflineModelClient # Uncomment for offline model (disabled by default)
 
 # Load environment variables
 load_dotenv()
@@ -39,17 +41,10 @@ device = (
 # Initialize models and client
 models: dict[str, ModelClient] = {
     "gpt-4o": OpenAIModelClient(os.getenv("OPENAI_API_KEY") or "", "gpt-4o"),
+    # Uncomment for offline model (disabled by default)
     # "granite-3.2-2b": OfflineModelClient(
     #     "models/granite/granite-3.2-2b-instruct-Q6_K.gguf",
     #     context_window=3072,
-    # ),
-    # "llama-3.2-3b": OfflineModelClient(
-    #     "models/llama/Llama-3.2-3B-Instruct-Q6_K.gguf",
-    #     context_window=3072,
-    # ),
-    # "granite-3.2-8b": OfflineModelClient(
-    #     "models/granite/granite-3.2-8b-instruct-Q3_K_L.gguf",
-    #     context_window=2048,
     # ),
 }
 
@@ -336,7 +331,9 @@ async def chat_stream(request: ChatRequest):
     async def event_generator():
         # Step 1: Decide on summary generation.
         print(f"Message: {request.message}")
-        generate_summary, explanation = await chat_agent.decide_summary(request.message, logs)
+        generate_summary, explanation = await chat_agent.decide_summary(
+            request.message, logs
+        )
         print(f"Generate Summary: {generate_summary}, Explanation: {explanation}")
         action = Action(
             type="summary_decision",
@@ -347,7 +344,9 @@ async def chat_stream(request: ChatRequest):
 
         # Step 2: If summary is needed, generate it.
         if generate_summary:
-            summary_text, stats = await chat_agent.generate_summary(request.message, logs)
+            summary_text, stats = await chat_agent.generate_summary(
+                request.message, logs
+            )
             action = Action(
                 type="generate_summary",
                 body={"summary": summary_text, "stats": stats},

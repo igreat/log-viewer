@@ -2,7 +2,7 @@ import os
 from utils import load_logs, extract_top_rows
 import pytest
 from agent import ChatAgent
-from model_client import OpenAIModelClient
+from model_client.openai_model import OpenAIModelClient
 from typing import Any
 
 TEST_MODEL = "gpt-4o"
@@ -176,9 +176,7 @@ async def test_generate_filter_integration(
         "text" in f and "regex" in f and "caseSensitive" in f and "color" in f
         for f in filter_group["filters"]
     )
-    assert all(
-        "description" in f for f in filter_group["filters"]
-    )
+    assert all("description" in f for f in filter_group["filters"])
     assert filter_group["title"] is not None
     assert filter_group["description"] is not None
     assert filter_group["filters"] is not None
