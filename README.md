@@ -250,7 +250,7 @@ You can now uncomment the offline model part for the model I recommended to star
 ![Upload View](client/images/upload-bar.png)
   
 - **View:**  
-  Logs are displayed in a double table responsive view that allows scrolling and pagination. The top table shows all the logs, while the bottom table displays the filtered logs. Clicking on a row in the bottom table will automatically highlight and scroll to the corresponding row in the top table.
+  Logs are displayed in a double table responsive view that allows scrolling and pagination. The top table shows all the logs, while the bottom table displays the filtered logs. Clicking on a row in the bottom table will automatically highlight and scroll to the corresponding row in the top table. Also notice the gutter separating the two tables, which can be used to resize the tables based on how much space the user would like to give to either table.
 
 ![Table Double View](client/images/double-view-highlight.png)
 
