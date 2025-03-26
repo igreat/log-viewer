@@ -138,15 +138,29 @@ For efficient log storage and search capabilities, we use Elasticsearch:
     xpack.security.enabled: false
     ```
 
+3. Start Elasticsearch (after navigating to the Elasticsearch installation directory):
+
+  - Mac:
+
+      ```bash
+      ./bin/elasticsearch
+      ```
+
+  - Windows:
+
+      ```bash
+      .\bin\elasticsearch
+      ```
+
 4. Verify Elasticsearch is running:
 
-- Mac/Linux:
+  - Mac:
 
       ```bash
       curl -X GET "http://localhost:9200/?pretty"
       ```
 
-- Windows:
+  - Windows:
 
       ```bash
       curl.exe -X GET "http://localhost:9200/?pretty"
@@ -175,6 +189,8 @@ For efficient log storage and search capabilities, we use Elasticsearch:
     ```
 
 These steps should set up Elasticsearch on your machine at `http://localhost:9200`.
+
+If you run into issues, please follow the detailed instructions on the [Elasticsearch website](https://www.elastic.co/guide/en/elasticsearch/reference/current/setup.html).
 
 ### Environment Variables (.env)
 
