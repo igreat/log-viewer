@@ -2,6 +2,9 @@
 
 A modern log viewer tool designed for Cisco engineers to quickly view, filter, and analyze log files. The tool features a responsive UI, customizable filters, intelligent summarization and issue detection powered by AI agents.
 
+> Note
+> This is not an official Cisco repository and is simply a prototype we made to present to Cisco, porting some of these changes into their existing tooling.
+
 ## Table of Contents
 
 - [Overview](#overview)
