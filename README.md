@@ -326,6 +326,8 @@ The agent needs context to provide accurate recommendations. Workspaces and cate
 
 For the Front-End, the only major dependencies are jQuery and Bootsrap. However, for quick development we also used CORS, Marked.js and Split.js. We also have jest for running tests.
 
+We use vite as our bundler.
+
 For the Back-End, here is what the requirements.txt has
 
 ```
