@@ -205,6 +205,8 @@ If you run into issues, please follow the detailed instructions on the [Elastics
 
 Create a .env file in the server root directory with the following key (you may need to get your own OpenAI API key or come request one from us):
 
+Make sure to restart the server by terminating and rerunning the `main.py` file.
+
 ```bash
 OPENAI_API_KEY=your_openai_api_key_here
 ```
@@ -246,6 +248,8 @@ models: dict[str, ModelClient] = {
 ```
 
 You can now uncomment the offline model part for the model I recommended to start with, but feel free to put any other models (perhaps try 8b ones if your machine can handle it). Also feel fre to tweak the `context_window` parameter to your liking.
+
+Make sure to restart the server by terminating and rerunning the `main.py` file.
 
 ## Features (User Manual)
 
