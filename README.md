@@ -324,7 +324,7 @@ The agent needs context to provide accurate recommendations. Workspaces and cate
 
 ## Dependencies
 
-For the Front-End, the only major dependencies are jQuery and Bootsrap. However, for quick development we also used CORS, Marked.js and Split.js, all of which are open source and match our license.
+For the Front-End, the only major dependencies are jQuery and Bootsrap. However, for quick development we also used CORS, Marked.js and Split.js. We also have jest for running tests.
 
 For the Back-End, here is what the requirements.txt has
 
@@ -340,4 +340,4 @@ pytest-asyncio==0.25.3
 
 However, on macOS, if the user decides to enable offline AI, then there's also `llama-cpp-python==0.3.4`.
 
-Once again the dependencies are all open source and match our license.
+The dependencies are all open source and match our license.
