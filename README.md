@@ -5,7 +5,7 @@ A modern log viewer tool designed for Cisco engineers to quickly view, filter, a
 ## Table of Contents
 
 - [Overview](#overview)
-- [Setup](#setup)
+- [Setup (Deployment Manual)](#setup)
   - [Client Setup](#client-setup)
   - [Server Setup](#server-setup)
     - [macOS Setup](#macos-setup)
@@ -13,7 +13,7 @@ A modern log viewer tool designed for Cisco engineers to quickly view, filter, a
   - [Database Setup](#database-setup)
   - [Environment Variables (.env)](#environment-variables-env)
   - [Enabling Offline AI Agent (macOS only)](#enabling-offline-ai-agent-macos-only)
-- [Features](#features)
+- [Features (User Manual)](#features)
   - [Uploading and Viewing Log Files](#uploading-and-viewing-log-files)
   - [Filtering Log Entries](#filtering-log-entries)
   - [AI Agent for Analysis](#ai-agent-for-analysis)
@@ -239,7 +239,7 @@ models: dict[str, ModelClient] = {
 
 You can now uncomment the offline model part for the model I recommended to start with, but feel free to put any other models (perhaps try 8b ones if your machine can handle it). Also feel fre to tweak the `context_window` parameter to your liking.
 
-## Features
+## Features (User Manual)
 
 ![Main Page](client/images/main-page.png)
 
