@@ -13,7 +13,7 @@ A modern log viewer tool designed for Cisco engineers to quickly view, filter, a
   - [Database Setup](#database-setup)
   - [Environment Variables (.env)](#environment-variables-env)
   - [Enabling Offline AI Agent (macOS only)](#enabling-offline-ai-agent-macos-only)
-- [Features (User Manual)](#features)
+- [Features (User Manual)](#features-user-manual)
   - [Uploading and Viewing Log Files](#uploading-and-viewing-log-files)
   - [Filtering Log Entries](#filtering-log-entries)
   - [AI Agent for Analysis](#ai-agent-for-analysis)
