@@ -255,6 +255,8 @@ Make sure to restart the server by terminating and rerunning the `main.py` file.
 
 ![Main Page](client/images/main-page.png)
 
+Once again, there are example logs in the `test-logs` directory, so use those for testing if you'd like.
+
 ### Uploading and Viewing Log Files
 
 - **Upload:**  
