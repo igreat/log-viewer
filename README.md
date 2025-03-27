@@ -21,6 +21,7 @@ A modern log viewer tool designed for Cisco engineers to quickly view, filter, a
   - [Filtering Log Entries](#filtering-log-entries)
   - [AI Agent for Analysis](#ai-agent-for-analysis)
   - [Workspaces & Categories](#workspaces--categories)
+- [Dependencies](#dependencies)
 
 ## Overview
 
@@ -320,3 +321,23 @@ The agent needs context to provide accurate recommendations. Workspaces and cate
   View, edit, and delete filter categories in a modern, responsive modal interface.
 
 ![Category Modal](client/images/category-modal.png)
+
+## Dependencies
+
+For the Front-End, the only major dependencies are jQuery and Bootsrap. However, for quick development we also used CORS, Marked.js and Split.js, all of which are open source and match our license.
+
+For the Back-End, here is what the requirements.txt has
+
+```
+fastapi==0.115.11
+uvicorn[standard]==0.33.0
+elasticsearch==8.13.0
+openai==1.68.2
+sentence-transformers==3.4.1
+pytest==8.3.5
+pytest-asyncio==0.25.3
+```
+
+However, on macOS, if the user decides to enable offline AI, then there's also `llama-cpp-python==0.3.4`.
+
+Once again the dependencies are all open source and match our license.
