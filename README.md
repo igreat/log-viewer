@@ -75,6 +75,8 @@ The following are instructions to set up the backend. However, the frontend will
 
 #### macOS Setup
 
+> Do the following steps in a separate terminal instance
+
 First navigate to the server directory:
 
 1. Create a Python virtual environment:
@@ -133,6 +135,8 @@ First navigate to the server directory:
     ```
 
 ### Database Setup
+
+> Do the following steps in a separate terminal instance
 
 For efficient log storage and search capabilities, we use Elasticsearch:
 
